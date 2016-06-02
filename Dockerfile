@@ -1,7 +1,7 @@
 FROM resin/raspberrypi-golang
 
-# What's the name of your go package?
-ENV PKG test
+# The app
+ENV PKG ttgate
 
 # Enable systemd
 ENV INITSYSTEM on
@@ -10,7 +10,7 @@ ENV INITSYSTEM on
 COPY ./src $GOPATH/src
 
 # Build all the golang source
-WORKDIR $GOPATH/src
+WORKDIR $GOPATH/src/$PKG
 RUN go get && go install && go build all
 
 # Tell the container to run the golang program's binary on startup
