@@ -93,26 +93,26 @@ func cmdProcess(cmd []byte) {
             // if there's a pending outbound, transmit it (which will change state)
             // else restart the receive
             if (!SentPendingOutbound()) {
-				RestartReceive()
+                RestartReceive()
             }
         } else if bytes.HasPrefix(cmd, []byte("busy")) {
             // This is not at all expected, but it means that we're
             // moving too quickly and we should try again.
-			RestartReceive()
+            RestartReceive()
         } else if bytes.HasPrefix(cmd, []byte("radio_rx ")) {
             // Parse and process the received message
             cmdProcessReceived(cmd[len("radio_rx "):])
             // if there's a pending outbound, transmit it (which will change state)
             // else restart the receive
             if (!SentPendingOutbound()) {
-				RestartReceive()
+                RestartReceive()
             }
         } else {
             // Totally unknown error, but since we cannot just
             // leave things in a state without a pending receive,
             // we need to just restart it.
             fmt.Printf("LPWAN rcv error\n")
-			RestartReceive()
+            RestartReceive()
         }
 
     case CMD_STATE_LPWAN_TXRPL1:
@@ -120,18 +120,18 @@ func cmdProcess(cmd []byte) {
             cmdSetState(CMD_STATE_LPWAN_TXRPL2);
         } else {
             fmt.Printf("LPWAN xmt1 error\n")
-			RestartReceive()
+            RestartReceive()
         }
 
     case CMD_STATE_LPWAN_TXRPL2:
         if bytes.HasPrefix(cmd, []byte("radio_tx_ok")) {
             // if there's another pending outbound, transmit it, else restart the receive
             if (!SentPendingOutbound()) {
-				RestartReceive()
+                RestartReceive()
             }
         } else {
             fmt.Printf("LPWAN xmt2 error\n")
-			RestartReceive()
+            RestartReceive()
         }
 
     }
@@ -145,17 +145,25 @@ func RestartReceive() {
 
 func SentPendingOutbound() bool {
     hexchar := []byte("0123456789ABCDEF")
-    for ocmd := range outboundQueue {
-        outbuf := []byte("radio tx ")
-        for databyte := range ocmd.Command {
-            loChar := hexchar[(databyte & 0x0f)]
-            hiChar := hexchar[((databyte >> 4) & 0x0f)]
-            outbuf = append(outbuf, hiChar)
-            outbuf = append(outbuf, loChar)
+
+	// We test this because we can never afford to block here,
+	// and we knkow that we're the only consumer of this queue
+	
+    if (len(outboundQueue) != 0) {
+
+        for ocmd := range outboundQueue {
+            outbuf := []byte("radio tx ")
+            for _, databyte := range ocmd.Command {
+                loChar := hexchar[(databyte & 0x0f)]
+                hiChar := hexchar[((databyte >> 4) & 0x0f)]
+                outbuf = append(outbuf, hiChar)
+                outbuf = append(outbuf, loChar)
+            }
+            ioSendCommand(outbuf)
+            cmdSetState(CMD_STATE_LPWAN_TXRPL1)
+            return true
         }
-        ioSendCommand(outbuf)
-        cmdSetState(CMD_STATE_LPWAN_TXRPL1)
-        return true
+
     }
     return false
 }
