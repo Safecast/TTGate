@@ -31,6 +31,26 @@ func ioInit() bool {
 
     serialPort = s
 
+	// debug
+	
+    for i := 0; ; i++ {
+		fmt.Printf("sys get ver:\n")
+
+		n, err := s.Write([]byte("sys get ver\r\n"))
+		if (err != nil) {
+			fmt.Printf("write err: %d");
+		} else {
+			buf := make([]byte, 128)
+			n, err = s.Read(buf)
+			if (err != nil) {
+				fmt.Printf("read err: %d");
+			} else {
+				fmt.Printf("%q\n", buf[:n])
+			}
+		}
+		time.Sleep(1 * time.Second)
+	}
+	
     // Process receives on a different thread because I/O is synchronous
 
     go InboundMain()
@@ -116,7 +136,7 @@ func ioSendCommandString(cmd string) {
 
 func ioSendCommand(cmd []byte) {
 
-    fmt.Printf("ioSendCommand(%s)\n", bytes.Join([][]byte{cmd, []byte("")}, []byte("\r\n")))
+    fmt.Printf("ioSendCommand(%s)\n", cmd)
 
     _, err := serialPort.Write(bytes.Join([][]byte{cmd, []byte("")}, []byte("\r\n")))
     if (err != nil) {
