@@ -68,8 +68,6 @@ func ProcessInbound(buf []byte) []byte  {
     begin := 0
     end := 0
 
-    fmt.Printf("ProcessInbound(%s)\n", buf)
-
     // Loop over the buffer, which could have multiple lines in it
 
     for begin<length {
