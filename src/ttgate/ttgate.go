@@ -8,15 +8,29 @@ package main
 import (
     "time"
 	"fmt"
+	"os"
 )
 
+var debug bool = false
+
 func main() {
+	var s string
+
+	fmt.Printf("Teletype Gateway\n")
+
+	s = os.Getenv("HALT")		// Resin debugging via terminal requires quitting the main instance
+	if (s != "") {
+		fmt.Printf("HALT environment variable detected\n");
+		fmt.Printf("Exiting.\n");
+		os.Exit(0);
+	}
+
+	s = os.Getenv("DEBUG")		// For verbose debugging info
+	debug = s != ""
 
     // Initialize serial I/O.  We can't very well proceed without
     // a serial port, and yet it's senseless to exit within
     // the resin environment.
-
-	fmt.Printf("Teletype Gateway\n")
 	
     for !ioInit() {
         time.Sleep(5 * time.Second)

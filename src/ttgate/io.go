@@ -72,7 +72,7 @@ func ProcessInbound(buf []byte) []byte  {
         // Skip leading cr and lf lying around in buffer
 
         for ; begin<length; begin++ {
-            if (buf[begin] == '\r' || buf[begin] == '\n') {
+            if (buf[begin] != '\r' && buf[begin] != '\n') {
                 break
             }
         }
