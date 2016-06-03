@@ -10,7 +10,7 @@ package main
 import (
     "fmt"
     "bytes"
-	"time"
+    "time"
     "github.com/tarm/serial"
 )
 
@@ -49,22 +49,18 @@ func InboundMain() {
 
     fmt.Printf("Inbound Task Initiated\n");
 
-    for {
-        time.Sleep(5 * time.Second)
-//		ioReadIncoming()
-    }
-
-}
-
-func ioReadIncoming() {
-    var thisbuf = make([]byte, 128)     // make this big after we know that it works
+    var thisbuf = make([]byte, 128)
     var prevbuf []byte = []byte("")
-    n, err := serialPort.Read(thisbuf)
-    if (err != nil) {
-        fmt.Printf("read err: %d", err)
-    } else {
-        prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
+
+    for {
+        n, err := serialPort.Read(thisbuf)
+        if (err != nil) {
+            fmt.Printf("read err: %d", err)
+        } else {
+            prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
+        }
     }
+
 }
 
 func ProcessInbound(buf []byte) []byte  {
@@ -75,25 +71,25 @@ func ProcessInbound(buf []byte) []byte  {
 
     fmt.Printf("ProcessInbound(%s)\n", buf)
 
-	// Loop over the buffer, which could have multiple lines in it
-	
+    // Loop over the buffer, which could have multiple lines in it
+
     for begin<length {
 
-		// Parse out a single line delineated by begin:end
+        // Parse out a single line delineated by begin:end
 
         for end = begin; end<length; end++ {
 
-			// Process the line if it ends in \r\n or \r or \n
-			
+            // Process the line if it ends in \r\n or \r or \n
+
             if (buf[end] == '\r' || buf[end] == '\n') {
 
-				// Process if non-blank (which it will be on the \n of \r\n)
+                // Process if non-blank (which it will be on the \n of \r\n)
 
-				if (end > begin) {
-	                cmdProcess(buf[begin:end])
-				}
-				
-				// Skip past this delimeter and look for the next command
+                if (end > begin) {
+                    cmdProcess(buf[begin:end])
+                }
+
+                // Skip past this delimeter and look for the next command
 
                 begin = end+1
                 break

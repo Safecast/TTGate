@@ -42,11 +42,8 @@ func main() {
     // This is to simulate stuff coming in from the cloud service
 
     for {
-
-		ioReadIncoming()
-//        time.Sleep(60 * time.Second)
-//        cmdEnqueueOutbound([]byte("Heartbeat"))
-
+        time.Sleep(60 * time.Second)
+        cmdEnqueueOutbound([]byte("Heartbeat"))
     }
 
 }
