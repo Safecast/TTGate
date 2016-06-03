@@ -1,44 +1,34 @@
 /*
- * Testing...
+ * Teletype Gateway
  *
- * Contributors:
- *    Ray Ozzie
  */
 
 package main
 
 import (
-    "fmt"
     "time"
-    "log"
-    "github.com/tarm/serial"
 )
 
 func main() {
 
-//    c := &serial.Config{Name: "/dev/ttyUSB0", Baud: 57600}
-    c := &serial.Config{Name: "/dev/ttyS0", Baud: 57600}
-    s, err := serial.OpenPort(c)
-    if (err != nil) {
-        log.Fatal(err);
+    // Initialize serial I/O.  We can't very well proceed without
+    // a serial port, and yet it's senseless to exit within
+    // the resin environment.
+
+    for !ioInit() {
+        time.Sleep(5 * time.Second)
     }
 
-    for i := 0; ; i++ {
-        fmt.Printf("sys get ver:")
+    // In our idle loop, transmit a beacon once per minute.
+    // This is to simulate stuff coming in from the cloud service
 
-        n, err := s.Write([]byte("sys get ver\r\n"))
-        if (err != nil) {
-            fmt.Printf("write err: %d");
-        } else {
-            buf := make([]byte, 128)
-            n, err = s.Read(buf)
-            if (err != nil) {
-                fmt.Printf("read err: %d");
-            } else {
-                log.Printf("%q", buf[:n])
-            }
-        }
-        time.Sleep(1 * time.Second)
+    for {
+
+        time.Sleep(60 * time.Second)
+
+        cmdEnqueueOutbound([]byte("Heartbeat"))
     }
 
 }
+
+// eof

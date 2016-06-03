@@ -1,0 +1,192 @@
+/*
+ * Teletype Command Processing
+ *
+ * This module contains the command state machine.
+ */
+
+package main
+
+import (
+    "fmt"
+    "bytes"
+)
+
+// States
+
+const (
+    CMD_STATE_IDLE = iota
+    CMD_STATE_LPWAN_RESETREQ
+    CMD_STATE_LPWAN_GETVERRPL
+    CMD_STATE_LPWAN_SYSRESETRPL
+    CMD_STATE_LPWAN_MACPAUSERPL
+    CMD_STATE_LPWAN_SETWDTRPL
+    CMD_STATE_LPWAN_RCVRPL
+    CMD_STATE_LPWAN_TXRPL1
+    CMD_STATE_LPWAN_TXRPL2
+)
+
+type OutboundCommand struct {
+	Command []byte
+}
+
+var outboundQueue chan OutboundCommand
+var currentState uint16
+
+func cmdInit() {
+
+    // Initialize the state machine and kick off a device reset
+
+    cmdSetState(CMD_STATE_LPWAN_RESETREQ);
+    cmdProcess([]byte(""))
+
+	// Initialize the outbound queue
+
+	outboundQueue = make(chan OutboundCommand, 100)			// Don't exhibit backpressure for a long time
+
+}
+
+func cmdEnqueueOutbound(cmd []byte) {
+	var ocmd OutboundCommand
+	ocmd.Command = cmd
+	outboundQueue <- ocmd
+}
+
+func cmdSetState(newState uint16) {
+    currentState = newState
+}
+
+func cmdProcess(cmd []byte) {
+
+    fmt.Printf("cmdProcess(%s)\n", cmd)
+
+    switch currentState {
+
+    case CMD_STATE_LPWAN_RESETREQ:
+        // This is important, because it is a harmless command
+        // that we can use to get in sync with an unaligned
+        // command stream.  This may fail, but that is the point.
+        ioSendCommandString("sys get ver")
+        cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
+
+    case CMD_STATE_LPWAN_GETVERRPL:
+        ioSendCommandString("sys reset")
+        cmdSetState(CMD_STATE_LPWAN_SYSRESETRPL)
+
+    case CMD_STATE_LPWAN_SYSRESETRPL:
+        ioSendCommandString("mac pause")
+        cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
+
+    case CMD_STATE_LPWAN_MACPAUSERPL:
+        ioSendCommandString("radio set wdt 5000")
+        cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
+
+    case CMD_STATE_LPWAN_SETWDTRPL:
+        ioSendCommandString("radio rx 0")
+        cmdSetState(CMD_STATE_LPWAN_RCVRPL)
+
+    case CMD_STATE_LPWAN_RCVRPL:
+        if !bytes.HasPrefix(cmd, []byte("ok")) {
+			fmt.Printf("LPWAN rcv error\n")
+	        cmdSetState(CMD_STATE_LPWAN_RCVRPL)
+		} else if !bytes.HasPrefix(cmd, []byte("radio_err")) {
+            // Expected from timeout of WDT seconds, so restart the receive
+            ioSendCommandString("radio rx 0")
+	        cmdSetState(CMD_STATE_LPWAN_RCVRPL)
+        } else if !bytes.HasPrefix(cmd, []byte("radio_rx ")) {
+            // Parse and process the received message
+            cmdProcessReceived(cmd[len("radio_rx "):])
+			// if there's a pending outbound, transmit it, else restart the receive
+			if (!SentPendingOutbound()) {
+	            ioSendCommandString("radio rx 0")
+		        cmdSetState(CMD_STATE_LPWAN_RCVRPL)
+			}
+        }
+
+    case CMD_STATE_LPWAN_TXRPL1:
+        if !bytes.HasPrefix(cmd, []byte("ok")) {
+	        cmdSetState(CMD_STATE_LPWAN_TXRPL2);
+		} else {
+			fmt.Printf("LPWAN xmt1 error\n")
+			// return to receive state upon TX error
+            ioSendCommandString("radio rx 0")
+	        cmdSetState(CMD_STATE_LPWAN_RCVRPL)
+		}
+
+    case CMD_STATE_LPWAN_TXRPL2:
+        if !bytes.HasPrefix(cmd, []byte("radio_tx_ok")) {
+			// if there's another pending outbound, transmit it, else restart the receive
+			if (!SentPendingOutbound()) {
+	            ioSendCommandString("radio rx 0")
+		        cmdSetState(CMD_STATE_LPWAN_RCVRPL)
+			}
+		} else {
+			fmt.Printf("LPWAN xmt2 error\n")
+			// return to receive state upon TX error
+            ioSendCommandString("radio rx 0")
+	        cmdSetState(CMD_STATE_LPWAN_RCVRPL)
+		}
+
+    }
+
+}
+
+func SentPendingOutbound() bool {
+	hexchar := []byte("0123456789ABCDEF")
+	for ocmd := range outboundQueue {
+		outbuf := []byte("radio tx ")
+		for databyte := range ocmd.Command {
+			loChar := hexchar[(databyte & 0x0f)]
+			hiChar := hexchar[((databyte >> 4) & 0x0f)]
+			outbuf = append(outbuf, hiChar)
+			outbuf = append(outbuf, loChar)
+		}
+		ioSendCommand(outbuf)
+		cmdSetState(CMD_STATE_LPWAN_TXRPL1)
+		return true
+	}
+	return false
+}
+
+func cmdProcessReceived(hex []byte) {
+
+    // Convert received message from hex to binary
+    bin := make([]byte, len(hex)/2)
+    for i := range hex {
+
+		var hinibble, lonibble byte
+        hinibblechar := hex[2*i]
+        lonibblechar := hex[2*i+1]
+
+        if (hinibblechar >= '0' && hinibblechar <= '9') {
+			hinibble = hinibblechar - '0'
+		} else if (hinibblechar >= 'A' && hinibblechar <= 'F') {
+			hinibble = hinibblechar - 'A'
+        } else if (hinibblechar >= 'a' && hinibblechar <= 'f') {
+			hinibble = hinibblechar - 'a'
+        } else {
+			hinibble = 0
+		}
+
+        if (lonibblechar >= '0' && lonibblechar <= '9') {
+			lonibble = lonibblechar - '0'
+		} else if (lonibblechar >= 'A' && lonibblechar <= 'F') {
+			lonibble = lonibblechar - 'A'
+        } else if (lonibblechar >= 'a' && lonibblechar <= 'f') {
+			lonibble = lonibblechar - 'a'
+        } else {
+			lonibble = 0
+		}
+
+		bin[i] = (hinibble << 4) | lonibble
+
+    }
+
+    fmt.Printf("rcv(%d)\n", len(bin))
+
+	// Decode the binary protocol buffer
+
+	// Decide what to do with it
+	
+}
+
+// eof
