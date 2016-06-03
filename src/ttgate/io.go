@@ -51,7 +51,7 @@ func InboundMain() {
     for {
         n, err := serialPort.Read(thisbuf)
         if (err != nil) {
-            fmt.Printf("read err: %d", err);
+            fmt.Printf("read err: %d", err)
         } else {
             prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
         }
@@ -64,6 +64,8 @@ func ProcessInbound(buf []byte) []byte  {
     length := len(buf)
 	begin := 0
 	end := 0
+	
+	fmt.Printf("ProcessInbound(%s)\n", buf)
 	
     for begin<length {
 		
@@ -105,6 +107,8 @@ func ioSendCommandString(cmd string) {
 }
 
 func ioSendCommand(cmd []byte) {
+
+	fmt.Printf("ioSendCommand(%s)\n", cmd)
 
     _, err := serialPort.Write(cmd)
     if (err != nil) {
