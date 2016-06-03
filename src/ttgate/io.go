@@ -31,7 +31,7 @@ func ioInit() bool {
 
     serialPort = s
 
-	// debug
+	// debug only
 	
     for i := 0; ; i++ {
 		fmt.Printf("sys get ver:\n")
