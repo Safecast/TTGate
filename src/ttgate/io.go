@@ -34,7 +34,7 @@ func ioInit() bool {
 	// debug only
 	
     for i := 0; ; i++ {
-		fmt.Printf("sys get ver:\n")
+		fmt.Printf("sys get ver\n")
 
 		n, err := s.Write([]byte("sys get ver\r\n"))
 		if (err != nil) {
