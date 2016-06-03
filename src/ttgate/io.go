@@ -10,7 +10,6 @@ package main
 import (
     "fmt"
     "bytes"
-    "time"
     "github.com/tarm/serial"
 )
 
