@@ -89,9 +89,10 @@ func ProcessInbound(buf []byte) []byte  {
 
 				// Process if non-blank (which it will be on the \n of \r\n)
 
-				if (end > begin)
+				if (end > begin) {
 	                cmdProcess(buf[begin:end])
-
+				}
+				
 				// Skip past this delimeter and look for the next command
 
                 begin = end+1
