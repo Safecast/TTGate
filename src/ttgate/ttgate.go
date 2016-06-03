@@ -43,9 +43,10 @@ func main() {
 
     for {
 
-        time.Sleep(60 * time.Second)
+		ioReadIncoming()
+//        time.Sleep(60 * time.Second)
+//        cmdEnqueueOutbound([]byte("Heartbeat"))
 
-        cmdEnqueueOutbound([]byte("Heartbeat"))
     }
 
 }

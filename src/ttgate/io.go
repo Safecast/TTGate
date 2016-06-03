@@ -9,7 +9,7 @@ package main
 
 import (
     "fmt"
-	"bytes"
+    "bytes"
     "github.com/tarm/serial"
 )
 
@@ -45,30 +45,37 @@ func ioInit() bool {
 }
 
 func InboundMain() {
-    var thisbuf = make([]byte, 5)		// make this big after we know that it works
-    var prevbuf []byte = []byte("")
+
+    fmt.Printf("Inbound Task Initiated\n");
 
     for {
-        n, err := serialPort.Read(thisbuf)
-        if (err != nil) {
-            fmt.Printf("read err: %d", err)
-        } else {
-            prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
-        }
+        time.Sleep(5 * time.Second)
+//		ioReadIncoming()
     }
 
+}
+
+func ioReadIncoming() {
+    var thisbuf = make([]byte, 128)     // make this big after we know that it works
+    var prevbuf []byte = []byte("")
+    n, err := serialPort.Read(thisbuf)
+    if (err != nil) {
+        fmt.Printf("read err: %d", err)
+    } else {
+        prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
+    }
 }
 
 func ProcessInbound(buf []byte) []byte  {
 
     length := len(buf)
-	begin := 0
-	end := 0
-	
-	fmt.Printf("ProcessInbound(%s)\n", buf)
-	
+    begin := 0
+    end := 0
+
+    fmt.Printf("ProcessInbound(%s)\n", buf)
+
     for begin<length {
-		
+
         // Skip leading cr and lf lying around in buffer
 
         for ; begin<length; begin++ {
@@ -103,22 +110,17 @@ func ProcessInbound(buf []byte) []byte  {
 }
 
 func ioSendCommandString(cmd string) {
-	ioSendCommand([]byte(cmd))
+    ioSendCommand([]byte(cmd))
 }
 
 func ioSendCommand(cmd []byte) {
 
-	fmt.Printf("ioSendCommand(%s)\n", cmd)
+    fmt.Printf("ioSendCommand(%s)\n", bytes.Join([][]byte{cmd, []byte("")}, []byte("\r\n")))
 
-    _, err := serialPort.Write(cmd)
+    _, err := serialPort.Write(bytes.Join([][]byte{cmd, []byte("")}, []byte("\r\n")))
     if (err != nil) {
-		fmt.Printf("write err: %d", err)
-	}
-	
-    _, err = serialPort.Write([]byte("\r\n"))
-    if (err != nil) {
-		fmt.Printf("write err: %d", err)
-	}
+        fmt.Printf("write err: %d", err)
+    }
 
 }
 
