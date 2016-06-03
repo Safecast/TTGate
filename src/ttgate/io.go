@@ -31,26 +31,6 @@ func ioInit() bool {
 
     serialPort = s
 
-	// debug only
-	
-    for i := 0; ; i++ {
-		fmt.Printf("sys get ver\n")
-
-		n, err := s.Write([]byte("sys get ver\r\n"))
-		if (err != nil) {
-			fmt.Printf("write err: %d");
-		} else {
-			buf := make([]byte, 128)
-			n, err = s.Read(buf)
-			if (err != nil) {
-				fmt.Printf("read err: %d");
-			} else {
-				fmt.Printf("%q\n", buf[:n])
-			}
-		}
-		time.Sleep(1 * time.Second)
-	}
-	
     // Process receives on a different thread because I/O is synchronous
 
     go InboundMain()
@@ -95,28 +75,30 @@ func ProcessInbound(buf []byte) []byte  {
 
     fmt.Printf("ProcessInbound(%s)\n", buf)
 
+	// Loop over the buffer, which could have multiple lines in it
+	
     for begin<length {
 
-        // Skip leading cr and lf lying around in buffer
-
-        for ; begin<length; begin++ {
-            if (buf[begin] != '\r' && buf[begin] != '\n') {
-                break
-            }
-        }
-
-        // Scan to see if there's a cr or lf in this buffer,
-        // and just exit if not.
+		// Parse out a single line delineated by begin:end
 
         for end = begin; end<length; end++ {
+
+			// Process the line if it ends in \r\n or \r or \n
+			
             if (buf[end] == '\r' || buf[end] == '\n') {
-                cmdProcess(buf[begin:end])
-                begin = end
+
+				// Process if non-blank (which it will be on the \n of \r\n)
+
+				if (end > begin)
+	                cmdProcess(buf[begin:end])
+
+				// Skip past this delimeter and look for the next command
+
+                begin = end+1
                 break
+
             }
         }
-
-        // If we've processed it all, stop
 
         if (end >= length) {
             break
