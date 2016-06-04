@@ -103,7 +103,7 @@ func cmdProcess(cmd []byte) {
             RestartReceive()
         } else if bytes.HasPrefix(cmd, []byte("radio_rx")) {
 			// skip whitespace (there is more than one space)
-			var hexstarts
+			var hexstarts int
 			for hexstarts = len("radio_rx"); hexstarts<len(cmd); hexstarts++ {
 				if (cmd[hexstarts] > ' ') {
 					break
