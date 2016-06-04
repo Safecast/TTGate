@@ -10,7 +10,7 @@ import (
     "fmt"
     "bytes"
 	"github.com/golang/protobuf/proto"
-	"./teletype"
+	"github.com/rayozzie/teletype-proto/golang"
 )
 
 // States
