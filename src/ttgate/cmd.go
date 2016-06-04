@@ -172,13 +172,15 @@ func SentPendingOutbound() bool {
 
 func cmdProcessReceived(hex []byte) {
 
+    fmt.Printf("cmdProcessReceived(%s)\n", hex)
+
     // Convert received message from hex to binary
     bin := make([]byte, len(hex)/2)
     for i := 0; i < len(hex)/2; i++ {
 
         var hinibble, lonibble byte
         hinibblechar := hex[2*i]
-        lonibblechar := hex[2*i+1]
+        lonibblechar := hex[(2*i)+1]
 
         if (hinibblechar >= '0' && hinibblechar <= '9') {
             hinibble = hinibblechar - '0'
@@ -204,9 +206,7 @@ func cmdProcessReceived(hex []byte) {
 
     }
 
-    fmt.Printf("rcv(%d)\n", len(bin))
-    fmt.Printf("   hex: %c%c%c%c...%c%c\n", hex[0], hex[1], hex[2], hex[3], hex[len(hex)-2], hex[len(hex)-1])
-    fmt.Printf("   bin: %02x%02x...%02x\n", bin[0], bin[1], bin[len(bin)-1])
+    fmt.Printf("cmdProcessReceivedProtobuf(%s)\n", bin)
 
     // Process the received protocol buffer
 
