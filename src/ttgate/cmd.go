@@ -106,7 +106,7 @@ func cmdProcess(cmd []byte) {
 			fmt.Printf("first 20: %s\n", cmd[0:20])
 			fmt.Printf("starting 1: %s\n", cmd[1:21])
 			fmt.Printf("what i think it should do: %s\n", cmd[9:19])
-			fmt.Printf("what it does: %s\n", cmd[len("radio_rx "):19)
+			fmt.Printf("what it does: %s\n", cmd[len("radio_rx "):19])
             // Parse and process the received message
             cmdProcessReceived(cmd[len("radio_rx "):])
             // if there's a pending outbound, transmit it (which will change state)
