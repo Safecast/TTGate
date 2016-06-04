@@ -205,6 +205,8 @@ func cmdProcessReceived(hex []byte) {
     }
 
     fmt.Printf("rcv(%d)\n", len(bin))
+    fmt.Printf("   hex: %c%c%c%c...%c%c\n", hex[0], hex[1], hex[2], hex[3], hex[len(hex)-2], hex[len(hex)-1])
+    fmt.Printf("   bin: %02x%02x...%02x\n", bin[0], bin[1], bin[len(bin)-1])
 
     // Process the received protocol buffer
 
