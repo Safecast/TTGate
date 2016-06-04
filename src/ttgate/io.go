@@ -11,6 +11,7 @@ import (
     "fmt"
     "bytes"
     "github.com/tarm/serial"
+	"net"
 )
 
 var serialPort *serial.Port
@@ -119,6 +120,18 @@ func ioSendCommand(cmd []byte) {
         fmt.Printf("write err: %d", err)
     }
 
+}
+
+func getDeviceID() string {
+	ifs, _ := net.Interfaces()
+	for _, v := range ifs {
+		h := v.HardwareAddr.String()
+		if len(h) == 0 {
+			continue
+		}
+		return(h)
+	}
+	return("");
 }
 
 // eof

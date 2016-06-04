@@ -9,6 +9,8 @@ import (
     "time"
 	"fmt"
 	"os"
+//    "github.com/golang/protobuf/proto"
+//    "github.com/rayozzie/teletype-proto/golang"
 )
 
 var debug bool = false
@@ -42,8 +44,26 @@ func main() {
     // This is to simulate stuff coming in from the cloud service
 
     for {
+
+		// Broadcast a test message
+/*
+		msg := &teletype.Telecast {
+//			DeviceType: teletype.Telecast_SIMPLECAST,
+//			DeviceType: teletype.TelecastDeviceType_value["SIMPLECAST"],
+//			DeviceType: teletype.Telecast_SIMPLECAST,
+			DeviceType: teletype.TelecastDeviceType(teletype.Telecast_SIMPLECAST),
+			DeviceID: proto.String(getDeviceID()),
+			Message: proto.String("Heartbeat #test #yes"),
+		}
+		data, err := proto.Marshal(msg)
+		if err != nil {
+			fmt.Printf("marshaling error: ", err)
+		}
+        cmdEnqueueOutbound(data)
+*/
+		// Sleep for a while
+		
         time.Sleep(60 * time.Second)
-        cmdEnqueueOutbound([]byte("Heartbeat"))
     }
 
 }
