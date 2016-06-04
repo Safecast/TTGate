@@ -172,7 +172,7 @@ func cmdProcessReceived(hex []byte) {
 
     // Convert received message from hex to binary
     bin := make([]byte, len(hex)/2)
-    for i := range hex {
+	for (i := 0; i < len(hex)/2; i++) {
 
         var hinibble, lonibble byte
         hinibblechar := hex[2*i]
