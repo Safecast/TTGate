@@ -146,9 +146,9 @@ func RestartReceive() {
 func SentPendingOutbound() bool {
     hexchar := []byte("0123456789ABCDEF")
 
-	// We test this because we can never afford to block here,
-	// and we knkow that we're the only consumer of this queue
-	
+    // We test this because we can never afford to block here,
+    // and we knkow that we're the only consumer of this queue
+
     if (len(outboundQueue) != 0) {
 
         for ocmd := range outboundQueue {
@@ -172,7 +172,7 @@ func cmdProcessReceived(hex []byte) {
 
     // Convert received message from hex to binary
     bin := make([]byte, len(hex)/2)
-	for (i := 0; i < len(hex)/2; i++) {
+    for i := 0; i < len(hex)/2; i++ {
 
         var hinibble, lonibble byte
         hinibblechar := hex[2*i]
