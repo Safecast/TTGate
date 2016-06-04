@@ -206,9 +206,9 @@ func cmdProcessReceived(hex []byte) {
 
     }
 
-	fmt.Printf("cmdProcessReceivedProtobuf(");
-	for (i=0; i<sizeof(bin); i++) {
-		fmt.Printf("%02x", bin[i]);
+	fmt.Printf("cmdProcessReceivedProtobuf(")
+	for i:=0; i<len(bin); i++ {
+		fmt.Printf("%02x", bin[i])
 	}
     fmt.Printf("\n")
 
