@@ -9,6 +9,8 @@ package main
 import (
     "fmt"
     "bytes"
+	"github.com/golang/protobuf/proto"
+	"./teletype"
 )
 
 // States
@@ -204,10 +206,25 @@ func cmdProcessReceived(hex []byte) {
 
     fmt.Printf("rcv(%d)\n", len(bin))
 
-    // Decode the binary protocol buffer
+    // Process the received protocol buffer
 
-    // Decide what to do with it
+	cmdProcessReceivedProtobuf(bin)
 
+}
+
+func cmdProcessReceivedProtobuf(buf []byte) {
+	
+	// Unmarshal the buffer into a golang object
+	
+	msg := &teletype.Telecast{}
+	err := proto.Unmarshal(buf, msg)
+	if err != nil {
+		fmt.Printf("cmdProcessReceivedProtobuf unmarshaling error: ", err);
+		return
+	}
+
+	fmt.Printf("Received Message from Device %s: %s", msg.GetDeviceID(), msg.GetMessage())
+	
 }
 
 // eof
