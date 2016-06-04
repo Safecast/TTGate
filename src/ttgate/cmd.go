@@ -206,7 +206,11 @@ func cmdProcessReceived(hex []byte) {
 
     }
 
-    fmt.Printf("cmdProcessReceivedProtobuf(%s)\n", bin)
+	fmt.Printf("cmdProcessReceivedProtobuf(");
+	for (i=0; i<sizeof(bin); i++) {
+		fmt.Printf("%02x", bin[i]);
+	}
+    fmt.Printf("\n")
 
     // Process the received protocol buffer
 
