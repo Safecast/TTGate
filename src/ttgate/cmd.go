@@ -109,6 +109,7 @@ func cmdProcess(cmd []byte) {
 					break
 				}
 			}
+			fmt.Printf("stuff(%d) = '''%s'''\n", hexstarts, cmd[hexstarts:])
             // Parse and process the received message
             cmdProcessReceived(cmd[hexstarts:])
             // if there's a pending outbound, transmit it (which will change state)

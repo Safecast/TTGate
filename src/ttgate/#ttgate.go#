@@ -44,10 +44,19 @@ func main() {
     // This is to simulate stuff coming in from the cloud service
 
     for {
-        time.Sleep(60 * time.Second)
 
-		// 
-        cmdEnqueueOutbound([]byte("Heartbeat #test #yes"))
+		// Broadcast a test message
+
+		msg := &teletype.Telecast {
+			Message: proto.String("Heartbeat #test #yes"),
+			DeviceType: teletype_Telecast_deviceType_TTRELAY,
+			DeviceID: proto.String("EUID goes here"),
+		}
+        cmdEnqueueOutbound([]byte())
+
+		// Sleep for a while
+		
+        time.Sleep(60 * time.Second)
     }
 
 }
