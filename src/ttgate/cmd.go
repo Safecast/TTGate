@@ -101,24 +101,15 @@ func cmdProcess(cmd []byte) {
             // This is not at all expected, but it means that we're
             // moving too quickly and we should try again.
             RestartReceive()
-        } else if bytes.HasPrefix(cmd, []byte("radio_rx ")) {
-            fmt.Printf("radio_rx len == %d\n", len("radio_rx "))
-
-            fmt.Printf("first 29 bytes of cmd: ")
-            for i:=0; i<20; i++ {
-                fmt.Printf("%02x", cmd[i])
-            }
-            fmt.Printf("\n")
-			foo := cmd[len("radio_rx "):]
-            fmt.Printf("first 20 bytes of cmd[9:]: ")
-            for i:=0; i<20; i++ {
-                fmt.Printf("%02x", foo[i])
-            }
-            fmt.Printf("\n")
-            fmt.Printf("what i think it should do: '''%s'''\n", cmd[9:])
-            fmt.Printf("what it does: '''%s'''\n", cmd[len("radio_rx "):])
+        } else if bytes.HasPrefix(cmd, []byte("radio_rx")) {
+			// skip whitespace (there is more than one space)
+			for hexstarts := len("radio_rx"); hexstarts<len(cmd); hexstarts++ {
+				if (cmd[hexstarts] > ' ') {
+					break
+				}
+			}
             // Parse and process the received message
-            cmdProcessReceived(cmd[len("radio_rx "):])
+            cmdProcessReceived(cmd[hexstarts:])
             // if there's a pending outbound, transmit it (which will change state)
             // else restart the receive
             if (!SentPendingOutbound()) {
@@ -187,8 +178,6 @@ func SentPendingOutbound() bool {
 
 func cmdProcessReceived(hex []byte) {
 
-    fmt.Printf("cmdProcessReceived('''%s''')\n", hex)
-
     // Convert received message from hex to binary
     bin := make([]byte, len(hex)/2)
     for i := 0; i < len(hex)/2; i++ {
@@ -220,12 +209,6 @@ func cmdProcessReceived(hex []byte) {
         bin[i] = (hinibble << 4) | lonibble
 
     }
-
-    fmt.Printf("cmdProcessReceivedProtobuf(")
-    for i:=0; i<len(bin); i++ {
-        fmt.Printf("%02x", bin[i])
-    }
-    fmt.Printf("\n")
 
     // Process the received protocol buffer
 
