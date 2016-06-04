@@ -9,8 +9,8 @@ package main
 import (
     "fmt"
     "bytes"
-	"github.com/golang/protobuf/proto"
-	"github.com/rayozzie/teletype-proto/golang"
+    "github.com/golang/protobuf/proto"
+    "github.com/rayozzie/teletype-proto/golang"
 )
 
 // States
@@ -102,11 +102,21 @@ func cmdProcess(cmd []byte) {
             // moving too quickly and we should try again.
             RestartReceive()
         } else if bytes.HasPrefix(cmd, []byte("radio_rx ")) {
-			fmt.Printf("radio_rx len == %d\n", len("radio_rx "))
-			fmt.Printf("first 20: %s\n", cmd[0:20])
-			fmt.Printf("starting 1: %s\n", cmd[1:21])
-			fmt.Printf("what i think it should do: '''%s'''\n", cmd[9:])
-			fmt.Printf("what it does: '''%s'''\n", cmd[len("radio_rx "):])
+            fmt.Printf("radio_rx len == %d\n", len("radio_rx "))
+
+            fmt.Printf("first 29 bytes of cmd: ")
+            for i:=0; i<20; i++ {
+                fmt.Printf("%02x", cmd[i])
+            }
+            fmt.Printf("\n")
+			foo := cmd[len("radio_rx "):]
+            fmt.Printf("first 20 bytes of cmd[9:]: ")
+            for i:=0; i<20; i++ {
+                fmt.Printf("%02x", foo[i])
+            }
+            fmt.Printf("\n")
+            fmt.Printf("what i think it should do: '''%s'''\n", cmd[9:])
+            fmt.Printf("what it does: '''%s'''\n", cmd[len("radio_rx "):])
             // Parse and process the received message
             cmdProcessReceived(cmd[len("radio_rx "):])
             // if there's a pending outbound, transmit it (which will change state)
@@ -211,31 +221,31 @@ func cmdProcessReceived(hex []byte) {
 
     }
 
-	fmt.Printf("cmdProcessReceivedProtobuf(")
-	for i:=0; i<len(bin); i++ {
-		fmt.Printf("%02x", bin[i])
-	}
+    fmt.Printf("cmdProcessReceivedProtobuf(")
+    for i:=0; i<len(bin); i++ {
+        fmt.Printf("%02x", bin[i])
+    }
     fmt.Printf("\n")
 
     // Process the received protocol buffer
 
-	cmdProcessReceivedProtobuf(bin)
+    cmdProcessReceivedProtobuf(bin)
 
 }
 
 func cmdProcessReceivedProtobuf(buf []byte) {
-	
-	// Unmarshal the buffer into a golang object
-	
-	msg := &teletype.Telecast{}
-	err := proto.Unmarshal(buf, msg)
-	if err != nil {
-		fmt.Printf("cmdProcessReceivedProtobuf unmarshaling error: ", err);
-		return
-	}
 
-	fmt.Printf("Received Message from Device %s: %s", msg.GetDeviceID(), msg.GetMessage())
-	
+    // Unmarshal the buffer into a golang object
+
+    msg := &teletype.Telecast{}
+    err := proto.Unmarshal(buf, msg)
+    if err != nil {
+        fmt.Printf("cmdProcessReceivedProtobuf unmarshaling error: ", err);
+        return
+    }
+
+    fmt.Printf("Received Message from Device %s: %s", msg.GetDeviceID(), msg.GetMessage())
+
 }
 
 // eof
