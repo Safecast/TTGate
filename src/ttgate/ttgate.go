@@ -9,8 +9,8 @@ import (
     "time"
 	"fmt"
 	"os"
-//    "github.com/golang/protobuf/proto"
-//    "github.com/rayozzie/teletype-proto/golang"
+    "github.com/golang/protobuf/proto"
+    "github.com/rayozzie/teletype-proto/golang"
 )
 
 var debug bool = false
@@ -46,12 +46,10 @@ func main() {
     for {
 
 		// Broadcast a test message
-/*
+
+		var deviceType teletype.TelecastDeviceType = teletype.Telecast_TTGATE
 		msg := &teletype.Telecast {
-//			DeviceType: teletype.Telecast_SIMPLECAST,
-//			DeviceType: teletype.TelecastDeviceType_value["SIMPLECAST"],
-//			DeviceType: teletype.Telecast_SIMPLECAST,
-			DeviceType: teletype.TelecastDeviceType(teletype.Telecast_SIMPLECAST),
+			DeviceType: &deviceType,
 			DeviceID: proto.String(getDeviceID()),
 			Message: proto.String("Heartbeat #test #yes"),
 		}
@@ -60,7 +58,7 @@ func main() {
 			fmt.Printf("marshaling error: ", err)
 		}
         cmdEnqueueOutbound(data)
-*/
+
 		// Sleep for a while
 		
         time.Sleep(60 * time.Second)
