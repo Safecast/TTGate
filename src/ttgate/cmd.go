@@ -310,7 +310,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 		    Latitude = os.Getenv("LAT")
 		}
         if Latitude == "" {
-            fmt.Printf("*** error: env var %sLAT is required\n", prefix)
+            fmt.Printf("*** error: env var LAT (or %sLAT) required\n", prefix)
             return;
 		}
     }
@@ -319,11 +319,11 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 		Longitude = fmt.Sprintf("%f", msg.GetLongitude())
     } else {
         Longitude = os.Getenv(prefix + "LON")
-		if (Latitude == "") {
+		if (Longitude == "") {
 		    Longitude = os.Getenv("LON")
 		}
         if Longitude == "" {
-            fmt.Printf("*** error: env var %sLON is required\n", prefix)
+            fmt.Printf("*** error: env var LON (or %sLON) required\n", prefix)
             return;
 		}
     }
@@ -403,7 +403,9 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 	}
 
 	defer resp.Body.Close()
-	
+
+	fmt.Printf("Success!\n")
+
 }
 
 // eof
