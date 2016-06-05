@@ -109,7 +109,6 @@ func cmdProcess(cmd []byte) {
                     break
                 }
             }
-            fmt.Printf("stuff(%d) = '''%s'''\n", hexstarts, cmd[hexstarts:])
             // Parse and process the received message
             cmdProcessReceived(cmd[hexstarts:])
             // if there's a pending outbound, transmit it (which will change state)
@@ -220,12 +219,6 @@ func cmdProcessReceived(hex []byte) {
 
 func cmdProcessReceivedProtobuf(buf []byte) {
 
-    fmt.Printf("decode len = %d\n", len(buf))
-    for i := 0; i<len(buf); i++ {
-        fmt.Printf("%02x", buf[i])
-    }
-    fmt.Printf("\n")
-
     // Unmarshal the buffer into a golang object
 
     msg := &teletype.Telecast{}
@@ -235,7 +228,7 @@ func cmdProcessReceivedProtobuf(buf []byte) {
         return
     }
 
-    fmt.Printf("Received Message from Device %s: %s", msg.GetDeviceID(), msg.GetMessage())
+    fmt.Printf("Received Message from Device %s: '%s'\n", msg.GetDeviceID(), msg.GetMessage())
 
 }
 
