@@ -102,14 +102,14 @@ func cmdProcess(cmd []byte) {
             // moving too quickly and we should try again.
             RestartReceive()
         } else if bytes.HasPrefix(cmd, []byte("radio_rx")) {
-			// skip whitespace (there is more than one space)
-			var hexstarts int
-			for hexstarts = len("radio_rx"); hexstarts<len(cmd); hexstarts++ {
-				if (cmd[hexstarts] > ' ') {
-					break
-				}
-			}
-			fmt.Printf("stuff(%d) = '''%s'''\n", hexstarts, cmd[hexstarts:])
+            // skip whitespace (there is more than one space)
+            var hexstarts int
+            for hexstarts = len("radio_rx"); hexstarts<len(cmd); hexstarts++ {
+                if (cmd[hexstarts] > ' ') {
+                    break
+                }
+            }
+            fmt.Printf("stuff(%d) = '''%s'''\n", hexstarts, cmd[hexstarts:])
             // Parse and process the received message
             cmdProcessReceived(cmd[hexstarts:])
             // if there's a pending outbound, transmit it (which will change state)
@@ -219,6 +219,12 @@ func cmdProcessReceived(hex []byte) {
 }
 
 func cmdProcessReceivedProtobuf(buf []byte) {
+
+    fmt.Printf("decode len = %d\n", len(buf))
+    for i := 0; i<len(buf); i++ {
+        fmt.Printf("%02x", buf[i])
+    }
+    fmt.Printf("\n")
 
     // Unmarshal the buffer into a golang object
 
