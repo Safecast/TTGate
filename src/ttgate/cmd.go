@@ -7,9 +7,13 @@
 package main
 
 import (
+	"os"
     "fmt"
     "bytes"
-	"strings"
+    "time"
+	"encoding/json"
+    "strings"
+	"net/http"
     "github.com/golang/protobuf/proto"
     "github.com/rayozzie/teletype-proto/golang"
 )
@@ -224,43 +228,159 @@ func cmdProcessReceivedProtobuf(buf []byte) {
         return
     }
 
-	// Do special handling based on whether the message contains special hashtags
+    // Do special handling based on whether the message contains special hashtags
 
-	str := msg.GetMessage() + " "		// So that the test works with hashtags at the end of the string
+    str := msg.GetMessage() + " "       // So that the test works with hashtags at the end of the string
 
-	if strings.Contains(str, "#safecast ") {
-		cmdProcessReceivedSafecastMessage(msg)
-	} else {
-	    fmt.Printf("Received Msg from Device %s: '%s'\n", msg.GetDeviceID(), msg.GetMessage())
-	}
+    if strings.Contains(str, "#safecast ") {
+        cmdProcessReceivedSafecastMessage(msg)
+    } else {
+        fmt.Printf("Received Msg from Device %s: '%s'\n", msg.GetDeviceID(), msg.GetMessage())
+    }
 
 }
 
 func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 
-	fmt.Printf("Received Safecast Message:\n")
-	fmt.Printf("    Message: %s\n", msg.GetMessage())
-	fmt.Printf("    DeviceID: %s\n", msg.GetDeviceID())
-	fmt.Printf("    DeviceType: %s\n", msg.GetDeviceType())
-	if (msg.CapturedAt != nil) {
-		fmt.Printf("    CapturedAt: %s\n", msg.GetCapturedAt())
+    // Debug
+
+    fmt.Printf("Received Safecast Message:\n")
+    fmt.Printf("    Message: %s\n", msg.GetMessage())
+    fmt.Printf("    DeviceID: %s\n", msg.GetDeviceID())
+    fmt.Printf("    DeviceType: %s\n", msg.GetDeviceType())
+    if (msg.CapturedAt != nil) {
+        fmt.Printf("    CapturedAt: %s\n", msg.GetCapturedAt())
+    }
+    if (msg.Unit != nil) {
+        fmt.Printf("    Unit: %s\n", msg.GetUnit())
+    }
+    if (msg.Value != nil) {
+        fmt.Printf("    Value: %d\n", msg.GetValue())
+    }
+    if (msg.Latitude != nil) {
+        fmt.Printf("    Latitude: %f\n", msg.GetLatitude())
+    }
+    if (msg.Longitude != nil) {
+        fmt.Printf("    Longitude: %f\n", msg.GetLongitude())
+    }
+    if (msg.Altitude != nil) {
+        fmt.Printf("    Longitude: %d\n", msg.GetAltitude())
+    }
+
+    // Combine the info with what we can find in the environment vars
+
+    var DeviceID, CapturedAt, Unit, Value, Altitude, Latitude, Longitude string
+
+    prefix := msg.GetDeviceID() + "-"
+    DeviceID = os.Getenv(prefix + "ID")
+    if DeviceID == "" {
+        DeviceID = msg.GetDeviceID()
+    }
+
+    if msg.CapturedAt != nil {
+        CapturedAt = msg.GetCapturedAt()
+    } else {
+        CapturedAt = time.Now().Format(time.RFC3339)
+    }
+
+    if msg.Unit == nil || string(msg.GetUnit()) != "CPM" {
+        fmt.Printf("*** error: (Unit) only CPM is acceptable\n")
+        return;
+    }
+    Unit = "cpm"
+
+    if msg.Value == nil {
+        fmt.Printf("*** error: (Value) is required\n")
+        return
+    }
+	Value = fmt.Sprintf("%d", msg.GetValue())
+
+    if msg.Latitude != nil {
+		Latitude = fmt.Sprintf("%f", msg.GetLatitude())
+    } else {
+        Latitude = os.Getenv(prefix + "LAT")
+        if Latitude == "" {
+            fmt.Printf("*** error: env var %sLAT is required\n", prefix)
+            return;
+		}
+    }
+
+    if msg.Longitude != nil {
+		Longitude = fmt.Sprintf("%f", msg.GetLongitude())
+    } else {
+        Longitude = os.Getenv(prefix + "LON")
+        if Longitude == "" {
+            fmt.Printf("*** error: env var %sLON is required\n", prefix)
+            return;
+		}
+    }
+
+    if msg.Altitude != nil {
+		Altitude = fmt.Sprintf("%d", msg.GetAltitude())
+    } else {
+        Altitude = os.Getenv(prefix + "ALT")
+        if Altitude == "" {
+            Altitude = "0"
+		}
+    }
+
+	// Get upload parameters
+
+	URL := os.Getenv("URL")
+    if URL == "" {
+		URL = "http://107.161.164.163/scripts/indextest.php?api_key=%s"
+    }
+	KEY := os.Getenv("APIKEY")
+	if KEY == "" {
+		KEY = "z3sHhgousVDDrCVXhzMT"
 	}
-	if (msg.Unit != nil) {
-		fmt.Printf("    Unit: %s\n", msg.GetUnit())
-	}
-	if (msg.Value != nil) {
-		fmt.Printf("    Value: %d\n", msg.GetValue())
-	}
-	if (msg.Latitude != nil) {
-		fmt.Printf("    Latitude: %f\n", msg.GetLatitude())
-	}
-	if (msg.Longitude != nil) {
-		fmt.Printf("    Longitude: %f\n", msg.GetLongitude())
-	}
-	if (msg.Altitude != nil) {
-		fmt.Printf("    Longitude: %d\n", msg.GetAltitude())
+	UploadURL := fmt.Sprintf(URL, KEY)
+	
+    // Upload it to safecast
+
+    type SafecastData struct {
+        CapturedAt   string `json:"captured_at,omitempty"`   // 2016-02-20T14:02:25Z
+        ChannelID    string `json:"channel_id,omitempty"`    // nil
+        DeviceID     string `json:"device_id,omitempty"`     // 140
+        DeviceTypeID string `json:"devicetype_id,omitempty"` // nil
+        Height       string `json:"height,omitempty"`        // 123
+        ID           string `json:"id,omitempty"`            // 972298
+        LocationName string `json:"location_name,omitempty"` // nil
+        OriginalID   string `json:"original_id,omitempty"`   // 972298
+        SensorID     string `json:"sensor_id,omitempty"`     // nil
+        StationID    string `json:"station_id,omitempty"`    // nil
+        Unit         string `json:"unit,omitempty"`          // cpm
+        UserID       string `json:"user_id,omitempty"`       // 304
+        Value        string `json:"value,omitempty"`         // 36
+        Latitude     string `json:"latitude,omitempty"`      // 37.0105
+        Longitude    string `json:"longitude,omitempty"`     // 140.9253
+    }
+
+    sc := &SafecastData{}
+    sc.DeviceID = DeviceID
+    sc.CapturedAt = CapturedAt
+    sc.Unit = Unit
+    sc.Value = Value
+    sc.Latitude = Latitude
+    sc.Longitude = Longitude
+    sc.Height = Altitude
+
+    scJSON, _ := json.Marshal(sc)
+
+	fmt.Printf("About to upload to %s:\n%s\n", UploadURL, scJSON)
+
+	req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
+	req.Header.Set("User-Agent", "TTGATE")
+	req.Header.Set("Content-Type", "application/json")
+
+	httpclient := &http.Client{}
+	resp, err := httpclient.Do(req)
+	if err != nil {
+		fmt.Printf("*** Error uploading to Safecast %s\n\n", err)
 	}
 
+	defer resp.Body.Close()
+	
 }
 
 // eof
