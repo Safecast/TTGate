@@ -283,7 +283,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         CapturedAt = time.Now().Format(time.RFC3339)
     }
 
-	Unit = fmt.Sprintf("%d", msg.GetUnit())
+	Unit = fmt.Sprintf("%s", msg.GetUnit())
     if Unit != "CPM" {
         fmt.Printf("*** error: (Unit) only CPM is acceptable\n")
         return;
