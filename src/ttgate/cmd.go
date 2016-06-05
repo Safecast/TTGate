@@ -191,9 +191,9 @@ func cmdProcessReceived(hex []byte) {
         if (hinibblechar >= '0' && hinibblechar <= '9') {
             hinibble = hinibblechar - '0'
         } else if (hinibblechar >= 'A' && hinibblechar <= 'F') {
-            hinibble = hinibblechar - 'A'
+            hinibble = (hinibblechar - 'A') + 10
         } else if (hinibblechar >= 'a' && hinibblechar <= 'f') {
-            hinibble = hinibblechar - 'a'
+            hinibble = (hinibblechar - 'a') + 10
         } else {
             hinibble = 0
         }
@@ -201,9 +201,9 @@ func cmdProcessReceived(hex []byte) {
         if (lonibblechar >= '0' && lonibblechar <= '9') {
             lonibble = lonibblechar - '0'
         } else if (lonibblechar >= 'A' && lonibblechar <= 'F') {
-            lonibble = lonibblechar - 'A'
+            lonibble = (lonibblechar - 'A') + 10
         } else if (lonibblechar >= 'a' && lonibblechar <= 'f') {
-            lonibble = lonibblechar - 'a'
+            lonibble = (lonibblechar - 'a') + 10
         } else {
             lonibble = 0
         }
