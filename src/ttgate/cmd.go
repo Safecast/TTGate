@@ -268,11 +268,17 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     }
 
     // Combine the info with what we can find in the environment vars
+	// Note that we support both unqualified and DeviceID-qualified variables,
+	// both for convenience and in case a gateway could potentially pick up multiple
+	// source devices.
 
     var DeviceID, CapturedAt, Unit, Value, Altitude, Latitude, Longitude string
 
-    prefix := msg.GetDeviceID() + "-"
+    prefix := msg.GetDeviceID() + "_"
     DeviceID = os.Getenv(prefix + "ID")
+	if (DeviceID == "") {
+	    DeviceID = os.Getenv("ID")
+	}
     if DeviceID == "" {
         DeviceID = msg.GetDeviceID()
     }
@@ -300,6 +306,9 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 		Latitude = fmt.Sprintf("%f", msg.GetLatitude())
     } else {
         Latitude = os.Getenv(prefix + "LAT")
+		if (Latitude == "") {
+		    Latitude = os.Getenv("LAT")
+		}
         if Latitude == "" {
             fmt.Printf("*** error: env var %sLAT is required\n", prefix)
             return;
@@ -310,6 +319,9 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 		Longitude = fmt.Sprintf("%f", msg.GetLongitude())
     } else {
         Longitude = os.Getenv(prefix + "LON")
+		if (Latitude == "") {
+		    Longitude = os.Getenv("LON")
+		}
         if Longitude == "" {
             fmt.Printf("*** error: env var %sLON is required\n", prefix)
             return;
@@ -320,6 +332,9 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 		Altitude = fmt.Sprintf("%d", msg.GetAltitude())
     } else {
         Altitude = os.Getenv(prefix + "ALT")
+		if (Altitude == "") {
+		    Altitude = os.Getenv("ALT")
+		}
         if Altitude == "" {
             Altitude = "0"
 		}
@@ -327,11 +342,18 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 
 	// Get upload parameters
 
-	URL := os.Getenv("URL")
+	URL := os.Getenv(prefix + "URL")
+	if (URL == "") {
+		URL = os.Getenv("URL")
+	}
     if URL == "" {
 		URL = "http://107.161.164.163/scripts/indextest.php?api_key=%s"
     }
-	KEY := os.Getenv("APIKEY")
+
+	KEY := os.Getenv(prefix + "KEY")
+	if (KEY == "") {
+		KEY = os.Getenv("KEY")
+	}
 	if KEY == "" {
 		KEY = "z3sHhgousVDDrCVXhzMT"
 	}
