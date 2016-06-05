@@ -47,12 +47,11 @@ func main() {
 
 		// Broadcast a test message
 
-		var deviceType teletype.TelecastDeviceType = teletype.Telecast_TTGATE
-		msg := &teletype.Telecast {
-			DeviceType: &deviceType,
-			DeviceID: proto.String(getDeviceID()),
-			Message: proto.String("Heartbeat #test #yes"),
-		}
+		deviceType := teletype.Telecast_TTGATE
+		msg := &teletype.Telecast {}
+		msg.DeviceType = &deviceType
+		msg.DeviceID = proto.String(getDeviceID())
+		msg.Message = proto.String("Heartbeat #test #yes")
 		data, err := proto.Marshal(msg)
 		if err != nil {
 			fmt.Printf("marshaling error: ", err)

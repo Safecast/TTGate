@@ -9,6 +9,7 @@ package main
 import (
     "fmt"
     "bytes"
+	"strings"
     "github.com/golang/protobuf/proto"
     "github.com/rayozzie/teletype-proto/golang"
 )
@@ -223,7 +224,42 @@ func cmdProcessReceivedProtobuf(buf []byte) {
         return
     }
 
-    fmt.Printf("Received Message from Device %s: '%s'\n", msg.GetDeviceID(), msg.GetMessage())
+	// Do special handling based on whether the message contains special hashtags
+
+	str := msg.GetMessage() + " "		// So that the test works with hashtags at the end of the string
+
+	if strings.Contains(str, "#safecast ") {
+		cmdProcessReceivedSafecastMessage(msg)
+	} else {
+	    fmt.Printf("Received Msg from Device %s: '%s'\n", msg.GetDeviceID(), msg.GetMessage())
+	}
+
+}
+
+func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
+
+	fmt.Printf("Received Safecast Message:\n")
+	fmt.Printf("    Message: %s\n", msg.GetMessage())
+	fmt.Printf("    DeviceID: %s\n", msg.GetDeviceID())
+	fmt.Printf("    DeviceType: %s\n", msg.GetDeviceType())
+	if (msg.GetCapturedAt != nil) {
+		fmt.Printf("    CapturedAt: %s\n", msg.GetCapturedAt())
+	}
+	if (msg.GetUnit != nil) {
+		fmt.Printf("    Unit: %s\n", msg.GetUnit())
+	}
+	if (msg.GetValue != nil) {
+		fmt.Printf("    Value: %l\n", msg.GetValue())
+	}
+	if (msg.GetLatitude != nil) {
+		fmt.Printf("    Latitude: %f\n", msg.GetLatitude())
+	}
+	if (msg.GetLongitude != nil) {
+		fmt.Printf("    Longitude: %f\n", msg.GetLongitude())
+	}
+	if (msg.GetAltitude != nil) {
+		fmt.Printf("    Longitude: %l\n", msg.GetAltitude())
+	}
 
 }
 
