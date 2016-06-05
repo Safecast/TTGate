@@ -242,22 +242,22 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 	fmt.Printf("    Message: %s\n", msg.GetMessage())
 	fmt.Printf("    DeviceID: %s\n", msg.GetDeviceID())
 	fmt.Printf("    DeviceType: %s\n", msg.GetDeviceType())
-	if (msg.GetCapturedAt() != nil) {
+	if (msg.CapturedAt != nil) {
 		fmt.Printf("    CapturedAt: %s\n", msg.GetCapturedAt())
 	}
-	if (msg.GetUnit() != nil) {
+	if (msg.Unit != nil) {
 		fmt.Printf("    Unit: %s\n", msg.GetUnit())
 	}
-	if (msg.GetValue() != nil) {
+	if (msg.Value != nil) {
 		fmt.Printf("    Value: %d\n", msg.GetValue())
 	}
-	if (msg.GetLatitude() != nil) {
+	if (msg.Latitude != nil) {
 		fmt.Printf("    Latitude: %f\n", msg.GetLatitude())
 	}
-	if (msg.GetLongitude() != nil) {
+	if (msg.Longitude != nil) {
 		fmt.Printf("    Longitude: %f\n", msg.GetLongitude())
 	}
-	if (msg.GetAltitude() != nil) {
+	if (msg.Altitude != nil) {
 		fmt.Printf("    Longitude: %d\n", msg.GetAltitude())
 	}
 
