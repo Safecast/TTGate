@@ -19,7 +19,6 @@ const (
     CMD_STATE_IDLE = iota
     CMD_STATE_LPWAN_RESETREQ
     CMD_STATE_LPWAN_GETVERRPL
-    CMD_STATE_LPWAN_SYSRESETRPL
     CMD_STATE_LPWAN_MACPAUSERPL
     CMD_STATE_LPWAN_SETWDTRPL
     CMD_STATE_LPWAN_RCVRPL
@@ -71,10 +70,6 @@ func cmdProcess(cmd []byte) {
         cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
 
     case CMD_STATE_LPWAN_GETVERRPL:
-        ioSendCommandString("sys reset")
-        cmdSetState(CMD_STATE_LPWAN_SYSRESETRPL)
-
-    case CMD_STATE_LPWAN_SYSRESETRPL:
         ioSendCommandString("mac pause")
         cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
 
