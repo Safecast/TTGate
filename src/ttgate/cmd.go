@@ -242,23 +242,23 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 	fmt.Printf("    Message: %s\n", msg.GetMessage())
 	fmt.Printf("    DeviceID: %s\n", msg.GetDeviceID())
 	fmt.Printf("    DeviceType: %s\n", msg.GetDeviceType())
-	if (msg.GetCapturedAt != nil) {
+	if (msg.GetCapturedAt() != nil) {
 		fmt.Printf("    CapturedAt: %s\n", msg.GetCapturedAt())
 	}
-	if (msg.GetUnit != nil) {
+	if (msg.GetUnit() != nil) {
 		fmt.Printf("    Unit: %s\n", msg.GetUnit())
 	}
-	if (msg.GetValue != nil) {
-		fmt.Printf("    Value: %l\n", msg.GetValue())
+	if (msg.GetValue() != nil) {
+		fmt.Printf("    Value: %d\n", msg.GetValue())
 	}
-	if (msg.GetLatitude != nil) {
+	if (msg.GetLatitude() != nil) {
 		fmt.Printf("    Latitude: %f\n", msg.GetLatitude())
 	}
-	if (msg.GetLongitude != nil) {
+	if (msg.GetLongitude() != nil) {
 		fmt.Printf("    Longitude: %f\n", msg.GetLongitude())
 	}
-	if (msg.GetAltitude != nil) {
-		fmt.Printf("    Longitude: %l\n", msg.GetAltitude())
+	if (msg.GetAltitude() != nil) {
+		fmt.Printf("    Longitude: %d\n", msg.GetAltitude())
 	}
 
 }
