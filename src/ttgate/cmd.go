@@ -264,7 +264,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         fmt.Printf("    Longitude: %f\n", msg.GetLongitude())
     }
     if (msg.Altitude != nil) {
-        fmt.Printf("    Longitude: %d\n", msg.GetAltitude())
+        fmt.Printf("    Altitude: %d\n", msg.GetAltitude())
     }
 
     // Combine the info with what we can find in the environment vars
@@ -283,7 +283,8 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         CapturedAt = time.Now().Format(time.RFC3339)
     }
 
-    if msg.Unit == nil || string(msg.GetUnit()) != "CPM" {
+	Unit = fmt.Sprintf("%d", msg.GetUnit())
+    if Unit != "CPM" {
         fmt.Printf("*** error: (Unit) only CPM is acceptable\n")
         return;
     }
