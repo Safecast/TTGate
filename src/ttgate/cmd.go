@@ -37,10 +37,10 @@ type OutboundCommand struct {
 
 var outboundQueue chan OutboundCommand
 var currentState uint16
-var totalMessagesReceived uint32 = 0
-var totalMessagesSent uint32 = 0
+var totalMessagesReceived int = 0
+var totalMessagesSent int = 0
 
-func cmdGetStats() (received uint32, sent uint32) {
+func cmdGetStats() (received int, sent int) {
 	return totalMessagesReceived, totalMessagesSent
 }
 

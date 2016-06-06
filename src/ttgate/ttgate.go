@@ -44,8 +44,12 @@ func main() {
     // This is to simulate stuff coming in from the cloud service
 
     for {
+
+		// Get the stats in the form of a message
+		
 		totalReceived, totalSent := cmdGetStats()
-		message := fmt.Sprintf("#gateway received %lu sent %lu", totalReceived, totalSent)
+		message := fmt.Sprintf("#gateway received %d sent %d", totalReceived, totalSent)
+		fmt.Printf("%s\n", message);
 
 		// Broadcast a test message
 
