@@ -7,13 +7,13 @@
 package main
 
 import (
-	"os"
+    "os"
     "fmt"
     "bytes"
     "time"
-	"encoding/json"
+    "encoding/json"
     "strings"
-	"net/http"
+    "net/http"
     "github.com/golang/protobuf/proto"
     "github.com/rayozzie/teletype-proto/golang"
 )
@@ -37,6 +37,12 @@ type OutboundCommand struct {
 
 var outboundQueue chan OutboundCommand
 var currentState uint16
+var totalMessagesReceived uint32 = 0
+var totalMessagesSent uint32 = 0
+
+func cmdGetStats() (received uint32, sent uint32) {
+	return totalMessagesReceived, totalMessagesSent
+}
 
 func cmdInit() {
 
@@ -242,6 +248,10 @@ func cmdProcessReceivedProtobuf(buf []byte) {
 
 func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 
+    // Bump stats
+
+    totalMessagesReceived = totalMessagesReceived+1
+
     // Debug
 
     fmt.Printf("Received Safecast Message:\n")
@@ -268,17 +278,17 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     }
 
     // Combine the info with what we can find in the environment vars
-	// Note that we support both unqualified and DeviceID-qualified variables,
-	// both for convenience and in case a gateway could potentially pick up multiple
-	// source devices.
+    // Note that we support both unqualified and DeviceID-qualified variables,
+    // both for convenience and in case a gateway could potentially pick up multiple
+    // source devices.
 
     var DeviceID, CapturedAt, Unit, Value, Altitude, Latitude, Longitude string
 
     prefix := msg.GetDeviceID() + "_"
     DeviceID = os.Getenv(prefix + "ID")
-	if (DeviceID == "") {
-	    DeviceID = os.Getenv("ID")
-	}
+    if (DeviceID == "") {
+        DeviceID = os.Getenv("ID")
+    }
     if DeviceID == "" {
         DeviceID = msg.GetDeviceID()
     }
@@ -289,7 +299,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         CapturedAt = time.Now().Format(time.RFC3339)
     }
 
-	Unit = fmt.Sprintf("%s", msg.GetUnit())
+    Unit = fmt.Sprintf("%s", msg.GetUnit())
     if Unit != "CPM" {
         fmt.Printf("*** error: (Unit) only CPM is acceptable\n")
         return;
@@ -300,65 +310,65 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         fmt.Printf("*** error: (Value) is required\n")
         return
     }
-	Value = fmt.Sprintf("%d", msg.GetValue())
+    Value = fmt.Sprintf("%d", msg.GetValue())
 
     if msg.Latitude != nil {
-		Latitude = fmt.Sprintf("%f", msg.GetLatitude())
+        Latitude = fmt.Sprintf("%f", msg.GetLatitude())
     } else {
         Latitude = os.Getenv(prefix + "LAT")
-		if (Latitude == "") {
-		    Latitude = os.Getenv("LAT")
-		}
+        if (Latitude == "") {
+            Latitude = os.Getenv("LAT")
+        }
         if Latitude == "" {
             fmt.Printf("*** error: env var LAT (or %sLAT) required\n", prefix)
             return;
-		}
+        }
     }
 
     if msg.Longitude != nil {
-		Longitude = fmt.Sprintf("%f", msg.GetLongitude())
+        Longitude = fmt.Sprintf("%f", msg.GetLongitude())
     } else {
         Longitude = os.Getenv(prefix + "LON")
-		if (Longitude == "") {
-		    Longitude = os.Getenv("LON")
-		}
+        if (Longitude == "") {
+            Longitude = os.Getenv("LON")
+        }
         if Longitude == "" {
             fmt.Printf("*** error: env var LON (or %sLON) required\n", prefix)
             return;
-		}
+        }
     }
 
     if msg.Altitude != nil {
-		Altitude = fmt.Sprintf("%d", msg.GetAltitude())
+        Altitude = fmt.Sprintf("%d", msg.GetAltitude())
     } else {
         Altitude = os.Getenv(prefix + "ALT")
-		if (Altitude == "") {
-		    Altitude = os.Getenv("ALT")
-		}
+        if (Altitude == "") {
+            Altitude = os.Getenv("ALT")
+        }
         if Altitude == "" {
             Altitude = "0"
-		}
+        }
     }
 
-	// Get upload parameters
+    // Get upload parameters
 
-	URL := os.Getenv(prefix + "URL")
-	if (URL == "") {
-		URL = os.Getenv("URL")
-	}
+    URL := os.Getenv(prefix + "URL")
+    if (URL == "") {
+        URL = os.Getenv("URL")
+    }
     if URL == "" {
-		URL = "http://107.161.164.163/scripts/indextest.php?api_key=%s"
+        URL = "http://107.161.164.163/scripts/indextest.php?api_key=%s"
     }
 
-	KEY := os.Getenv(prefix + "KEY")
-	if (KEY == "") {
-		KEY = os.Getenv("KEY")
-	}
-	if KEY == "" {
-		KEY = "z3sHhgousVDDrCVXhzMT"
-	}
-	UploadURL := fmt.Sprintf(URL, KEY)
-	
+    KEY := os.Getenv(prefix + "KEY")
+    if (KEY == "") {
+        KEY = os.Getenv("KEY")
+    }
+    if KEY == "" {
+        KEY = "z3sHhgousVDDrCVXhzMT"
+    }
+    UploadURL := fmt.Sprintf(URL, KEY)
+
     // Upload it to safecast
 
     type SafecastData struct {
@@ -390,21 +400,26 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 
     scJSON, _ := json.Marshal(sc)
 
-	fmt.Printf("About to upload to %s:\n%s\n", UploadURL, scJSON)
+    fmt.Printf("About to upload to %s:\n%s\n", UploadURL, scJSON)
 
-	req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
-	req.Header.Set("User-Agent", "TTGATE")
-	req.Header.Set("Content-Type", "application/json")
+    req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
+    req.Header.Set("User-Agent", "TTGATE")
+    req.Header.Set("Content-Type", "application/json")
 
-	httpclient := &http.Client{}
-	resp, err := httpclient.Do(req)
-	if err != nil {
-		fmt.Printf("*** Error uploading to Safecast %s\n\n", err)
-	}
+    httpclient := &http.Client{}
+    resp, err := httpclient.Do(req)
+    if err != nil {
+        fmt.Printf("*** Error uploading to Safecast %s\n\n", err)
+    } else {
 
-	defer resp.Body.Close()
+        // Bump stats
+        totalMessagesSent = totalMessagesSent+1
 
-	fmt.Printf("Success!\n")
+    }
+
+    defer resp.Body.Close()
+
+    fmt.Printf("Success!\n")
 
 }
 

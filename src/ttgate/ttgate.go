@@ -44,6 +44,8 @@ func main() {
     // This is to simulate stuff coming in from the cloud service
 
     for {
+		totalReceived, totalSent := cmdGetStats()
+		message := fmt.Sprintf("#gateway received %lu sent %lu", totalReceived, totalSent)
 
 		// Broadcast a test message
 
@@ -51,7 +53,7 @@ func main() {
 		msg := &teletype.Telecast {}
 		msg.DeviceType = &deviceType
 		msg.DeviceID = proto.String(getDeviceID())
-		msg.Message = proto.String("Heartbeat #test #yes")
+		msg.Message = proto.String(message)
 		data, err := proto.Marshal(msg)
 		if err != nil {
 			fmt.Printf("marshaling error: ", err)
