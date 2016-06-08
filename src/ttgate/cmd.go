@@ -106,6 +106,7 @@ func cmdProcess(cmd []byte) {
         } else if bytes.HasPrefix(cmd, []byte("busy")) {
             // This is not at all expected, but it means that we're
             // moving too quickly and we should try again.
+	        time.Sleep(5 * time.Second)
             RestartReceive()
         } else if bytes.HasPrefix(cmd, []byte("radio_rx")) {
             // skip whitespace (there is more than one space)
