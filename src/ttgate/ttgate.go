@@ -76,10 +76,10 @@ func heartbeat() {
 
     var mem runtime.MemStats
     runtime.ReadMemStats(&mem)
-    fmt.Println(mem.Alloc)
-    fmt.Println(mem.TotalAlloc)
-    fmt.Println(mem.HeapAlloc)
-    fmt.Println(mem.HeapSys)
+    fmt.Printf("mem.Alloc: %d\n", mem.Alloc)
+    fmt.Printf("mem.TotalAlloc: %d\n", mem.TotalAlloc)
+    fmt.Printf("mem.HeapAlloc: %d\n", mem.HeapAlloc)
+    fmt.Printf("mem.HeapSys: %d\n", mem.HeapSys)
 
 }
 
