@@ -9,6 +9,7 @@ import (
     "time"
 	"fmt"
 	"os"
+	"runtime"
     "github.com/golang/protobuf/proto"
     "github.com/rayozzie/teletype-proto/golang"
 )
@@ -63,6 +64,15 @@ func main() {
 			fmt.Printf("marshaling error: ", err)
 		}
         cmdEnqueueOutbound(data)
+
+		// Print resource usage, just as an FYI
+
+		var mem runtime.MemStats
+		runtime.ReadMemStats(&mem)
+		fmt.Println(mem.Alloc)
+		fmt.Println(mem.TotalAlloc)
+		fmt.Println(mem.HeapAlloc)
+		fmt.Println(mem.HeapSys)
 
 		// Sleep for a while
 		
