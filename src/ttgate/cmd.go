@@ -417,7 +417,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 
     }
 
-    defer resp.Body.Close()
+    resp.Body.Close()
 
     fmt.Printf("Success!\n")
 
