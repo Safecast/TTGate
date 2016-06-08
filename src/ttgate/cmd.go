@@ -424,3 +424,4 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 }
 
 // eof
+

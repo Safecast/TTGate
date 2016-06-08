@@ -47,8 +47,6 @@ func ioInit() bool {
 
 func InboundMain() {
 
-    fmt.Printf("Inbound Task Initiated\n");
-
     var thisbuf = make([]byte, 128)
     var prevbuf []byte = []byte("")
 
@@ -57,7 +55,10 @@ func InboundMain() {
         if (err != nil) {
             fmt.Printf("read err: %d", err)
         } else {
-            prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
+			todobuf := bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte(""))
+			prevbuf = nil
+            prevbuf = ProcessInbound(todobuf)
+			todobuf = nil
         }
     }
 
