@@ -413,12 +413,13 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         fmt.Printf("*** Error uploading to Safecast %s\n\n", err)
     } else {
 
+	    resp.Body.Close()
+
         // Bump stats
         totalMessagesSent = totalMessagesSent+1
 
     }
 
-    resp.Body.Close()
 
     fmt.Printf("Success!\n")
 

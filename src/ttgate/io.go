@@ -55,10 +55,7 @@ func InboundMain() {
         if (err != nil) {
             fmt.Printf("read err: %d", err)
         } else {
-			todobuf := bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte(""))
-			prevbuf = nil
-            prevbuf = ProcessInbound(todobuf)
-			todobuf = nil
+            prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
         }
     }
 
