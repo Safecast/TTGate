@@ -283,7 +283,8 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     // both for convenience and in case a gateway could potentially pick up multiple
     // source devices.
 
-    var DeviceID, CapturedAt, Unit, Value, Altitude, Latitude, Longitude string
+    var DeviceID, CapturedAt, Unit, Value, Altitude, Latitude, Longitude, BatteryLevel, WirelessSNR string
+	var hasBatteryLevel, hasWirelessSNR bool
 
     prefix := msg.GetDeviceID() + "_"
     DeviceID = os.Getenv(prefix + "ID")
@@ -351,6 +352,20 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         }
     }
 
+    if msg.BatteryLevel != nil {
+        BatteryLevel = fmt.Sprintf("%f", msg.GetBatteryLevel())
+		hasBatteryLevel = true
+    } else {
+        hasBatteryLevel = false;
+    }
+
+    if msg.WirelessSNR != nil {
+        WirelessSNR = fmt.Sprintf("%f", msg.GetWirelessSNR())
+		hasWirelessSNR = true
+    } else {
+        hasWirelessSNR = false;
+    }
+
     // Get upload parameters
 
     URL := os.Getenv(prefix + "URL")
@@ -388,6 +403,9 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         Value        string `json:"value,omitempty"`         // 36
         Latitude     string `json:"latitude,omitempty"`      // 37.0105
         Longitude    string `json:"longitude,omitempty"`     // 140.9253
+        BatteryLevel string `json:"longitude,omitempty"`     // 0%-100%
+        WirelessSNR  string `json:"longitude,omitempty"`     // -127db to +127db
+
     }
 
     sc := &SafecastData{}
@@ -398,6 +416,12 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     sc.Latitude = Latitude
     sc.Longitude = Longitude
     sc.Height = Altitude
+	if (hasBatteryLevel) {
+		sc.BatteryLevel = BatteryLevel
+	}
+	if (hasWirelessSNR) {
+		sc.WirelessSNR = WirelessSNR;
+	}
 
     scJSON, _ := json.Marshal(sc)
 
