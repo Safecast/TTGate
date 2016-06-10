@@ -9,6 +9,7 @@ package main
 import (
     "os"
     "fmt"
+	"strconv"
     "bytes"
     "time"
     "encoding/json"
@@ -29,19 +30,22 @@ const (
     CMD_STATE_LPWAN_RCVRPL
     CMD_STATE_LPWAN_TXRPL1
     CMD_STATE_LPWAN_TXRPL2
+    CMD_STATE_LPWAN_SNRRPL
 )
 
 type OutboundCommand struct {
     Command []byte
 }
 
+var gotSNR bool = false
+var SNR float64
 var outboundQueue chan OutboundCommand
 var currentState uint16
 var totalMessagesReceived int = 0
 var totalMessagesSent int = 0
 
 func cmdGetStats() (received int, sent int) {
-	return totalMessagesReceived, totalMessagesSent
+    return totalMessagesReceived, totalMessagesSent
 }
 
 func cmdInit() {
@@ -101,12 +105,16 @@ func cmdProcess(cmd []byte) {
             // if there's a pending outbound, transmit it (which will change state)
             // else restart the receive
             if (!SentPendingOutbound()) {
-                RestartReceive()
+                {
+                    // Update the SNR stat
+                    ioSendCommandString("radio get snr")
+                    cmdSetState(CMD_STATE_LPWAN_SNRRPL)
+                }
             }
         } else if bytes.HasPrefix(cmd, []byte("busy")) {
             // This is not at all expected, but it means that we're
             // moving too quickly and we should try again.
-	        time.Sleep(5 * time.Second)
+            time.Sleep(5 * time.Second)
             RestartReceive()
         } else if bytes.HasPrefix(cmd, []byte("radio_rx")) {
             // skip whitespace (there is more than one space)
@@ -128,6 +136,18 @@ func cmdProcess(cmd []byte) {
             // leave things in a state without a pending receive,
             // we need to just restart it.
             fmt.Printf("LPWAN rcv error\n")
+            RestartReceive()
+        }
+
+    case CMD_STATE_LPWAN_SNRRPL:
+        {
+            // Get the number in the commanbd buffer
+            f, err := strconv.ParseFloat(string(cmd), 64)
+            if (err == nil) {
+                SNR = f
+                gotSNR = true
+            }
+			// Always restart receive
             RestartReceive()
         }
 
@@ -256,7 +276,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     // Debug
 
     fmt.Printf("Received Safecast Message:\n")
-	fmt.Printf("%s", msg)
+    fmt.Printf("%s", msg)
 
     // Combine the info with what we can find in the environment vars
     // Note that we support both unqualified and DeviceID-qualified variables,
@@ -264,7 +284,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     // source devices.
 
     var DeviceID, CapturedAt, Unit, Value, Altitude, Latitude, Longitude, BatteryLevel string
-	var hasBatteryLevel bool
+    var hasBatteryLevel bool
 
     prefix := msg.GetDeviceID() + "_"
     DeviceID = os.Getenv(prefix + "ID")
@@ -334,7 +354,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 
     if msg.BatteryLevel != nil {
         BatteryLevel = fmt.Sprintf("%f", msg.GetBatteryLevel())
-		hasBatteryLevel = true
+        hasBatteryLevel = true
     } else {
         hasBatteryLevel = false;
     }
@@ -388,8 +408,12 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     sc.Latitude = Latitude
     sc.Longitude = Longitude
     sc.Height = Altitude
-	if (hasBatteryLevel) {
-		sc.BatteryLevel = BatteryLevel
+    if (hasBatteryLevel) {
+        sc.BatteryLevel = BatteryLevel
+    }
+	if (gotSNR) {
+	    fstr := fmt.Sprintf("%f", SNR)
+        sc.WirelessSNR = fstr
 	}
 
     scJSON, _ := json.Marshal(sc)
@@ -406,7 +430,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         fmt.Printf("*** Error uploading to Safecast %s\n\n", err)
     } else {
 
-	    resp.Body.Close()
+        resp.Body.Close()
 
         // Bump stats
         totalMessagesSent = totalMessagesSent+1
@@ -419,4 +443,3 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 }
 
 // eof
-
