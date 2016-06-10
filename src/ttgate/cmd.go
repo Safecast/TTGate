@@ -259,6 +259,9 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     fmt.Printf("    Message: %s\n", msg.GetMessage())
     fmt.Printf("    DeviceID: %s\n", msg.GetDeviceID())
     fmt.Printf("    DeviceType: %s\n", msg.GetDeviceType())
+
+	fmt.Printf("%s", msg)
+
     if (msg.CapturedAt != nil) {
         fmt.Printf("    CapturedAt: %s\n", msg.GetCapturedAt())
     }
