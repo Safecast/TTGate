@@ -24,6 +24,7 @@ import (
 const (
     CMD_STATE_IDLE = iota
     CMD_STATE_LPWAN_RESETREQ
+	CMD_STATE_LPWAN_RESETRPL
     CMD_STATE_LPWAN_GETVERRPL
     CMD_STATE_LPWAN_MACPAUSERPL
     CMD_STATE_LPWAN_SETWDTRPL
@@ -85,6 +86,13 @@ func cmdProcess(cmd []byte) {
         cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
 
     case CMD_STATE_LPWAN_GETVERRPL:
+		// Very important because we need to kill any pending
+		// RCV from before a resin reboot.  (Not necessary
+		// on device because it's always a cold start.)
+        ioSendCommandString("sys reset")
+        cmdSetState(CMD_STATE_LPWAN_RESETRPL)
+
+    case CMD_STATE_LPWAN_RESETRPL:
         ioSendCommandString("mac pause")
         cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
 
