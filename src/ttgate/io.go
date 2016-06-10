@@ -9,6 +9,7 @@ package main
 
 import (
     "fmt"
+	"time"
     "bytes"
     "github.com/tarm/serial"
 	"net"
