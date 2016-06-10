@@ -39,8 +39,6 @@ func main() {
         time.Sleep(5 * time.Second)
     }
 
-    fmt.Printf("Serial I/O Initialized\n")
-
     // In our idle loop, transmit a beacon once per minute.
     // This is to simulate stuff coming in from the cloud service
 

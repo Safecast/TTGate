@@ -28,19 +28,20 @@ func ioInit() bool {
         fmt.Printf("Cannot open %s\n", port)
         return false
     }
-
     serialPort = s
 
-    // Process receives on a different thread because I/O is synchronous
+    fmt.Printf("Serial I/O Initialized\n")
 
-    go InboundMain()
+	// Give the port a real chance of initializing
+    time.Sleep(5 * time.Second)
 
     // Initialize the command processing and state machine
-
     cmdInit()
 
-    // Success
+    // Process receives on a different thread because I/O is synchronous
+    go InboundMain()
 
+    // Success
     return true
 
 }
