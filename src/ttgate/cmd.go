@@ -361,7 +361,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     }
 
     if msg.BatteryLevel != nil {
-        BatteryLevel = fmt.Sprintf("%f", msg.GetBatteryLevel())
+        BatteryLevel = fmt.Sprintf("%.2f", msg.GetBatteryLevel())
         hasBatteryLevel = true
     } else {
         hasBatteryLevel = false;
@@ -424,7 +424,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         sc1.BatteryLevel = BatteryLevel
     }
     if (gotSNR) {
-        fstr := fmt.Sprintf("%f", SNR)
+        fstr := fmt.Sprintf("%.2f", SNR)
         sc1.WirelessSNR = fstr
     }
 
