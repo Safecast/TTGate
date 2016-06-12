@@ -9,7 +9,7 @@ package main
 import (
     "os"
     "fmt"
-	"strconv"
+    "strconv"
     "bytes"
     "time"
     "encoding/json"
@@ -24,7 +24,7 @@ import (
 const (
     CMD_STATE_IDLE = iota
     CMD_STATE_LPWAN_RESETREQ
-	CMD_STATE_LPWAN_RESETRPL
+    CMD_STATE_LPWAN_RESETRPL
     CMD_STATE_LPWAN_GETVERRPL
     CMD_STATE_LPWAN_MACPAUSERPL
     CMD_STATE_LPWAN_SETWDTRPL
@@ -86,9 +86,9 @@ func cmdProcess(cmd []byte) {
         cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
 
     case CMD_STATE_LPWAN_GETVERRPL:
-		// Very important because we need to kill any pending
-		// RCV from before a resin reboot.  (Not necessary
-		// on device because it's always a cold start.)
+        // Very important because we need to kill any pending
+        // RCV from before a resin reboot.  (Not necessary
+        // on device because it's always a cold start.)
         ioSendCommandString("sys reset")
         cmdSetState(CMD_STATE_LPWAN_RESETRPL)
 
@@ -155,7 +155,7 @@ func cmdProcess(cmd []byte) {
                 SNR = f
                 gotSNR = true
             }
-			// Always restart receive
+            // Always restart receive
             RestartReceive()
         }
 
@@ -408,45 +408,81 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         WirelessSNR  string `json:"wireless_snr,omitempty"`  // -127db to +127db
     }
 
+    // We upload 3 records to the safecast service; here's the stuff in common to all
     sc := &SafecastData{}
     sc.DeviceID = DeviceID
     sc.CapturedAt = CapturedAt
-    sc.Unit = Unit
-    sc.Value = Value
     sc.Latitude = Latitude
     sc.Longitude = Longitude
     sc.Height = Altitude
+
+    // The first upload has everything
+    sc1 := sc
+    sc1.Unit = Unit
+    sc1.Value = Value
     if (hasBatteryLevel) {
-        sc.BatteryLevel = BatteryLevel
+        sc1.BatteryLevel = BatteryLevel
     }
-	if (gotSNR) {
-	    fstr := fmt.Sprintf("%f", SNR)
-        sc.WirelessSNR = fstr
-	}
+    if (gotSNR) {
+        fstr := fmt.Sprintf("%f", SNR)
+        sc1.WirelessSNR = fstr
+    }
 
-    scJSON, _ := json.Marshal(sc)
-
+    scJSON, _ := json.Marshal(sc1)
     fmt.Printf("About to upload to %s:\n%s\n", UploadURL, scJSON)
-
     req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
     req.Header.Set("User-Agent", "TTGATE")
     req.Header.Set("Content-Type", "application/json")
-
     httpclient := &http.Client{}
     resp, err := httpclient.Do(req)
     if err != nil {
         fmt.Printf("*** Error uploading to Safecast %s\n\n", err)
     } else {
-
         resp.Body.Close()
-
         // Bump stats
         totalMessagesSent = totalMessagesSent+1
-
+	    fmt.Printf("Success!\n")
     }
 
+    // The second upload has battery level
+    if (hasBatteryLevel) {
+		// Prepare the data
+        sc2 := sc
+        sc2.Unit = "battery_level"
+        sc2.Value = sc1.BatteryLevel
+		// Do the upload
+        scJSON, _ = json.Marshal(sc2)
+        req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
+        req.Header.Set("User-Agent", "TTGATE")
+        req.Header.Set("Content-Type", "application/json")
+        httpclient = &http.Client{}
+        resp, err = httpclient.Do(req)
+        if err != nil {
+            fmt.Printf("*** Error uploading battery_level to Safecast %s\n\n", err)
+        } else {
+            resp.Body.Close()
+        }
+    }
 
-    fmt.Printf("Success!\n")
+    // The third upload has SNR
+    if (gotSNR) {
+		// Prepare the data
+        sc3 := sc
+        sc3.Unit = "wireless_snr"
+        sc3.Value = sc1.WirelessSNR
+		// Do the upload
+        scJSON, _ = json.Marshal(sc3)
+        req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
+        req.Header.Set("User-Agent", "TTGATE")
+        req.Header.Set("Content-Type", "application/json")
+        httpclient = &http.Client{}
+        resp, err = httpclient.Do(req)
+        if err != nil {
+            fmt.Printf("*** Error uploading SNR to Safecast %s\n\n", err)
+        } else {
+            resp.Body.Close()
+        }
+    }
 
 }
 

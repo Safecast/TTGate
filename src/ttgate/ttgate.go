@@ -39,12 +39,12 @@ func main() {
         time.Sleep(5 * time.Second)
     }
 
-    // In our idle loop, transmit a beacon once per minute.
+    // In our idle loop, transmit an occasional beacon. 
     // This is to simulate stuff coming in from the cloud service
 
     for {
         heartbeat()
-        time.Sleep(5 * 60 * time.Second)
+        time.Sleep(15 * 60 * time.Second)
     }
 
 }
