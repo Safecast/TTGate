@@ -62,7 +62,7 @@ func ioInitMicrochip() {
 		return;
 	}
 
-	fmt.Printf("ioInitMicrochip: FORCED RESET...\n")
+	fmt.Printf("ioInitMicrochip: Hardware reset...\n")
 
 	// Note that this requires two things to be true:
 	// 1) On the back side of the RN2483/RN2903, use solder to close the gap of SJ1, which brings /RESET to Xbee Pin 17
@@ -73,7 +73,7 @@ func ioInitMicrochip() {
 	rpio.Close()
 
     time.Sleep(10 * time.Second)
-	fmt.Printf("ioInitMicrochip: ...DONE\n");
+	fmt.Printf("ioInitMicrochip: ...completed\n");
 	
 }
 
