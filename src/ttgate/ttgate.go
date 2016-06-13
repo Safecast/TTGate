@@ -39,17 +39,30 @@ func main() {
         time.Sleep(5 * time.Second)
     }
 
-    // In our idle loop, transmit an occasional beacon. 
-    // This is to simulate stuff coming in from the cloud service
+	// Spawn different timer tasks
 
-    for {
-        heartbeat()
-        time.Sleep(15 * 60 * time.Second)
-    }
+    go timer15m()
+	timer1m()
 
 }
 
-func heartbeat() {
+func timer1m() {
+    for {
+        time.Sleep(1 * 60 * time.Second)
+		// Watch to see if we are getting stuck in any given state for 1-2m
+        cmdWatchdog1m()
+    }
+}
+
+func timer15m() {
+    for {
+        time.Sleep(15 * 60 * time.Second)
+		// Send a heartbeat to clients
+        heartbeat15m()
+    }
+}
+
+func heartbeat15m() {
 
     // Get the stats in the form of a message
 

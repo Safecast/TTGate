@@ -9,10 +9,12 @@ package main
 
 import (
     "fmt"
-	"time"
+    "time"
     "bytes"
     "github.com/tarm/serial"
-	"net"
+    "net"
+    "os"
+    "io"
 )
 
 var serialPort *serial.Port
@@ -21,10 +23,14 @@ var serialPort *serial.Port
 
 func ioInit() bool {
 
-    port := "/dev/ttyS0"
+    port := os.Getenv("SERIAL")
+    if (port == "") {
+        port = "/dev/ttyS0"
+    }
+
     speed := 57600
 
-    s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed})
+    s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed, ReadTimeout: time.Second * 60 * 2})
     if (err != nil) {
         fmt.Printf("Cannot open %s\n", port)
         return false
@@ -33,7 +39,7 @@ func ioInit() bool {
 
     fmt.Printf("Serial I/O Initialized\n")
 
-	// Give the port a real chance of initializing
+    // Give the port a real chance of initializing
     time.Sleep(5 * time.Second)
 
     // Initialize the command processing and state machine
@@ -55,7 +61,11 @@ func InboundMain() {
     for {
         n, err := serialPort.Read(thisbuf)
         if (err != nil) {
-            fmt.Printf("read err: %d", err)
+            if (err == io.EOF) {
+                fmt.Printf("serial: timeout\n")
+            } else {
+                fmt.Printf("serial: read error %v\n", err)
+            }
         } else {
             prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
         }
@@ -123,15 +133,15 @@ func ioSendCommand(cmd []byte) {
 }
 
 func getDeviceID() string {
-	ifs, _ := net.Interfaces()
-	for _, v := range ifs {
-		h := v.HardwareAddr.String()
-		if len(h) == 0 {
-			continue
-		}
-		return(h)
-	}
-	return("");
+    ifs, _ := net.Interfaces()
+    for _, v := range ifs {
+        h := v.HardwareAddr.String()
+        if len(h) == 0 {
+            continue
+        }
+        return(h)
+    }
+    return("");
 }
 
 // eof

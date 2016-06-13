@@ -44,22 +44,62 @@ var outboundQueue chan OutboundCommand
 var currentState uint16
 var totalMessagesReceived int = 0
 var totalMessagesSent int = 0
+var watchdogCount = 0
+var busyCount = 0
+
+func cmdWatchdog1m() {
+	// Ignore the first increment, which could occur at any time 0-59s.
+	// But then, on the second increment, reset the world.
+	watchdogCount = watchdogCount + 1
+	if (watchdogCount == 1) {
+	    fmt.Printf("*** Watchdog: warning\n")
+	}		
+	if (watchdogCount > 1) {
+	    fmt.Printf("*** Watchdog: reinitializing!\n")
+		cmdReinit()
+	}
+}
+
+func cmdBusy() {
+	// Ignore the first increment, which could occur at any time 0-59s.
+	// But then, on the second increment, reset the world.
+	busyCount = busyCount + 1
+	if (busyCount > 10) {
+		cmdReinit()
+	}
+}
+
+func cmdWatchdogReset() {
+	watchdogCount = 0
+}
+
+func cmdBusyReset() {
+	busyCount = 0
+}
 
 func cmdGetStats() (received int, sent int) {
     return totalMessagesReceived, totalMessagesSent
 }
 
-func cmdInit() {
+func cmdReinit() {
 
     // Initialize the state machine and kick off a device reset
 
     cmdSetState(CMD_STATE_LPWAN_RESETREQ);
     cmdProcess([]byte(""))
 
+}
+
+func cmdInit() {
+
     // Initialize the outbound queue
 
     outboundQueue = make(chan OutboundCommand, 100)         // Don't exhibit backpressure for a long time
 
+	// Init state machine, etc.
+
+	cmdReinit()
+	
 }
 
 func cmdEnqueueOutbound(cmd []byte) {
@@ -70,6 +110,7 @@ func cmdEnqueueOutbound(cmd []byte) {
 
 func cmdSetState(newState uint16) {
     currentState = newState
+	cmdWatchdogReset()
 }
 
 func cmdProcess(cmd []byte) {
@@ -101,8 +142,7 @@ func cmdProcess(cmd []byte) {
         cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
 
     case CMD_STATE_LPWAN_SETWDTRPL:
-        ioSendCommandString("radio rx 0")
-        cmdSetState(CMD_STATE_LPWAN_RCVRPL)
+		RestartReceive()
 
     case CMD_STATE_LPWAN_RCVRPL:
         if bytes.HasPrefix(cmd, []byte("ok")) {
@@ -124,6 +164,8 @@ func cmdProcess(cmd []byte) {
             // moving too quickly and we should try again.
             time.Sleep(5 * time.Second)
             RestartReceive()
+			// reset the world if too many consecutive busy errors
+			cmdBusy()
         } else if bytes.HasPrefix(cmd, []byte("radio_rx")) {
             // skip whitespace (there is more than one space)
             var hexstarts int
@@ -162,6 +204,13 @@ func cmdProcess(cmd []byte) {
     case CMD_STATE_LPWAN_TXRPL1:
         if bytes.HasPrefix(cmd, []byte("ok")) {
             cmdSetState(CMD_STATE_LPWAN_TXRPL2);
+        } else if bytes.HasPrefix(cmd, []byte("busy")) {
+            // This is not at all expected, but it means that we're
+            // moving too quickly and we should try again.
+            time.Sleep(5 * time.Second)
+            RestartReceive()
+			// reset the world if too many consecutive busy errors
+			cmdBusy()
         } else {
             fmt.Printf("LPWAN xmt1 error\n")
             RestartReceive()
@@ -184,6 +233,7 @@ func cmdProcess(cmd []byte) {
 
 func RestartReceive() {
     ioSendCommandString("radio rx 0")
+	cmdBusyReset()
     cmdSetState(CMD_STATE_LPWAN_RCVRPL)
 }
 
@@ -204,6 +254,7 @@ func SentPendingOutbound() bool {
                 outbuf = append(outbuf, loChar)
             }
             ioSendCommand(outbuf)
+			cmdBusyReset()
             cmdSetState(CMD_STATE_LPWAN_TXRPL1)
             return true
         }
