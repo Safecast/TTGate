@@ -148,6 +148,8 @@ func cmdProcess(cmd []byte) {
         cmdSetState(CMD_STATE_LPWAN_RESETRPL)
 
     case CMD_STATE_LPWAN_RESETRPL:
+		// Give reset a chance to complete
+        time.Sleep(5 * time.Second)	
         ioSendCommandString("mac pause")
         cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
 
