@@ -72,7 +72,7 @@ func ioInitMicrochip() {
 	pin.Toggle()       // Toggle pin (Low -> High -> Low)
 	rpio.Close()
 
-    time.Sleep(5 * time.Second)
+    time.Sleep(10 * time.Second)
 	fmt.Printf("ioInitMicrochip: ...DONE\n");
 	
 }
