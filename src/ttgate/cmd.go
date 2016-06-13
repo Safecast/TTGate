@@ -349,7 +349,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     // Debug
 
     fmt.Printf("Received Safecast Message:\n")
-    fmt.Printf("%s", msg)
+    fmt.Printf("%s\n", msg)
 
     // Combine the info with what we can find in the environment vars
     // Note that we support both unqualified and DeviceID-qualified variables,
