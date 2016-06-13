@@ -51,11 +51,13 @@ func cmdWatchdog1m() {
 	// Ignore the first increment, which could occur at any time 0-59s.
 	// But then, on the second increment, reset the world.
 	watchdogCount = watchdogCount + 1
-	if (watchdogCount == 1) {
-	    fmt.Printf("*** Watchdog: warning\n")
-	}		
-	if (watchdogCount > 1) {
-	    fmt.Printf("*** Watchdog: reinitializing!\n")
+	switch (watchdogCount) {
+	case 1:
+	case 2:
+	case 3:		
+	    fmt.Printf("*** Watchdog: Warning!\n")
+	case 4:		
+	    fmt.Printf("*** Watchdog: Reinitializing!\n")
 		cmdReinit()
 	}
 }

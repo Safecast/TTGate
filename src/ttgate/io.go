@@ -30,7 +30,7 @@ func ioInit() bool {
 
     speed := 57600
 
-    s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed, ReadTimeout: time.Second * 60 * 2})
+    s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed, ReadTimeout: (time.Second * 60 * 3)})
     if (err != nil) {
         fmt.Printf("Cannot open %s\n", port)
         return false
@@ -61,9 +61,7 @@ func InboundMain() {
     for {
         n, err := serialPort.Read(thisbuf)
         if (err != nil) {
-            if (err == io.EOF) {
-                fmt.Printf("serial: timeout\n")
-            } else {
+            if (err != io.EOF) {
                 fmt.Printf("serial: read error %v\n", err)
             }
         } else {
