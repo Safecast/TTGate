@@ -38,6 +38,7 @@ type OutboundCommand struct {
     Command []byte
 }
 
+var receivedMessage = false;
 var gotSNR bool = false
 var SNR float64
 var outboundQueue chan OutboundCommand
@@ -85,6 +86,11 @@ func cmdGetStats() (received int, sent int) {
 
 func cmdReinit() {
 
+	// Init statics
+
+	gotSNR = false
+	receivedMessage = false
+	
     // Initialize the state machine and kick off a device reset
 
     cmdSetState(CMD_STATE_LPWAN_RESETREQ);
@@ -156,10 +162,14 @@ func cmdProcess(cmd []byte) {
             // else restart the receive
             if (!SentPendingOutbound()) {
                 {
-                    // Update the SNR stat
-                    ioSendCommandString("radio get snr")
-                    cmdSetState(CMD_STATE_LPWAN_SNRRPL)
-                }
+                    // Update the SNR stat if and only if we've received a message
+					if (receivedMessage) {
+	                    ioSendCommandString("radio get snr")
+	                    cmdSetState(CMD_STATE_LPWAN_SNRRPL)
+	                } else {
+						RestartReceive()
+					}
+				}
             }
         } else if bytes.HasPrefix(cmd, []byte("busy")) {
             // This is not at all expected, but it means that we're
@@ -176,6 +186,8 @@ func cmdProcess(cmd []byte) {
                     break
                 }
             }
+			// Remember that we received at least one message
+			receivedMessage = true
             // Parse and process the received message
             cmdProcessReceived(cmd[hexstarts:])
             // if there's a pending outbound, transmit it (which will change state)
