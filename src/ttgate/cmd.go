@@ -59,7 +59,7 @@ func cmdWatchdog1m() {
 	    fmt.Printf("*** Watchdog: Warning!\n")
 	case 4:		
 	    fmt.Printf("*** Watchdog: Reinitializing!\n")
-		cmdReinit()
+		cmdReinit(true)
 	}
 }
 
@@ -68,7 +68,7 @@ func cmdBusy() {
 	// But then, on the second increment, reset the world.
 	busyCount = busyCount + 1
 	if (busyCount > 10) {
-		cmdReinit()
+		cmdReinit(true)
 	}
 }
 
@@ -84,8 +84,14 @@ func cmdGetStats() (received int, sent int) {
     return totalMessagesReceived, totalMessagesSent
 }
 
-func cmdReinit() {
+func cmdReinit(rebootLPWAN bool) {
 
+	// Reinitialize the Microchip in case it's wedged.
+
+	if rebootLPWAN {
+		ioInitMicrochip()
+	}
+	
 	// Init statics
 
 	gotSNR = false
@@ -106,7 +112,7 @@ func cmdInit() {
 
 	// Init state machine, etc.
 
-	cmdReinit()
+	cmdReinit(false)
 	
 }
 
