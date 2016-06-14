@@ -154,7 +154,7 @@ func cmdProcess(cmd []byte) {
         cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
 
     case CMD_STATE_LPWAN_MACPAUSERPL:
-        ioSendCommandString("radio set wdt 60000")
+        ioSendCommandString("radio set wdt 32766")
         cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
 
     case CMD_STATE_LPWAN_SETWDTRPL:
