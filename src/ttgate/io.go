@@ -90,6 +90,9 @@ func InboundMain() {
             }
         } else {
             prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
+			if (len(prevbuf) != 0) {
+				fmt.Printf("serial pending: (\n", string(prevbuf))
+			}
         }
     }
 

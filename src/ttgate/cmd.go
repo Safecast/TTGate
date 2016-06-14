@@ -147,19 +147,12 @@ func cmdProcess(cmd []byte) {
     switch currentState {
 
     case CMD_STATE_LPWAN_RESETREQ:
-        // This is important, because it is a harmless command
-        // that we can use to get in sync with an unaligned
-        // command stream.  This may fail, but that is the point.
         time.Sleep(4 * time.Second)
         ioSendCommandString("sys get ver")
         cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
 
     case CMD_STATE_LPWAN_GETVERRPL:
-        // Very important because we need to kill any pending
-        // RCV from before a resin reboot.  (Not necessary
-        // on device because it's always a cold start.)
         time.Sleep(4 * time.Second)
-        // Loop in sys get ver until we get an acceptable reply, for sync purposes
         if ((!bytes.HasPrefix(cmd, []byte("RN2483"))) && (!bytes.HasPrefix(cmd, []byte("RN2903")))) {
             ioSendCommandString("sys get ver")
             cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
@@ -169,16 +162,21 @@ func cmdProcess(cmd []byte) {
         }
 
     case CMD_STATE_LPWAN_RESETRPL:
-        // Give reset a chance to complete
         time.Sleep(4 * time.Second)
         ioSendCommandString("mac pause")
         cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
 
     case CMD_STATE_LPWAN_MACPAUSERPL:
         time.Sleep(4 * time.Second)
-        ioSendCommandString("radio set wdt 60000")
-        cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
-
+		i64, err := strconv.ParseInt(string(cmd), 10, 64)
+		if (err != nil || i64 < 100000) {
+	        ioSendCommandString("mac pause")
+	        cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
+		} else {
+	        ioSendCommandString("radio set wdt 60000")
+	        cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
+		}
+			
     case CMD_STATE_LPWAN_SETWDTRPL:
         time.Sleep(4 * time.Second)
         RestartReceive()
