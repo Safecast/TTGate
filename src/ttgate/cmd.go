@@ -126,7 +126,9 @@ func cmdSetState(newState uint16) {
 
 func cmdProcess(cmd []byte) {
 
+	fmt.Printf("***** ENTER *****\n")
     fmt.Printf("cmdProcess(%s) entry state=%d\n", cmd, currentState)
+	fmt.Printf("***** ***** *****\n")
 
     switch currentState {
 

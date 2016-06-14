@@ -32,17 +32,17 @@ func ioInit() bool {
 
     speed := 57600
 
-    s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed, ReadTimeout: (time.Second * 60 * 3)})
+    s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed, ReadTimeout: (time.Second * 15)})
     if (err != nil) {
         fmt.Printf("Cannot open %s\n", port)
         return false
     }
     serialPort = s
 
+    time.Sleep(5 * time.Second)
+
     fmt.Printf("Serial I/O Initialized\n")
 
-    // Give the port a real chance of initializing
-    time.Sleep(5 * time.Second)
 
     // Process receives on a different thread because I/O is synchronous
     go InboundMain()
@@ -94,7 +94,9 @@ func InboundMain() {
     var prevbuf []byte = []byte("")
 
     for {
+		fmt.Printf("<rd>\n")
         n, err := serialPort.Read(thisbuf)
+		fmt.Printf("</rd>\n")
         if (err != nil) {
 
 			// If EOF, it's because of a timeout with no input
@@ -103,7 +105,7 @@ func InboundMain() {
 					reinitRequested = false;
 					cmdReinit()
 				}
-			} else if (err != io.EOF) {
+			} else {
                 fmt.Printf("serial: read error %v\n", err)
             }
 
