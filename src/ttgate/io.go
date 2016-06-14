@@ -81,6 +81,7 @@ func ioInitMicrochip() {
 }
 
 func ioRequestReinit() {
+    fmt.Printf("Hardware reset requested...\n")
     reinitRequested = true;
 }
 
@@ -97,16 +98,19 @@ func InboundMain() {
 
         n, err := serialPort.Read(thisbuf)
         if (err == io.EOF) {
+		    fmt.Printf("EOF...\n")
             err = nil
             n = 0
         }
 
         if (n == 0) {
+		    fmt.Printf("No data...\n")
             if reinitRequested {
+			    fmt.Printf("Reinit about to be done...\n")
                 reinitRequested = false;
                 cmdReinit()
             } else {
-                time.Sleep(100 * time.Millisecond)
+                time.Sleep(250 * time.Millisecond)
             }
         }
 
