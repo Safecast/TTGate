@@ -90,8 +90,8 @@ func cmdReinit(rebootLPWAN bool) {
     // Prevent recursion because we call this from multiple goroutines
 
     if inReinit {
-	    fmt.Printf("cmdReinit: Aborting nested init\n")
-//        return
+	    fmt.Printf("cmdReinit: [[[[[ Aborting nested init ]]]]]\n")
+        return
 	}
 	
     inReinit = true;
@@ -143,7 +143,6 @@ func cmdSetState(newState uint16) {
 
 func cmdProcess(cmd []byte) {
 
-	fmt.Printf("** Transform State **\n")
     fmt.Printf("cmdProcess(%s) entry state=%v\n", string(cmd), currentState)
 
     switch currentState {
