@@ -24,6 +24,7 @@ import (
 const (
     CMD_STATE_IDLE = iota
     CMD_STATE_LPWAN_RESETREQ
+    CMD_STATE_LPWAN_RESETRPL
     CMD_STATE_LPWAN_GETVERRPL
     CMD_STATE_LPWAN_MACPAUSERPL
     CMD_STATE_LPWAN_SETWDTRPL
@@ -54,10 +55,11 @@ func cmdWatchdog1m() {
 	switch (watchdogCount) {
 	case 1:
 	case 2:
-	    fmt.Printf("*** Watchdog: Warning!\n")
 	case 3:		
+	    fmt.Printf("*** Watchdog: Warning!\n")
+	case 4:		
 	    fmt.Printf("*** Watchdog: Reinitializing!\n")
-		ioRequestReinit()
+		cmdReinit(true)
 	}
 }
 
@@ -66,7 +68,7 @@ func cmdBusy() {
 	// But then, on the second increment, reset the world.
 	busyCount = busyCount + 1
 	if (busyCount > 10) {
-		ioRequestReinit()
+		cmdReinit(true)
 	}
 }
 
@@ -82,12 +84,13 @@ func cmdGetStats() (received int, sent int) {
     return totalMessagesReceived, totalMessagesSent
 }
 
-func cmdReinit() {
+func cmdReinit(rebootLPWAN bool) {
 
 	// Reinitialize the Microchip in case it's wedged.
 
-	cmdWatchdogReset()
-	ioInitMicrochip()
+	if rebootLPWAN {
+		ioInitMicrochip()
+	}
 	
 	// Init statics
 
@@ -109,7 +112,7 @@ func cmdInit() {
 
 	// Init state machine, etc.
 
-	cmdReinit()
+	cmdReinit(false)
 	
 }
 
@@ -126,9 +129,7 @@ func cmdSetState(newState uint16) {
 
 func cmdProcess(cmd []byte) {
 
-	fmt.Printf("***** ENTER *****\n")
-    fmt.Printf("cmdProcess(%s) entry state=%d\n", cmd, currentState)
-	fmt.Printf("***** ***** *****\n")
+    fmt.Printf("cmdProcess(%s)\n", cmd)
 
     switch currentState {
 
@@ -138,22 +139,26 @@ func cmdProcess(cmd []byte) {
         // command stream.  This may fail, but that is the point.
         ioSendCommandString("sys get ver")
         cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
-		break
 
     case CMD_STATE_LPWAN_GETVERRPL:
+        // Very important because we need to kill any pending
+        // RCV from before a resin reboot.  (Not necessary
+        // on device because it's always a cold start.)
+        ioSendCommandString("sys reset")
+        cmdSetState(CMD_STATE_LPWAN_RESETRPL)
+
+    case CMD_STATE_LPWAN_RESETRPL:
+		// Give reset a chance to complete
+        time.Sleep(5 * time.Second)	
         ioSendCommandString("mac pause")
         cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
-		break
 
     case CMD_STATE_LPWAN_MACPAUSERPL:
-		RestartReceive();
-		break
+        ioSendCommandString("radio set wdt 60000")
+        cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
 
     case CMD_STATE_LPWAN_SETWDTRPL:
-	    ioSendCommandString("radio rx 0")
-		cmdBusyReset()
-	    cmdSetState(CMD_STATE_LPWAN_RCVRPL)
-		break
+		RestartReceive()
 
     case CMD_STATE_LPWAN_RCVRPL:
         if bytes.HasPrefix(cmd, []byte("ok")) {
@@ -166,7 +171,7 @@ func cmdProcess(cmd []byte) {
             if (!SentPendingOutbound()) {
                 {
                     // Update the SNR stat if and only if we've received a message
-					if (receivedMessage && !gotSNR) {
+					if (receivedMessage) {
 	                    ioSendCommandString("radio get snr")
 	                    cmdSetState(CMD_STATE_LPWAN_SNRRPL)
 	                } else {
@@ -189,9 +194,8 @@ func cmdProcess(cmd []byte) {
                     break
                 }
             }
-			// Remember that we received a message and that we haven't gotten its SNR
+			// Remember that we received at least one message
 			receivedMessage = true
-			gotSNR = false;
             // Parse and process the received message
             cmdProcessReceived(cmd[hexstarts:])
             // if there's a pending outbound, transmit it (which will change state)
@@ -204,9 +208,8 @@ func cmdProcess(cmd []byte) {
             // leave things in a state without a pending receive,
             // we need to just restart it.
             fmt.Printf("LPWAN rcv error\n")
-			ioRequestReinit()
+            RestartReceive()
         }
-		break
 
     case CMD_STATE_LPWAN_SNRRPL:
         {
@@ -219,7 +222,6 @@ func cmdProcess(cmd []byte) {
             // Always restart receive
             RestartReceive()
         }
-		break
 
     case CMD_STATE_LPWAN_TXRPL1:
         if bytes.HasPrefix(cmd, []byte("ok")) {
@@ -235,7 +237,6 @@ func cmdProcess(cmd []byte) {
             fmt.Printf("LPWAN xmt1 error\n")
             RestartReceive()
         }
-		break
 
     case CMD_STATE_LPWAN_TXRPL2:
         if bytes.HasPrefix(cmd, []byte("radio_tx_ok")) {
@@ -247,17 +248,15 @@ func cmdProcess(cmd []byte) {
             fmt.Printf("LPWAN xmt2 error\n")
             RestartReceive()
         }
-		break
 
     }
-
-    fmt.Printf("cmdProcess() exit state=%d\n", currentState)
 
 }
 
 func RestartReceive() {
-    ioSendCommandString("radio set wdt 60000")
-	cmdSetState(CMD_STATE_LPWAN_SETWDTRPL);
+    ioSendCommandString("radio rx 0")
+	cmdBusyReset()
+    cmdSetState(CMD_STATE_LPWAN_RCVRPL)
 }
 
 func SentPendingOutbound() bool {

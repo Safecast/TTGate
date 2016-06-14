@@ -2,7 +2,7 @@
  * Teletype Gateway Serial I/O
  *
  * This module contains the actual I/O interface, as well as the goroutines
- * that dispatch inbound and outbound traffic.
+ * that dispatch inbound and outbound traffic
  */
 
 package main
@@ -15,11 +15,10 @@ import (
     "io"
     "net"
     "github.com/tarm/serial"
-    "github.com/stianeikeland/go-rpio"
+	"github.com/stianeikeland/go-rpio"
 )
 
 var serialPort *serial.Port
-var reinitRequested = false
 
 // Initialize the i/o subsystem
 
@@ -32,17 +31,20 @@ func ioInit() bool {
 
     speed := 57600
 
-    s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed, ReadTimeout: (time.Second * 5)})
+    s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed, ReadTimeout: (time.Second * 60 * 3)})
     if (err != nil) {
         fmt.Printf("Cannot open %s\n", port)
         return false
     }
     serialPort = s
 
-    time.Sleep(5 * time.Second)
-
     fmt.Printf("Serial I/O Initialized\n")
 
+    // Give the port a real chance of initializing
+    time.Sleep(5 * time.Second)
+
+    // Initialize the command processing and state machine
+    cmdInit()
 
     // Process receives on a different thread because I/O is synchronous
     go InboundMain()
@@ -54,75 +56,43 @@ func ioInit() bool {
 
 func ioInitMicrochip() {
 
-    err := rpio.Open()
-    if (err != nil) {
-        fmt.Printf("ioInitMicrochip: err %v\n", err)
-        return;
-    }
+	err := rpio.Open()
+	if (err != nil) {
+		fmt.Printf("ioInitMicrochip: err %v\n", err)
+		return;
+	}
 
-    fmt.Printf("ioInitMicrochip: Hardware reset...\n")
+	fmt.Printf("ioInitMicrochip: Hardware reset...\n")
 
-    // Note that this requires two things to be true:
-    // 1) On the back side of the RN2483/RN2903, use solder to close the gap of SJ1, which brings /RESET to Xbee Pin 17
-    // 2) Wire Xbee Pin 17 to the RPi's header Pin 36, which is BCM Pin 16 (http://pinout.xyz/pinout/pin36_gpio16)
-    pin := rpio.Pin(16)
+	// Note that this requires two things to be true:
+	// 1) On the back side of the RN2483/RN2903, use solder to close the gap of SJ1, which brings /RESET to Xbee Pin 17
+	// 2) Wire Xbee Pin 17 to the RPi's header Pin 36, which is BCM Pin 16 (http://pinout.xyz/pinout/pin36_gpio16)
+	pin := rpio.Pin(16)
+	pin.Output()       // Output mode
+	pin.Toggle()       // Toggle pin (Low -> High -> Low)
+	rpio.Close()
 
-    pin.Output()       // Output mode
-
-    pin.Toggle()       // Toggle pin (Low -> High -> Low)
-    time.Sleep(time.Second * 1)
-    pin.Toggle()       // Toggle pin (Low -> High -> Low)
-    time.Sleep(time.Second * 5)
-
-    rpio.Close()
-
-    fmt.Printf("ioInitMicrochip: ...completed\n");
-
-}
-
-func ioRequestReinit() {
-    fmt.Printf("Hardware reset requested...\n")
-    reinitRequested = true;
+    time.Sleep(10 * time.Second)
+	fmt.Printf("ioInitMicrochip: ...completed\n");
+	
 }
 
 func InboundMain() {
 
-    // Do all initialization and reinitialization in this goroutine
-    cmdInit()
-
-    // Loop reading from input, and dispatching to process it if something is received
     var thisbuf = make([]byte, 128)
     var prevbuf []byte = []byte("")
 
     for {
-
         n, err := serialPort.Read(thisbuf)
-        if (err == io.EOF) {
-		    fmt.Printf("EOF...\n")
-            err = nil
-            n = 0
-        }
-
-        if (n == 0) {
-		    fmt.Printf("No data...\n")
-            if reinitRequested {
-			    fmt.Printf("Reinit about to be done...\n")
-                reinitRequested = false;
-                cmdReinit()
-            } else {
-                time.Sleep(250 * time.Millisecond)
-            }
-        }
-
         if (err != nil) {
-            n = 0
-            fmt.Printf("serial: read error %v\n", err)
-        }
-
-        if (n != 0) {
+            if (err != io.EOF) {
+                fmt.Printf("serial: read error %v\n", err)
+            }
+        } else {
             prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
         }
     }
+
 }
 
 func ProcessInbound(buf []byte) []byte  {
@@ -181,8 +151,6 @@ func ioSendCommand(cmd []byte) {
     if (err != nil) {
         fmt.Printf("write err: %d", err)
     }
-
-    fmt.Printf("ioSendCommand(%s) (sent)\n", cmd)
 
 }
 
