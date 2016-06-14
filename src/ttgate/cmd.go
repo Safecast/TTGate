@@ -50,34 +50,34 @@ var watchdogCount = 0
 var busyCount = 0
 
 func cmdWatchdog1m() {
-	// Ignore the first increment, which could occur at any time 0-59s.
-	// But then, on the second increment, reset the world.
-	watchdogCount = watchdogCount + 1
-	switch (watchdogCount) {
-	case 1:
-	case 2:
-	    fmt.Printf("*** Watchdog: Warning!\n")
-	case 3:		
-	    fmt.Printf("*** Watchdog: Reinitializing!\n")
-		cmdReinit(true)
-	}
+    // Ignore the first increment, which could occur at any time 0-59s.
+    // But then, on the second increment, reset the world.
+    watchdogCount = watchdogCount + 1
+    switch (watchdogCount) {
+    case 1:
+    case 2:
+        fmt.Printf("*** Watchdog: Warning!\n")
+    case 3:
+        fmt.Printf("*** Watchdog: Reinitializing!\n")
+        cmdReinit(true)
+    }
 }
 
 func cmdBusy() {
-	// Ignore the first increment, which could occur at any time 0-59s.
-	// But then, on the second increment, reset the world.
-	busyCount = busyCount + 1
-	if (busyCount > 10) {
-		cmdReinit(true)
-	}
+    // Ignore the first increment, which could occur at any time 0-59s.
+    // But then, on the second increment, reset the world.
+    busyCount = busyCount + 1
+    if (busyCount > 10) {
+        cmdReinit(true)
+    }
 }
 
 func cmdWatchdogReset() {
-	watchdogCount = 0
+    watchdogCount = 0
 }
 
 func cmdBusyReset() {
-	busyCount = 0
+    busyCount = 0
 }
 
 func cmdGetStats() (received int, sent int) {
@@ -89,23 +89,23 @@ func cmdReinit(rebootLPWAN bool) {
     // Prevent recursion because we call this from multiple goroutines
 
     if inReinit {
-	    fmt.Printf("cmdReinit: [[[[[ Aborting nested init ]]]]]\n")
+        fmt.Printf("cmdReinit: [[[[[ Aborting nested init ]]]]]\n")
         return
-	}
-	
+    }
+
     inReinit = true;
 
-	// Reinitialize the Microchip in case it's wedged.
+    // Reinitialize the Microchip in case it's wedged.
 
-	if rebootLPWAN {
-		ioInitMicrochip()
-	}
-	
-	// Init statics
+    if rebootLPWAN {
+        ioInitMicrochip()
+    }
 
-	gotSNR = false
-	receivedMessage = false
-	
+    // Init statics
+
+    gotSNR = false
+    receivedMessage = false
+
     // Initialize the state machine and kick off a device reset
 
     cmdSetState(CMD_STATE_LPWAN_RESETREQ);
@@ -123,10 +123,10 @@ func cmdInit() {
 
     outboundQueue = make(chan OutboundCommand, 100)         // Don't exhibit backpressure for a long time
 
-	// Init state machine, etc.
+    // Init state machine, etc.
 
-	cmdReinit(true)
-	
+    cmdReinit(true)
+
 }
 
 func cmdEnqueueOutbound(cmd []byte) {
@@ -137,7 +137,7 @@ func cmdEnqueueOutbound(cmd []byte) {
 
 func cmdSetState(newState uint16) {
     currentState = newState
-	cmdWatchdogReset()
+    cmdWatchdogReset()
 }
 
 func cmdProcess(cmd []byte) {
@@ -150,7 +150,7 @@ func cmdProcess(cmd []byte) {
         // This is important, because it is a harmless command
         // that we can use to get in sync with an unaligned
         // command stream.  This may fail, but that is the point.
-        time.Sleep(4 * time.Second)	
+        time.Sleep(4 * time.Second)
         ioSendCommandString("sys get ver")
         cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
 
@@ -158,24 +158,30 @@ func cmdProcess(cmd []byte) {
         // Very important because we need to kill any pending
         // RCV from before a resin reboot.  (Not necessary
         // on device because it's always a cold start.)
-        time.Sleep(4 * time.Second)	
-        ioSendCommandString("sys reset")
-        cmdSetState(CMD_STATE_LPWAN_RESETRPL)
+        time.Sleep(4 * time.Second)
+        // Loop in sys get ver until we get an acceptable reply, for sync purposes
+        if ((!bytes.HasPrefix(cmd, []byte("RN2483"))) && (!bytes.HasPrefix(cmd, []byte("RN2903")))) {
+            ioSendCommandString("sys get ver")
+            cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
+        } else {
+            ioSendCommandString("sys reset")
+            cmdSetState(CMD_STATE_LPWAN_RESETRPL)
+        }
 
     case CMD_STATE_LPWAN_RESETRPL:
-		// Give reset a chance to complete
-        time.Sleep(4 * time.Second)	
+        // Give reset a chance to complete
+        time.Sleep(4 * time.Second)
         ioSendCommandString("mac pause")
         cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
 
     case CMD_STATE_LPWAN_MACPAUSERPL:
-        time.Sleep(4 * time.Second)	
+        time.Sleep(4 * time.Second)
         ioSendCommandString("radio set wdt 60000")
         cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
 
     case CMD_STATE_LPWAN_SETWDTRPL:
-        time.Sleep(4 * time.Second)	
-		RestartReceive()
+        time.Sleep(4 * time.Second)
+        RestartReceive()
 
     case CMD_STATE_LPWAN_RCVRPL:
         if bytes.HasPrefix(cmd, []byte("ok")) {
@@ -188,21 +194,21 @@ func cmdProcess(cmd []byte) {
             if (!SentPendingOutbound()) {
                 {
                     // Update the SNR stat if and only if we've received a message
-					if (receivedMessage && !gotSNR) {
-	                    ioSendCommandString("radio get snr")
-	                    cmdSetState(CMD_STATE_LPWAN_SNRRPL)
-	                } else {
-						RestartReceive()
-					}
-				}
+                    if (receivedMessage && !gotSNR) {
+                        ioSendCommandString("radio get snr")
+                        cmdSetState(CMD_STATE_LPWAN_SNRRPL)
+                    } else {
+                        RestartReceive()
+                    }
+                }
             }
         } else if bytes.HasPrefix(cmd, []byte("busy")) {
             // This is not at all expected, but it means that we're
             // moving too quickly and we should try again.
             time.Sleep(5 * time.Second)
             RestartReceive()
-			// reset the world if too many consecutive busy errors
-			cmdBusy()
+            // reset the world if too many consecutive busy errors
+            cmdBusy()
         } else if bytes.HasPrefix(cmd, []byte("radio_rx")) {
             // skip whitespace (there is more than one space)
             var hexstarts int
@@ -211,9 +217,9 @@ func cmdProcess(cmd []byte) {
                     break
                 }
             }
-			// Remember that we received at least one message
-			receivedMessage = true
-			gotSNR = false
+            // Remember that we received at least one message
+            receivedMessage = true
+            gotSNR = false
             // Parse and process the received message
             cmdProcessReceived(cmd[hexstarts:])
             // if there's a pending outbound, transmit it (which will change state)
@@ -226,7 +232,7 @@ func cmdProcess(cmd []byte) {
             // leave things in a state without a pending receive,
             // we need to just restart the world.
             fmt.Printf("LPWAN rcv error\n")
-			cmdReinit(true)
+            cmdReinit(true)
         }
 
     case CMD_STATE_LPWAN_SNRRPL:
@@ -249,8 +255,8 @@ func cmdProcess(cmd []byte) {
             // moving too quickly and we should try again.
             time.Sleep(5 * time.Second)
             RestartReceive()
-			// reset the world if too many consecutive busy errors
-			cmdBusy()
+            // reset the world if too many consecutive busy errors
+            cmdBusy()
         } else {
             fmt.Printf("LPWAN xmt1 error\n")
             RestartReceive()
@@ -275,7 +281,7 @@ func cmdProcess(cmd []byte) {
 
 func RestartReceive() {
     ioSendCommandString("radio rx 0")
-	cmdBusyReset()
+    cmdBusyReset()
     cmdSetState(CMD_STATE_LPWAN_RCVRPL)
 }
 
@@ -296,7 +302,7 @@ func SentPendingOutbound() bool {
                 outbuf = append(outbuf, loChar)
             }
             ioSendCommand(outbuf)
-			cmdBusyReset()
+            cmdBusyReset()
             cmdSetState(CMD_STATE_LPWAN_TXRPL1)
             return true
         }
@@ -534,16 +540,16 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         resp.Body.Close()
         // Bump stats
         totalMessagesSent = totalMessagesSent+1
-	    fmt.Printf("Success!\n")
+        fmt.Printf("Success!\n")
     }
 
     // The second upload has battery level
     if (hasBatteryLevel) {
-		// Prepare the data
+        // Prepare the data
         sc2 := sc
         sc2.Unit = "battery_level"
         sc2.Value = sc1.BatteryLevel
-		// Do the upload
+        // Do the upload
         scJSON, _ = json.Marshal(sc2)
         req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
         req.Header.Set("User-Agent", "TTGATE")
@@ -559,11 +565,11 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 
     // The third upload has SNR
     if (gotSNR) {
-		// Prepare the data
+        // Prepare the data
         sc3 := sc
         sc3.Unit = "wireless_snr"
         sc3.Value = sc1.WirelessSNR
-		// Do the upload
+        // Do the upload
         scJSON, _ = json.Marshal(sc3)
         req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
         req.Header.Set("User-Agent", "TTGATE")
