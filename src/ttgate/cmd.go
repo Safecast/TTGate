@@ -143,7 +143,8 @@ func cmdSetState(newState uint16) {
 
 func cmdProcess(cmd []byte) {
 
-    fmt.Printf("cmdProcess(%v) entry state=%v\n", cmd, currentState)
+	fmt.Printf("** Transform State **\n")
+    fmt.Printf("cmdProcess(%s) entry state=%v\n", string(cmd), currentState)
 
     switch currentState {
 
