@@ -24,7 +24,6 @@ import (
 const (
     CMD_STATE_IDLE = iota
     CMD_STATE_LPWAN_RESETREQ
-    CMD_STATE_LPWAN_RESETRPL
     CMD_STATE_LPWAN_GETVERRPL
     CMD_STATE_LPWAN_MACPAUSERPL
     CMD_STATE_LPWAN_SETWDTRPL
@@ -58,7 +57,7 @@ func cmdWatchdog1m() {
 	    fmt.Printf("*** Watchdog: Warning!\n")
 	case 3:		
 	    fmt.Printf("*** Watchdog: Reinitializing!\n")
-		cmdReinit(true)
+		cmdReinit()
 	}
 }
 
@@ -67,7 +66,7 @@ func cmdBusy() {
 	// But then, on the second increment, reset the world.
 	busyCount = busyCount + 1
 	if (busyCount > 10) {
-		cmdReinit(true)
+		cmdReinit()
 	}
 }
 
@@ -83,13 +82,11 @@ func cmdGetStats() (received int, sent int) {
     return totalMessagesReceived, totalMessagesSent
 }
 
-func cmdReinit(rebootLPWAN bool) {
+func cmdReinit() {
 
 	// Reinitialize the Microchip in case it's wedged.
 
-	if rebootLPWAN {
-		ioInitMicrochip()
-	}
+	ioInitMicrochip()
 	
 	// Init statics
 
@@ -111,7 +108,7 @@ func cmdInit() {
 
 	// Init state machine, etc.
 
-	cmdReinit(false)
+	cmdReinit()
 	
 }
 
@@ -140,15 +137,6 @@ func cmdProcess(cmd []byte) {
         cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
 
     case CMD_STATE_LPWAN_GETVERRPL:
-        // Very important because we need to kill any pending
-        // RCV from before a resin reboot.  (Not necessary
-        // on device because it's always a cold start.)
-        ioSendCommandString("sys reset")
-        cmdSetState(CMD_STATE_LPWAN_RESETRPL)
-
-    case CMD_STATE_LPWAN_RESETRPL:
-		// Give reset a chance to complete
-        time.Sleep(5 * time.Second)	
         ioSendCommandString("mac pause")
         cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
 
@@ -209,7 +197,7 @@ func cmdProcess(cmd []byte) {
             // leave things in a state without a pending receive,
             // we need to just restart it.
             fmt.Printf("LPWAN rcv error\n")
-			cmdReinit(true)
+			cmdReinit()
         }
 
     case CMD_STATE_LPWAN_SNRRPL:
