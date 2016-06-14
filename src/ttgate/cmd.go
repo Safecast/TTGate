@@ -37,6 +37,7 @@ type OutboundCommand struct {
     Command []byte
 }
 
+var initInProgress = false;
 var receivedMessage = false;
 var gotSNR bool = false
 var SNR float64
@@ -84,8 +85,17 @@ func cmdGetStats() (received int, sent int) {
 
 func cmdReinit() {
 
+	// Prevent recursion during delays
+
+	if (initInProgress) {
+		return
+	}
+
+	initInProgress = true
+
 	// Reinitialize the Microchip in case it's wedged.
 
+	cmdWatchdogReset()
 	ioInitMicrochip()
 	
 	// Init statics
@@ -97,6 +107,10 @@ func cmdReinit() {
 
     cmdSetState(CMD_STATE_LPWAN_RESETREQ);
     cmdProcess([]byte(""))
+
+	// Done
+
+	initInProgress = false
 
 }
 
