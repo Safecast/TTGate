@@ -174,6 +174,8 @@ func ioSendCommand(cmd []byte) {
         fmt.Printf("write err: %d", err)
     }
 
+    fmt.Printf("ioSendCommand(%s) (sent)\n", cmd)
+
 }
 
 func getDeviceID() string {
