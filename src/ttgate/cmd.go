@@ -141,8 +141,9 @@ func cmdSetState(newState uint16) {
 }
 
 func cmdProcess(cmd []byte) {
+	var cmdstr string = string(cmd)
 
-    fmt.Printf("cmdProcess(%s) entry state=%v\n", string(cmd), currentState)
+    fmt.Printf("cmdProcess(%s) entry state=%v\n", cmdstr, currentState)
 
     switch currentState {
 
@@ -168,7 +169,7 @@ func cmdProcess(cmd []byte) {
 
     case CMD_STATE_LPWAN_MACPAUSERPL:
         time.Sleep(4 * time.Second)
-		i64, err := strconv.ParseInt(string(cmd), 10, 64)
+		i64, err := strconv.ParseInt(cmdstr, 10, 64)
 		if (err != nil || i64 < 100000) {
 	        ioSendCommandString("mac pause")
 	        cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
@@ -236,7 +237,7 @@ func cmdProcess(cmd []byte) {
     case CMD_STATE_LPWAN_SNRRPL:
         {
             // Get the number in the commanbd buffer
-            f, err := strconv.ParseFloat(string(cmd), 64)
+            f, err := strconv.ParseFloat(cmdstr, 64)
             if (err == nil) {
                 SNR = f
                 gotSNR = true
