@@ -43,9 +43,6 @@ func ioInit() bool {
     // Give the port a real chance of initializing
     time.Sleep(5 * time.Second)
 
-    // Initialize the command processing and state machine
-    cmdInit()
-
     // Process receives on a different thread because I/O is synchronous
     go InboundMain()
 
@@ -72,9 +69,9 @@ func ioInitMicrochip() {
 	pin.Output()       // Output mode
 
 	pin.Toggle()       // Toggle pin (Low -> High -> Low)
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 1)
 	pin.Toggle()       // Toggle pin (Low -> High -> Low)
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 5)
 
 	rpio.Close()
 
@@ -83,6 +80,8 @@ func ioInitMicrochip() {
 }
 
 func InboundMain() {
+
+    cmdInit()
 
     var thisbuf = make([]byte, 128)
     var prevbuf []byte = []byte("")
