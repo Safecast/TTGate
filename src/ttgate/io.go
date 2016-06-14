@@ -15,7 +15,7 @@ import (
     "io"
     "net"
     "github.com/tarm/serial"
-	"github.com/stianeikeland/go-rpio"
+    "github.com/stianeikeland/go-rpio"
 )
 
 var serialPort *serial.Port
@@ -56,25 +56,25 @@ func ioInit() bool {
 
 func ioInitMicrochip() {
 
-	err := rpio.Open()
-	if (err != nil) {
-		fmt.Printf("ioInitMicrochip: err %v\n", err)
-		return;
-	}
+    err := rpio.Open()
+    if (err != nil) {
+        fmt.Printf("ioInitMicrochip: err %v\n", err)
+        return;
+    }
 
-	fmt.Printf("ioInitMicrochip: Hardware reset...\n")
+    fmt.Printf("ioInitMicrochip: Hardware reset...\n")
 
-	// Note that this requires two things to be true:
-	// 1) On the back side of the RN2483/RN2903, use solder to close the gap of SJ1, which brings /RESET to Xbee Pin 17
-	// 2) Wire Xbee Pin 17 to the RPi's header Pin 36, which is BCM Pin 16 (http://pinout.xyz/pinout/pin36_gpio16)
-	pin := rpio.Pin(16)
-	pin.Output()       // Output mode
-	pin.Toggle()       // Toggle pin (Low -> High -> Low)
-	rpio.Close()
+    // Note that this requires two things to be true:
+    // 1) On the back side of the RN2483/RN2903, use solder to close the gap of SJ1, which brings /RESET to Xbee Pin 17
+    // 2) Wire Xbee Pin 17 to the RPi's header Pin 36, which is BCM Pin 16 (http://pinout.xyz/pinout/pin36_gpio16)
+    pin := rpio.Pin(16)
+    pin.Output()       // Output mode
+    pin.Toggle()       // Toggle pin (Low -> High -> Low)
+    rpio.Close()
 
     time.Sleep(10 * time.Second)
-	fmt.Printf("ioInitMicrochip: ...completed\n");
-	
+    fmt.Printf("ioInitMicrochip: ...completed\n");
+
 }
 
 func InboundMain() {
@@ -89,15 +89,18 @@ func InboundMain() {
                 fmt.Printf("serial: read error %v\n", err)
             }
         } else {
-            prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
-			if (len(prevbuf) != 0) {
-				fmt.Printf("serial pending: (%v)\n", prevbuf)
-				fmt.Printf("[");
-				for _, databyte := range prevbuf {
-					fmt.Printf("%02x", databyte)
-				}
-				fmt.Printf("]\n")
-			}
+            if (n == 0) {
+			    time.Sleep(250 * time.Millisecond)
+			} else {
+                prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
+                if (len(prevbuf) != 0) {
+                    fmt.Printf("serial pending: (%s)\n[", string(prevbuf))
+                    for _, databyte := range prevbuf {
+                        fmt.Printf("%02x", databyte)
+                    }
+                    fmt.Printf("]\n")
+                }
+            }
         }
     }
 
@@ -109,14 +112,14 @@ func ProcessInbound(buf []byte) []byte  {
     begin := 0
     end := 0
 
-	// Skip over leading trash (such as nulls) that we see after a reset
+    // Skip over leading trash (such as nulls) that we see after a reset
 
-	for begin=0; begin<length; begin++ {
-		if (buf[begin] == '\r' || buf[begin] == '\n' || buf[begin] >= ' ') {
-			break
-		}
-	}
-		
+    for begin=0; begin<length; begin++ {
+        if (buf[begin] == '\r' || buf[begin] == '\n' || buf[begin] >= ' ') {
+            break
+        }
+    }
+
     // Loop over the buffer, which could have multiple lines in it
 
     for begin<length {
