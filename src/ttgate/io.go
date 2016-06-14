@@ -95,10 +95,7 @@ func InboundMain() {
 
     for {
 
-        fmt.Printf("<rd>\n")
         n, err := serialPort.Read(thisbuf)
-        fmt.Printf("</rd>\n")
-
         if (err == io.EOF) {
             err = nil
             n = 0
