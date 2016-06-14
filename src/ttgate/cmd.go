@@ -40,6 +40,7 @@ type OutboundCommand struct {
 
 var receivedMessage = false;
 var gotSNR bool = false
+var inReinit bool = false;
 var SNR float64
 var outboundQueue chan OutboundCommand
 var currentState uint16
@@ -86,6 +87,14 @@ func cmdGetStats() (received int, sent int) {
 
 func cmdReinit(rebootLPWAN bool) {
 
+    // Prevent recursion because we call this from multiple goroutines
+
+    if inReinit {
+        return
+	}
+	
+    inReinit = true;
+
 	// Reinitialize the Microchip in case it's wedged.
 
 	if rebootLPWAN {
@@ -101,6 +110,10 @@ func cmdReinit(rebootLPWAN bool) {
 
     cmdSetState(CMD_STATE_LPWAN_RESETREQ);
     cmdProcess([]byte(""))
+
+    // Done
+
+    inReinit = false
 
 }
 
@@ -129,7 +142,7 @@ func cmdSetState(newState uint16) {
 
 func cmdProcess(cmd []byte) {
 
-    fmt.Printf("cmdProcess(%s)\n", cmd)
+    fmt.Printf("cmdProcess(%v) entry state=%v\n", cmd, currentState)
 
     switch currentState {
 
@@ -171,7 +184,7 @@ func cmdProcess(cmd []byte) {
             if (!SentPendingOutbound()) {
                 {
                     // Update the SNR stat if and only if we've received a message
-					if (receivedMessage) {
+					if (receivedMessage && !gotSNR) {
 	                    ioSendCommandString("radio get snr")
 	                    cmdSetState(CMD_STATE_LPWAN_SNRRPL)
 	                } else {
@@ -196,6 +209,7 @@ func cmdProcess(cmd []byte) {
             }
 			// Remember that we received at least one message
 			receivedMessage = true
+			gotSNR = false
             // Parse and process the received message
             cmdProcessReceived(cmd[hexstarts:])
             // if there's a pending outbound, transmit it (which will change state)
@@ -250,6 +264,8 @@ func cmdProcess(cmd []byte) {
         }
 
     }
+
+    fmt.Printf("cmdProcess exit state=%v\n", currentState)
 
 }
 
