@@ -68,11 +68,20 @@ func ioInitMicrochip() {
 	// 1) On the back side of the RN2483/RN2903, use solder to close the gap of SJ1, which brings /RESET to Xbee Pin 17
 	// 2) Wire Xbee Pin 17 to the RPi's header Pin 36, which is BCM Pin 16 (http://pinout.xyz/pinout/pin36_gpio16)
 	pin := rpio.Pin(16)
+
 	pin.Output()       // Output mode
-	pin.Toggle()       // Toggle pin (Low -> High -> Low)
+
+	pin.Low()
+	time.Sleep(time.Second)
+	pin.High()
+	time.Sleep(time.Second)
+	pin.Low()
+	time.Sleep(time.Second)
+//	pin.Toggle()       // Toggle pin (Low -> High -> Low)
+
 	rpio.Close()
 
-    time.Sleep(10 * time.Second)
+//    time.Sleep(10 * time.Second)
 	fmt.Printf("ioInitMicrochip: ...completed\n");
 	
 }
