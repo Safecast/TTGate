@@ -25,9 +25,7 @@ RUN go get && go install && go build all
 RUN systemctl disable connman
 
 COPY ./assets/bind /etc/bind
-COPY ./assets/firmware /etc/firmware
-COPY ./assets/sbin /usr/sbin
- 
+
 RUN mkdir -p /usr/src/app/
 WORKDIR /usr/src/app
 
