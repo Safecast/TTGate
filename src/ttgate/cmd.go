@@ -208,7 +208,7 @@ func cmdProcess(cmd []byte) {
             // leave things in a state without a pending receive,
             // we need to just restart it.
             fmt.Printf("LPWAN rcv error\n")
-            RestartReceive()
+			cmdReinit(true)
         }
 
     case CMD_STATE_LPWAN_SNRRPL:
