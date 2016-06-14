@@ -124,79 +124,77 @@ func InboundMain() {
     }
 }
 
-}
-
 func ProcessInbound(buf []byte) []byte  {
 
-length := len(buf)
-begin := 0
-end := 0
+    length := len(buf)
+    begin := 0
+    end := 0
 
-// Loop over the buffer, which could have multiple lines in it
+    // Loop over the buffer, which could have multiple lines in it
 
-for begin<length {
+    for begin<length {
 
-    // Parse out a single line delineated by begin:end
+        // Parse out a single line delineated by begin:end
 
-    for end = begin; end<length; end++ {
+        for end = begin; end<length; end++ {
 
-        // Process the line if it ends in \r\n or \r or \n
+            // Process the line if it ends in \r\n or \r or \n
 
-        if (buf[end] == '\r' || buf[end] == '\n') {
+            if (buf[end] == '\r' || buf[end] == '\n') {
 
-            // Process if non-blank (which it will be on the \n of \r\n)
+                // Process if non-blank (which it will be on the \n of \r\n)
 
-            if (end > begin) {
-                cmdProcess(buf[begin:end])
+                if (end > begin) {
+                    cmdProcess(buf[begin:end])
+                }
+
+                // Skip past this delimeter and look for the next command
+
+                begin = end+1
+                break
+
             }
-
-            // Skip past this delimeter and look for the next command
-
-            begin = end+1
-            break
-
         }
+
+        if (end >= length) {
+            break
+        }
+
     }
 
-    if (end >= length) {
-        break
-    }
+    // Return unprocessed portion of the buffer for next time
 
-}
-
-// Return unprocessed portion of the buffer for next time
-
-return(buf[begin:])
+    return(buf[begin:])
 
 }
 
 func ioSendCommandString(cmd string) {
-ioSendCommand([]byte(cmd))
+    ioSendCommand([]byte(cmd))
 }
 
 func ioSendCommand(cmd []byte) {
 
-fmt.Printf("ioSendCommand(%s)\n", cmd)
+    fmt.Printf("ioSendCommand(%s)\n", cmd)
 
-_, err := serialPort.Write(bytes.Join([][]byte{cmd, []byte("")}, []byte("\r\n")))
-if (err != nil) {
-    fmt.Printf("write err: %d", err)
-}
+    _, err := serialPort.Write(bytes.Join([][]byte{cmd, []byte("")}, []byte("\r\n")))
+    if (err != nil) {
+        fmt.Printf("write err: %d", err)
+    }
 
-fmt.Printf("ioSendCommand(%s) (sent)\n", cmd)
+    fmt.Printf("ioSendCommand(%s) (sent)\n", cmd)
 
 }
 
 func getDeviceID() string {
-ifs, _ := net.Interfaces()
-for _, v := range ifs {
-    h := v.HardwareAddr.String()
-    if len(h) == 0 {
-        continue
+    ifs, _ := net.Interfaces()
+    for _, v := range ifs {
+        h := v.HardwareAddr.String()
+        if len(h) == 0 {
+            continue
+        }
+        return(h)
     }
-    return(h)
-}
-return("");
+    return("");
 }
 
 // eof
