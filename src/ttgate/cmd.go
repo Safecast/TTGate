@@ -56,9 +56,8 @@ func cmdWatchdog1m() {
 	switch (watchdogCount) {
 	case 1:
 	case 2:
-	case 3:		
 	    fmt.Printf("*** Watchdog: Warning!\n")
-	case 4:		
+	case 3:		
 	    fmt.Printf("*** Watchdog: Reinitializing!\n")
 		cmdReinit(true)
 	}
