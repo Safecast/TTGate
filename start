@@ -1,0 +1,14 @@
+#!/bin/bash
+if [[ "$INITSYSTEM" == "on" ]]; then
+	DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host_run/dbus/system_bus_socket npm start
+else
+	npm start
+fi
+
+/go/bin/ttgate
+
+while true
+do
+	echo "App exited but container is still running to allow web terminal access"
+	sleep 3600
+done

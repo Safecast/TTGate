@@ -1,17 +1,40 @@
 FROM resin/raspberrypi-golang
 
-# The app
-ENV PKG ttgate
+RUN apt-get update && apt-get install -y \
+    nodejs \
+	bind9 \
+	bridge-utils \
+	connman \
+	iptables \
+	libdbus-1-dev \
+	libexpat-dev \
+	net-tools \
+	usbutils \
+	wireless-tools \
+	&& rm -rf /var/lib/apt/lists/*
 
-# Enable systemd
-ENV INITSYSTEM on
-
-# Copy all the source code to the place where golang will find it
-COPY ./src $GOPATH/src
-
-# Build all the golang source
-WORKDIR $GOPATH/src/$PKG
+COPY ./src/ttgate $GOPATH/src/ttgate
+WORKDIR $GOPATH/src/ttgate
 RUN go get && go install && go build all
 
-# Tell the container to run the golang program's binary on startup
-CMD ["sh", "-c", "env && $GOPATH/bin/$PKG"]
+RUN systemctl disable connman
+
+COPY ./assets/bind /etc/bind
+
+RUN mkdir -p /usr/src/app/
+WORKDIR /usr/src/app
+
+COPY package.json ./
+RUN JOBS=MAX npm install --unsafe-perm --production && npm cache clean
+
+COPY bower.json .bowerrc ./
+RUN ./node_modules/.bin/bower --allow-root install \
+	&& ./node_modules/.bin/bower --allow-root cache clean
+
+COPY . ./
+RUN ./node_modules/.bin/coffee -c ./src
+RUN chmod +x ./start
+
+VOLUME /var/lib/connman
+
+CMD ./start
