@@ -109,6 +109,13 @@ func ProcessInbound(buf []byte) []byte  {
     begin := 0
     end := 0
 
+	// Skip over leading trash (such as nulls) that we see after a reset
+
+	for begin=0; begin<length; begin++ {
+		if (buf[begin] == '\r' || buf[begin] == '\n' || buf[begin] >= ' ')
+			break;
+	}
+		
     // Loop over the buffer, which could have multiple lines in it
 
     for begin<length {
