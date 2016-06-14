@@ -2,7 +2,7 @@ FROM resin/raspberrypi-golang
 
 RUN apt-get update && apt-get install -y \
     nodejs \
-    build-essential \
+    npm \
     bind9 \
 	bridge-utils \
 	connman \
