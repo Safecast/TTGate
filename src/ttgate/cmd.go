@@ -149,18 +149,22 @@ func cmdProcess(cmd []byte) {
         // command stream.  This may fail, but that is the point.
         ioSendCommandString("sys get ver")
         cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
+		break
 
     case CMD_STATE_LPWAN_GETVERRPL:
         ioSendCommandString("mac pause")
         cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
+		break
 
     case CMD_STATE_LPWAN_MACPAUSERPL:
 		RestartReceive();
+		break
 
     case CMD_STATE_LPWAN_SETWDTRPL:
 	    ioSendCommandString("radio rx 0")
 		cmdBusyReset()
 	    cmdSetState(CMD_STATE_LPWAN_RCVRPL)
+		break
 
     case CMD_STATE_LPWAN_RCVRPL:
         if bytes.HasPrefix(cmd, []byte("ok")) {
@@ -213,6 +217,7 @@ func cmdProcess(cmd []byte) {
             fmt.Printf("LPWAN rcv error\n")
 			cmdReinit()
         }
+		break
 
     case CMD_STATE_LPWAN_SNRRPL:
         {
@@ -225,6 +230,7 @@ func cmdProcess(cmd []byte) {
             // Always restart receive
             RestartReceive()
         }
+		break
 
     case CMD_STATE_LPWAN_TXRPL1:
         if bytes.HasPrefix(cmd, []byte("ok")) {
@@ -240,6 +246,7 @@ func cmdProcess(cmd []byte) {
             fmt.Printf("LPWAN xmt1 error\n")
             RestartReceive()
         }
+		break
 
     case CMD_STATE_LPWAN_TXRPL2:
         if bytes.HasPrefix(cmd, []byte("radio_tx_ok")) {
@@ -251,6 +258,7 @@ func cmdProcess(cmd []byte) {
             fmt.Printf("LPWAN xmt2 error\n")
             RestartReceive()
         }
+		break
 
     }
 
