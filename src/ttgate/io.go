@@ -31,7 +31,8 @@ func ioInit() bool {
 
     speed := 57600
 
-    s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed, ReadTimeout: (time.Second * 60 * 3)})
+//    s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed, ReadTimeout: (time.Second * 60 * 3)})
+    s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed})
     if (err != nil) {
         fmt.Printf("Cannot open %s\n", port)
         return false
@@ -93,12 +94,14 @@ func InboundMain() {
 			    time.Sleep(250 * time.Millisecond)
 			} else {
                 prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
-                if (len(prevbuf) != 0) {
-                    fmt.Printf("serial pending: (%s)\n[", string(prevbuf))
-                    for _, databyte := range prevbuf {
-                        fmt.Printf("%02x", databyte)
-                    }
-                    fmt.Printf("]\n")
+// ** When debugging input stream
+//                if (len(prevbuf) != 0) {
+//                    fmt.Printf("serial pending: (%s)\n[", string(prevbuf))
+//                    for _, databyte := range prevbuf {
+//                        fmt.Printf("%02x", databyte)
+//                    }
+//                    fmt.Printf("]\n")
+// **
                 }
             }
         }
