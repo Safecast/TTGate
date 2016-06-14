@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
 	&& rm -rf /var/lib/apt/lists/*
 
 ENV PKG ttgate
-ENV $GOPATH /go
+ENV GOPATH /go
 
 COPY ./src/ttgate $GOPATH/src/$PKG
 WORKDIR $GOPATH/src/$PKG
