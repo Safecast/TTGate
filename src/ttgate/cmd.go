@@ -112,7 +112,7 @@ func cmdInit() {
 
 	// Init state machine, etc.
 
-	cmdReinit(false)
+	cmdReinit(true)
 	
 }
 
