@@ -19,6 +19,7 @@ import (
 )
 
 var serialPort *serial.Port
+var reinitRequested = false
 
 // Initialize the i/o subsystem
 
@@ -31,7 +32,7 @@ func ioInit() bool {
 
     speed := 57600
 
-    s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed})
+    s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed, ReadTimeout: (time.Second * 60 * 3)})
     if (err != nil) {
         fmt.Printf("Cannot open %s\n", port)
         return false
@@ -79,21 +80,38 @@ func ioInitMicrochip() {
 	
 }
 
+func ioRequestReinit() {
+	reinitRequested = true;
+}
+
 func InboundMain() {
 
+	// Do all initialization and reinitialization in this goroutine
     cmdInit()
 
+	// Loop reading from input, and dispatching to process it if something is received
     var thisbuf = make([]byte, 128)
     var prevbuf []byte = []byte("")
 
     for {
         n, err := serialPort.Read(thisbuf)
         if (err != nil) {
-            if (err != io.EOF) {
+
+			// If EOF, it's because of a timeout with no input
+			if (err == io.EOF) {
+				if reinitRequested {
+					reinitRequested = false;
+					cmdReinit()
+				}
+			} else if (err != io.EOF) {
                 fmt.Printf("serial: read error %v\n", err)
             }
+
         } else {
+
+			// Process the inbound data
             prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
+
         }
     }
 

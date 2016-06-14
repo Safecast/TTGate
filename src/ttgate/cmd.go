@@ -37,7 +37,6 @@ type OutboundCommand struct {
     Command []byte
 }
 
-var initInProgress = false;
 var receivedMessage = false;
 var gotSNR bool = false
 var SNR float64
@@ -58,7 +57,7 @@ func cmdWatchdog1m() {
 	    fmt.Printf("*** Watchdog: Warning!\n")
 	case 3:		
 	    fmt.Printf("*** Watchdog: Reinitializing!\n")
-		cmdReinit()
+		ioRequestReinit()
 	}
 }
 
@@ -67,7 +66,7 @@ func cmdBusy() {
 	// But then, on the second increment, reset the world.
 	busyCount = busyCount + 1
 	if (busyCount > 10) {
-		cmdReinit()
+		ioRequestReinit()
 	}
 }
 
@@ -85,14 +84,6 @@ func cmdGetStats() (received int, sent int) {
 
 func cmdReinit() {
 
-	// Prevent recursion during delays
-
-	if (initInProgress) {
-		return
-	}
-
-	initInProgress = true
-
 	// Reinitialize the Microchip in case it's wedged.
 
 	cmdWatchdogReset()
@@ -107,10 +98,6 @@ func cmdReinit() {
 
     cmdSetState(CMD_STATE_LPWAN_RESETREQ);
     cmdProcess([]byte(""))
-
-	// Done
-
-	initInProgress = false
 
 }
 
@@ -215,7 +202,7 @@ func cmdProcess(cmd []byte) {
             // leave things in a state without a pending receive,
             // we need to just restart it.
             fmt.Printf("LPWAN rcv error\n")
-			cmdReinit()
+			ioRequestReinit()
         }
 		break
 
