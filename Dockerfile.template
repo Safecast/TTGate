@@ -1,4 +1,4 @@
-FROM resin/%%RESIN_MACHINE_NAME%%-node:0.10.40
+FROM resin/%%RESIN_MACHINE_NAME%%-node
 
 ENV VERSION=1.0
 ENV PKG ttgate
