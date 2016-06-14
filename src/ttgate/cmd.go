@@ -55,9 +55,8 @@ func cmdWatchdog1m() {
 	switch (watchdogCount) {
 	case 1:
 	case 2:
-	case 3:		
 	    fmt.Printf("*** Watchdog: Warning!\n")
-	case 4:		
+	case 3:		
 	    fmt.Printf("*** Watchdog: Reinitializing!\n")
 		cmdReinit(true)
 	}
@@ -112,7 +111,7 @@ func cmdInit() {
 
 	// Init state machine, etc.
 
-	cmdReinit(true)
+	cmdReinit(false)
 	
 }
 
@@ -154,11 +153,12 @@ func cmdProcess(cmd []byte) {
         cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
 
     case CMD_STATE_LPWAN_MACPAUSERPL:
-        ioSendCommandString("radio set wdt 32766")
-        cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
+		RestartReceive();
 
     case CMD_STATE_LPWAN_SETWDTRPL:
-		RestartReceive()
+	    ioSendCommandString("radio rx 0")
+		cmdBusyReset()
+	    cmdSetState(CMD_STATE_LPWAN_RCVRPL)
 
     case CMD_STATE_LPWAN_RCVRPL:
         if bytes.HasPrefix(cmd, []byte("ok")) {
@@ -255,9 +255,8 @@ func cmdProcess(cmd []byte) {
 }
 
 func RestartReceive() {
-    ioSendCommandString("radio rx 0")
-	cmdBusyReset()
-    cmdSetState(CMD_STATE_LPWAN_RCVRPL)
+    ioSendCommandString("radio set wdt 60000")
+	cmdSetState(CMD_STATE_LPWAN_SETWDTRPL);
 }
 
 func SentPendingOutbound() bool {
