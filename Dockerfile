@@ -2,7 +2,8 @@ FROM resin/raspberrypi-golang
 
 RUN apt-get update && apt-get install -y \
     nodejs \
-	bind9 \
+    build-essential \
+    bind9 \
 	bridge-utils \
 	connman \
 	iptables \
