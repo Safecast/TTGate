@@ -90,7 +90,8 @@ func cmdReinit(rebootLPWAN bool) {
     // Prevent recursion because we call this from multiple goroutines
 
     if inReinit {
-        return
+	    fmt.Printf("cmdReinit: Aborting nested init\n")
+//        return
 	}
 	
     inReinit = true;
