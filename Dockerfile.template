@@ -1,5 +1,9 @@
 FROM resin/%%RESIN_MACHINE_NAME%%-node:0.10.40
 
+ENV VERSION=1.0
+ENV PKG ttgate
+ENV $GOPATH /go
+
 RUN apt-get update && apt-get install -y \
     golang \
 	bind9 \
@@ -13,10 +17,8 @@ RUN apt-get update && apt-get install -y \
 	wireless-tools \
 	&& rm -rf /var/lib/apt/lists/*
 
-ENV PKG ttgate
-ENV $GOPATH /go
-COPY ./src/ttgate $GOPATH/src/ttgate
-WORKDIR $GOPATH/src/ttgate
+COPY ./src/ttgate $GOPATH/src/$PKG
+WORKDIR $GOPATH/src/$PKG
 RUN go get && go install && go build all
 
 RUN systemctl disable connman
