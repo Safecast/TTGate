@@ -94,15 +94,15 @@ func InboundMain() {
 			    time.Sleep(250 * time.Millisecond)
 			} else {
                 prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
-// ** When debugging input stream
+// ** When debugging how the input stream actually appears on comm channel
 //                if (len(prevbuf) != 0) {
 //                    fmt.Printf("serial pending: (%s)\n[", string(prevbuf))
 //                    for _, databyte := range prevbuf {
 //                        fmt.Printf("%02x", databyte)
 //                    }
 //                    fmt.Printf("]\n")
+//                }
 // **
-                }
             }
         }
     }
