@@ -31,7 +31,7 @@ func ioInit() bool {
 
     speed := 57600
 
-    s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed})
+    s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed, ReadTimeout: (time.Second * 60 * 3)})
     if (err != nil) {
         fmt.Printf("Cannot open %s\n", port)
         return false
