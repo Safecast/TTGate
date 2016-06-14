@@ -92,6 +92,11 @@ func InboundMain() {
             prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
 			if (len(prevbuf) != 0) {
 				fmt.Printf("serial pending: (%v)\n", prevbuf)
+				fmt.Printf("[");
+				for _, databyte := range prevbuf {
+					fmt.Printf("%02x", databyte)
+				}
+				fmt.Printf("]\n")
 			}
         }
     }
