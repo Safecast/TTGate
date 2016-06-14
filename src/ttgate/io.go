@@ -31,7 +31,6 @@ func ioInit() bool {
 
     speed := 57600
 
-//    s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed, ReadTimeout: (time.Second * 60 * 3)})
     s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed})
     if (err != nil) {
         fmt.Printf("Cannot open %s\n", port)
@@ -115,10 +114,10 @@ func ProcessInbound(buf []byte) []byte  {
     begin := 0
     end := 0
 
-    // Skip over leading trash (such as nulls) that we see after a reset
+    // Skip over leading trash (such as nulls) that we see after a reset; this is an ASCII protocol
 
     for begin=0; begin<length; begin++ {
-        if (buf[begin] == '\r' || buf[begin] == '\n' || buf[begin] >= ' ') {
+        if (buf[begin] == '\r' || buf[begin] == '\n' || (buf[begin] >= ' ' && buf[begin] < 0x7f)) {
             break
         }
     }
