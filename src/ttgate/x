@@ -1,4 +1,0 @@
-go build
-git add .
-git commit -m "more bug fixing"
-git push resin master
