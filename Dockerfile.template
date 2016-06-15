@@ -1,6 +1,6 @@
 FROM resin/%%RESIN_MACHINE_NAME%%-node:0.10
 
-ENV DOCKERFILEVERSION 1.1
+ENV DOCKERFILEVERSION 1.2
 
 RUN apt-get update && apt-get install -y \
     golang \
