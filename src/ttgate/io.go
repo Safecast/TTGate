@@ -66,8 +66,8 @@ func ioInitMicrochip() {
 
     // Note that this requires two things to be true:
     // 1) On the back side of the RN2483/RN2903, use solder to close the gap of SJ1, which brings /RESET to Xbee Pin 17
-    // 2) Wire Xbee Pin 17 to the RPi's header Pin 36, which is BCM Pin 16 (http://pinout.xyz/pinout/pin36_gpio16)
-    pin := rpio.Pin(16)
+    // 2) Wire Xbee Pin 17 to the RPi's Pin 18 BCM Pin 24: http://pinout.xyz/pinout/pin18_gpio24
+    pin := rpio.Pin(24)// BCM pin # on Raspberry Pi Pinout
     pin.Output()       // Output mode
     pin.Toggle()       // Toggle pin (Low -> High -> Low)
     rpio.Close()
