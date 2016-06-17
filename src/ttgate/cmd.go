@@ -373,7 +373,7 @@ func cmdProcessReceivedProtobuf(buf []byte) {
 
     str := msg.GetMessage() + " "       // So that the test works with hashtags at the end of the string
 
-    if strings.Contains(str, "#safecast ") {
+    if strings.Contains(str, "#s ") {	// Safecast hashtag
         cmdProcessReceivedSafecastMessage(msg)
     } else {
         fmt.Printf("Received Msg from Device %s: '%s'\n", msg.GetDeviceID(), msg.GetMessage())
