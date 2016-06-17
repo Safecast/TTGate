@@ -141,7 +141,7 @@ func cmdSetState(newState uint16) {
 }
 
 func cmdProcess(cmd []byte) {
-	var cmdstr string = string(cmd)
+    var cmdstr string = string(cmd)
 
     fmt.Printf("cmdProcess(%s) entry state=%v\n", cmdstr, currentState)
 
@@ -164,20 +164,23 @@ func cmdProcess(cmd []byte) {
 
     case CMD_STATE_LPWAN_RESETRPL:
         time.Sleep(4 * time.Second)
-        ioSendCommandString("mac pause")
-        cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
+        // If we're still getting these responses, it's because we're still
+        // flushing the buffer of incoming sys get ver's or sys resets from
+        // previous commands.  In this case, do NOT issue new commands
+        // because we'll just aggravate the situation.  Just flush,
+        // and keep waiting for the expected command.
+        if ((bytes.HasPrefix(cmd, []byte("RN2483"))) || (bytes.HasPrefix(cmd, []byte("RN2903")))) {
+            cmdSetState(CMD_STATE_LPWAN_RESETRPL)
+        } else {
+            ioSendCommandString("mac pause")
+            cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
+        }
 
     case CMD_STATE_LPWAN_MACPAUSERPL:
         time.Sleep(4 * time.Second)
-		i64, err := strconv.ParseInt(cmdstr, 10, 64)
-		if (err != nil || i64 < 100000) {
-	        ioSendCommandString("mac pause")
-	        cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
-		} else {
-	        ioSendCommandString("radio set wdt 60000")
-	        cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
-		}
-			
+        ioSendCommandString("radio set wdt 60000")
+        cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
+
     case CMD_STATE_LPWAN_SETWDTRPL:
         time.Sleep(4 * time.Second)
         RestartReceive()
