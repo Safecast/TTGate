@@ -13,7 +13,6 @@ import (
     "bytes"
     "time"
     "encoding/json"
-    "strings"
     "net/http"
     "github.com/golang/protobuf/proto"
     "github.com/rayozzie/teletype-proto/golang"
@@ -176,16 +175,16 @@ func cmdProcess(cmd []byte) {
         // and keep waiting for the expected command.
         if ((bytes.HasPrefix(cmd, []byte("RN2483"))) || (bytes.HasPrefix(cmd, []byte("RN2903")))) {
             cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
-		} else {
-			i64, err := strconv.ParseInt(cmdstr, 10, 64)
-			if (err != nil || i64 < 100000) {
-	            fmt.Printf("Bad response from mac pause: %s\n", cmdstr)
-	        } else {
-		        ioSendCommandString("radio set wdt 60000")
-		        cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
-			}
-		}
-			
+        } else {
+            i64, err := strconv.ParseInt(cmdstr, 10, 64)
+            if (err != nil || i64 < 100000) {
+                fmt.Printf("Bad response from mac pause: %s\n", cmdstr)
+            } else {
+                ioSendCommandString("radio set wdt 60000")
+                cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
+            }
+        }
+
     case CMD_STATE_LPWAN_SETWDTRPL:
         time.Sleep(4 * time.Second)
         RestartReceive()
@@ -369,14 +368,25 @@ func cmdProcessReceivedProtobuf(buf []byte) {
         return
     }
 
-    // Do special handling based on whether the message contains special hashtags
+	// Do various things baed upon the message type
 
-    str := msg.GetMessage() + " "       // So that the test works with hashtags at the end of the string
+    switch msg.GetDeviceType() {
 
-    if strings.Contains(str, "#s ") {	// Safecast hashtag
+	// Is it something we recognize as being from safecast?
+    case teletype.Telecast_BGEIGIE_NANO:
+        fallthrough
+    case teletype.Telecast_SIMPLECAST:
         cmdProcessReceivedSafecastMessage(msg)
-    } else {
-        fmt.Printf("Received Msg from Device %s: '%s'\n", msg.GetDeviceID(), msg.GetMessage())
+
+	// Display what we got from a non-Safecast device
+    default:
+        if (msg.GetDeviceIDString != nil) {
+            fmt.Printf("Received Msg from Device %s: '%s'\n", msg.GetDeviceIDString(), msg.GetMessage())
+        }
+        if (msg.GetDeviceIDNumber != nil) {
+            fmt.Printf("Received Msg from Device %ul: '%s'\n", msg.GetDeviceIDNumber(), msg.GetMessage())
+        }
+
     }
 
 }
@@ -397,16 +407,23 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     // both for convenience and in case a gateway could potentially pick up multiple
     // source devices.
 
-    var DeviceID, CapturedAt, Unit, Value, Altitude, Latitude, Longitude, BatteryLevel string
+    var rawDeviceID, DeviceID, CapturedAt, Unit, Value, Altitude, Latitude, Longitude, BatteryLevel string
     var hasBatteryLevel bool
 
-    prefix := msg.GetDeviceID() + "_"
+    if (msg.GetDeviceIDString != nil) {
+        rawDeviceID = msg.GetDeviceIDString();
+    } else if (msg.GetDeviceIDNumber != nil) {
+        rawDeviceID = strconv.FormatUint(uint64(msg.GetDeviceIDNumber()), 10);
+    } else {
+        rawDeviceID = "UNKNOWN";
+    }
+    prefix := rawDeviceID + "_"
     DeviceID = os.Getenv(prefix + "ID")
     if (DeviceID == "") {
         DeviceID = os.Getenv("ID")
     }
     if DeviceID == "" {
-        DeviceID = msg.GetDeviceID()
+        DeviceID = rawDeviceID;
     }
 
     if msg.CapturedAt != nil {
@@ -415,12 +432,11 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         CapturedAt = time.Now().Format(time.RFC3339)
     }
 
-    Unit = fmt.Sprintf("%s", msg.GetUnit())
-    if Unit != "CPM" {
-        fmt.Printf("*** error: (Unit) only CPM is acceptable\n")
-        return;
+    if (msg.Unit == nil) {
+        Unit = "cpm"
+    } else {
+        Unit = fmt.Sprintf("%s", msg.GetUnit())
     }
-    Unit = "cpm"
 
     if msg.Value == nil {
         fmt.Printf("*** error: (Value) is required\n")
@@ -516,7 +532,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 
     // We upload 3 records to the safecast service; here's the stuff in common to all
     sc := &SafecastData{}
-    sc.DeviceID = DeviceID
+    sc.DeviceID = rawDeviceID
     sc.CapturedAt = CapturedAt
     sc.Latitude = Latitude
     sc.Longitude = Longitude

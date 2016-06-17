@@ -75,7 +75,7 @@ func heartbeat15m() {
     deviceType := teletype.Telecast_TTGATE
     msg := &teletype.Telecast {}
     msg.DeviceType = &deviceType
-    msg.DeviceID = proto.String(getDeviceID())
+    msg.DeviceIDString = proto.String(getDeviceID())
     msg.Message = proto.String(message)
     data, err := proto.Marshal(msg)
     if err != nil {
