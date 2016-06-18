@@ -206,8 +206,14 @@ func ioWatchdog5s() {
         switch (watchdog5sCount) {
         case 1:
         case 2:
-            fmt.Printf("*** ioWatchdog: Warning!\n")
         case 3:
+        case 4:
+        case 5:
+            fmt.Printf("*** ioWatchdog: Warning!\n")
+        case 6:
+        case 7:
+        case 8:
+        case 9:
             fmt.Printf("*** ioWatchdog: Reinitializing!\n")
             ioWatchdogReset(false);
             cmdReinit(true)
