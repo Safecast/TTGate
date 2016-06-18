@@ -88,9 +88,10 @@ func ioInitMicrochip() {
     pin.Output()       // Output mode
 	pin2.Output()
 	for x:=0; x<10; x++ {
-        time.Sleep(100 * time.Millisecond)
 		pin.Toggle()
+        time.Sleep(100 * time.Millisecond)
 		pin2.Toggle()
+        time.Sleep(100 * time.Millisecond)
 	}
     rpio.Close()
 
