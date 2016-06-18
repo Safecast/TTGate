@@ -216,7 +216,7 @@ func ioWatchdog5s() {
         case 9:
             fmt.Printf("*** ioWatchdog: Reinitializing!\n")
             ioWatchdogReset(false);
-            cmdReinit(true)
+//            cmdReinit(true)
         }
     }
 }
