@@ -380,10 +380,10 @@ func cmdProcessReceivedProtobuf(buf []byte) {
 
 	// Display what we got from a non-Safecast device
     default:
-        if (msg.GetDeviceIDString != nil) {
+        if (msg.DeviceIDString != nil) {
             fmt.Printf("Received Msg from Device %s: '%s'\n", msg.GetDeviceIDString(), msg.GetMessage())
         }
-        if (msg.GetDeviceIDNumber != nil) {
+        if (msg.DeviceIDNumber != nil) {
             fmt.Printf("Received Msg from Device %ul: '%s'\n", msg.GetDeviceIDNumber(), msg.GetMessage())
         }
 
@@ -410,9 +410,9 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     var rawDeviceID, DeviceID, CapturedAt, Unit, Value, Altitude, Latitude, Longitude, BatteryLevel string
     var hasBatteryLevel bool
 
-    if (msg.GetDeviceIDString != nil) {
+    if (msg.DeviceIDString != nil) {
         rawDeviceID = msg.GetDeviceIDString();
-    } else if (msg.GetDeviceIDNumber != nil) {
+    } else if (msg.DeviceIDNumber != nil) {
         rawDeviceID = strconv.FormatUint(uint64(msg.GetDeviceIDNumber()), 10);
     } else {
         rawDeviceID = "UNKNOWN";
