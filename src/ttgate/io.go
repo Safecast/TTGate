@@ -35,6 +35,13 @@ func ioInit() {
         verboseDebug = true;
     }
 
+    if (os.Getenv("GPIOTEST") != "") {
+        for {
+            ioInitMicrochip()
+            time.Sleep(10 * time.Second)
+        }
+    }
+
     port := os.Getenv("SERIAL")
     if (port == "") {
         port = "/dev/ttyS0"
