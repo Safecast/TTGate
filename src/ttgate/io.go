@@ -84,8 +84,14 @@ func ioInitMicrochip() {
     // 1) On the back side of the RN2483/RN2903, use solder to close the gap of SJ1, which brings /RESET to Xbee Pin 17
     // 2) Wire Xbee Pin 17 to the RPi's Pin 18 BCM Pin 24: http://pinout.xyz/pinout/pin18_gpio24
     pin := rpio.Pin(24)// BCM pin # on Raspberry Pi Pinout
+    pin2 := rpio.Pin(10)
     pin.Output()       // Output mode
-    pin.Toggle()       // Toggle pin (Low -> High -> Low)
+	pin2.Output()
+	for x:=0; x<10; x++ {
+        time.Sleep(100 * time.Millisecond)
+		pin.Toggle()
+		pin2.Toggle()
+	}
     rpio.Close()
 
     time.Sleep(5 * time.Second)
@@ -111,7 +117,7 @@ func InboundMain() {
         } else {
             if (n != 0 && n != 128) {
                 if (verboseDebug) {
-                    fmt.Printf("read(%d): \n% 02x\n%s\n%s\n", n, thisbuf[:n], thisbuf[:n])
+                    fmt.Printf("read(%d): '%s'\n% 02x\n", n, thisbuf[:n], thisbuf[:n])
                 }
                 if (discardBufferedReads) {
                     discardBufferedReads = false
