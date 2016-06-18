@@ -31,19 +31,27 @@ func main() {
     s = os.Getenv("DEBUG")      // For verbose debugging info
     debug = s != ""
 
-    // Initialize serial I/O.  We can't very well proceed without
-    // a serial port, and yet it's senseless to exit within
-    // the resin environment.
-
-    for !ioInit() {
-        time.Sleep(5 * time.Second)
-    }
-
-	// Spawn different timer tasks
+	// Spawn various timer tasks
 
     go timer15m()
 	go timer1m()
-	timer5s()
+	go timer5s()
+
+	// Initialize I/O devices
+
+    ioInit()
+
+    // Initialize the command processing and state machine
+
+    cmdInit()
+
+	// Infinitely loop here
+
+    for {
+        time.Sleep(30 * 60 * time.Second)
+        ioWatchdog5s()
+    }
+	
 
 }
 

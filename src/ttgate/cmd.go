@@ -37,6 +37,7 @@ type OutboundCommand struct {
     Command []byte
 }
 
+var cmdInitialized = false;
 var receivedMessage = false;
 var gotSNR bool = false
 var inReinit bool = false;
@@ -49,9 +50,18 @@ var busyCount = 0
 var watchdog1mCount = 0
 
 func cmdWatchdog1m() {
+
+	// Exit if we're not yet initialized
+	
+	if (!cmdInitialized) {
+		return
+	}	
+
     // Ignore the first increment, which could occur at any time 0-59s.
     // But then, on the second increment, reset the world.
+
     watchdog1mCount = watchdog1mCount + 1
+
     switch (watchdog1mCount) {
     case 1:
     case 2:
@@ -60,15 +70,19 @@ func cmdWatchdog1m() {
         fmt.Printf("*** cmdWatchdog: Reinitializing!\n")
         cmdReinit(true)
     }
+
 }
 
 func cmdBusy() {
+
     // Ignore the first increment, which could occur at any time 0-59s.
     // But then, on the second increment, reset the world.
+
     busyCount = busyCount + 1
     if (busyCount > 10) {
         cmdReinit(true)
     }
+
 }
 
 func cmdWatchdogReset() {
@@ -125,6 +139,10 @@ func cmdInit() {
     // Init state machine, etc.
 
     cmdReinit(true)
+
+	// We're now fully initialized
+
+	cmdInitialized = true
 
 }
 

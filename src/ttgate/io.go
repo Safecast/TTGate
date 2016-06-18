@@ -26,7 +26,7 @@ var verboseDebug = false;
 
 // Initialize the i/o subsystem
 
-func ioInit() bool {
+func ioInit() {
 
     verboseDebug = false;
     verbose := os.Getenv("VERBOSE")
@@ -44,26 +44,19 @@ func ioInit() bool {
     s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed})
     if (err != nil) {
         fmt.Printf("Cannot open %s\n", port)
-        return false
+        return
     }
     serialPort = s
 
-    fmt.Printf("Serial I/O Initialized\n")
+    time.Sleep(2 * time.Second)
 
-    // Give the port a real chance of initializing
-    time.Sleep(5 * time.Second)
+    fmt.Printf("Serial I/O Initialized\n")
 
     // Reset the watchdog timer
     ioWatchdogReset(false)
 
-    // Initialize the command processing and state machine
-    cmdInit()
-
     // Process receives on a different thread because I/O is synchronous
     go InboundMain()
-
-    // Success
-    return true
 
 }
 
