@@ -92,11 +92,11 @@ func ioInitMicrochip() {
 
     pin.Toggle()
     time.Sleep(100 * time.Millisecond)
-    pin2.Toggle()
+    pin.Toggle()
     time.Sleep(100 * time.Millisecond)
     pin.Toggle()
     time.Sleep(100 * time.Millisecond)
-    pin2.Toggle()
+    pin.Toggle()
 
     time.Sleep(5 * time.Second)
     fmt.Printf("ioInitMicrochip: ...completed\n");
