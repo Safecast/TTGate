@@ -23,6 +23,7 @@ var serialPort *serial.Port
 var watchdog5s = false
 var watchdog5sCount = 0
 var verboseDebug = false;
+var discardBufferedReads = false;
 
 // Initialize the i/o subsystem
 
@@ -62,6 +63,8 @@ func ioInit() {
 
 func ioInitMicrochip() {
 
+    discardBufferedReads = true;
+
     err := rpio.Open()
     if (err != nil) {
         fmt.Printf("ioInitMicrochip: err %v\n", err)
@@ -89,10 +92,10 @@ func InboundMain() {
     var prevbuf []byte = []byte("")
 
     for {
-		// We sleep before every read just to give the serial package a chance to accumulate
-		// a buffer of characters rather than thrashing on every byte becoming ready.
+        // We sleep before every read just to give the serial package a chance to accumulate
+        // a buffer of characters rather than thrashing on every byte becoming ready.
         time.Sleep(100 * time.Millisecond)
-		// read
+        // read
         n, err := serialPort.Read(thisbuf)
         if (err != nil) {
             if (err != io.EOF) {
@@ -101,9 +104,14 @@ func InboundMain() {
         } else {
             if (n != 0 && n != 128) {
                 if (verboseDebug) {
-                    fmt.Printf("read(%d): \n% 02x\n%s\n%s\n", n, thisbuf[:n], thisbuf[:n], append(prevbuf[:], thisbuf[:n]...))
+                    fmt.Printf("read(%d): \n% 02x\n%s\n%s\n", n, thisbuf[:n], thisbuf[:n])
                 }
-                prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
+                if (discardBufferedReads) {
+                    discardBufferedReads = false
+                    ProcessInbound(thisbuf[:n])
+                } else {
+                    prevbuf = ProcessInbound(append(prevbuf[:], thisbuf[:n]...))
+                }
             }
         }
     }
@@ -216,7 +224,7 @@ func ioWatchdog5s() {
         case 9:
             fmt.Printf("*** ioWatchdog: Reinitializing!\n")
             ioWatchdogReset(false);
-//            cmdReinit(true)
+            //            cmdReinit(true)
         }
     }
 }
