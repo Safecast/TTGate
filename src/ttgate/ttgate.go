@@ -49,7 +49,7 @@ func main() {
 
 func timer5s() {
     for {
-        time.Sleep(1 * 5 * time.Second)
+        time.Sleep(5 * time.Second)
         ioWatchdog5s()
     }
 }

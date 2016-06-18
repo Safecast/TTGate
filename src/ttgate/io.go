@@ -19,6 +19,7 @@ import (
 )
 
 var serialPort *serial.Port
+
 var watchdog5s = false
 var watchdog5sCount = 0
 var verboseDebug = false;
@@ -27,7 +28,7 @@ var verboseDebug = false;
 
 func ioInit() bool {
 
-	verboseDebug = false;
+    verboseDebug = false;
     verbose := os.Getenv("VERBOSE")
     if (verbose != "") {
         verboseDebug = true;
@@ -52,9 +53,9 @@ func ioInit() bool {
     // Give the port a real chance of initializing
     time.Sleep(5 * time.Second)
 
-	// Reset the watchdog timer
-	ioWatchdogReset(false)
-	
+    // Reset the watchdog timer
+    ioWatchdogReset(false)
+
     // Initialize the command processing and state machine
     cmdInit()
 
@@ -149,7 +150,7 @@ func ProcessInbound(buf []byte) []byte  {
                 // Process if non-blank (which it will be on the \n of \r\n)
 
                 if (end > begin) {
-					watchdog5s = false;
+                    watchdog5s = false;
                     cmdProcess(buf[begin:end])
                 }
 
@@ -169,10 +170,10 @@ func ProcessInbound(buf []byte) []byte  {
 
     // Return unprocessed portion of the buffer for next time
 
-	if (verboseDebug && watchdog5s) {
-		fmt.Printf("Unprocessed: '%s'\n", buf[begin:])
-	}
-	
+    if (verboseDebug && watchdog5s) {
+        fmt.Printf("Unprocessed: '%s' -> '%s'\n", buf, buf[begin:])
+    }
+
     return(buf[begin:])
 
 }
@@ -202,6 +203,15 @@ func ioWatchdogReset(fEnable bool) {
 func ioWatchdog5s() {
     // Ignore the first increment, which could occur at any time in the first interval.
     // But then, on the second increment, reset the world.
+
+    if (verboseDebug) {
+        if (watchdog5s) {
+            fmt.Printf("ioWatchdog5s() %d\n", watchdog5sCount);
+        } else {
+            fmt.Printf("ioWatchdog5s() idle\n");
+        }
+    }
+
     if (watchdog5s) {
         watchdog5sCount = watchdog5sCount + 1
         switch (watchdog5sCount) {
@@ -210,7 +220,7 @@ func ioWatchdog5s() {
             fmt.Printf("*** ioWatchdog: Warning!\n")
         case 3:
             fmt.Printf("*** ioWatchdog: Reinitializing!\n")
-			ioWatchdogReset(false);
+            ioWatchdogReset(false);
             cmdReinit(true)
         }
     }
