@@ -98,18 +98,11 @@ func InboundMain() {
             if (n == 0) {
                 time.Sleep(250 * time.Millisecond)
             } else {
-			    if (verboseDebug) {
-			        fmt.Printf("Received(%d): '%s' == '%s'\n", n, thisbuf, thisbuf[:n])
-				}
+                if (verboseDebug) {
+                    fmt.Printf("read(%d): \n% 02x\n%s\n%s\n", n, thisbuf[:n], thisbuf[:n], append(prevbuf[:], thisbuf[:n]...))
+                }
                 prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
                 // ** When debugging how the input stream actually appears on comm channel
-                //                if (len(prevbuf) != 0) {
-                //                    fmt.Printf("serial pending: (%s)\n[", string(prevbuf))
-                //                    for _, databyte := range prevbuf {
-                //                        fmt.Printf("%02x", databyte)
-                //                    }
-                //                    fmt.Printf("]\n")
-                //                }
                 // **
             }
         }
