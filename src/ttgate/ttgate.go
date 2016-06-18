@@ -42,14 +42,21 @@ func main() {
 	// Spawn different timer tasks
 
     go timer15m()
-	timer1m()
+	go timer1m()
+	timer5s()
 
+}
+
+func timer5s() {
+    for {
+        time.Sleep(1 * 5 * time.Second)
+        ioWatchdog5s()
+    }
 }
 
 func timer1m() {
     for {
         time.Sleep(1 * 60 * time.Second)
-		// Watch to see if we are getting stuck in any given state for 1-2m
         cmdWatchdog1m()
     }
 }
@@ -57,7 +64,6 @@ func timer1m() {
 func timer15m() {
     for {
         time.Sleep(15 * 60 * time.Second)
-		// Send a heartbeat to clients
         heartbeat15m()
     }
 }

@@ -19,10 +19,19 @@ import (
 )
 
 var serialPort *serial.Port
+var watchdog5s = false
+var watchdog5sCount = 0
+var verboseDebug = false;
 
 // Initialize the i/o subsystem
 
 func ioInit() bool {
+
+	verboseDebug = false;
+    verbose := os.Getenv("VERBOSE")
+    if (verbose != "") {
+        verboseDebug = true;
+    }
 
     port := os.Getenv("SERIAL")
     if (port == "") {
@@ -43,6 +52,9 @@ func ioInit() bool {
     // Give the port a real chance of initializing
     time.Sleep(5 * time.Second)
 
+	// Reset the watchdog timer
+	ioWatchdogReset(false)
+	
     // Initialize the command processing and state machine
     cmdInit()
 
@@ -90,18 +102,18 @@ func InboundMain() {
             }
         } else {
             if (n == 0) {
-			    time.Sleep(250 * time.Millisecond)
-			} else {
+                time.Sleep(250 * time.Millisecond)
+            } else {
                 prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
-// ** When debugging how the input stream actually appears on comm channel
-//                if (len(prevbuf) != 0) {
-//                    fmt.Printf("serial pending: (%s)\n[", string(prevbuf))
-//                    for _, databyte := range prevbuf {
-//                        fmt.Printf("%02x", databyte)
-//                    }
-//                    fmt.Printf("]\n")
-//                }
-// **
+                // ** When debugging how the input stream actually appears on comm channel
+                //                if (len(prevbuf) != 0) {
+                //                    fmt.Printf("serial pending: (%s)\n[", string(prevbuf))
+                //                    for _, databyte := range prevbuf {
+                //                        fmt.Printf("%02x", databyte)
+                //                    }
+                //                    fmt.Printf("]\n")
+                //                }
+                // **
             }
         }
     }
@@ -137,6 +149,7 @@ func ProcessInbound(buf []byte) []byte  {
                 // Process if non-blank (which it will be on the \n of \r\n)
 
                 if (end > begin) {
+					watchdog5s = false;
                     cmdProcess(buf[begin:end])
                 }
 
@@ -156,6 +169,10 @@ func ProcessInbound(buf []byte) []byte  {
 
     // Return unprocessed portion of the buffer for next time
 
+	if (verboseDebug && watchdog5s) {
+		fmt.Printf("Unprocessed: '%s'\n", buf[begin:])
+	}
+	
     return(buf[begin:])
 
 }
@@ -173,6 +190,29 @@ func ioSendCommand(cmd []byte) {
         fmt.Printf("write err: %d", err)
     }
 
+    ioWatchdogReset(true)
+
+}
+
+func ioWatchdogReset(fEnable bool) {
+    watchdog5s = fEnable
+    watchdog5sCount = 0
+}
+
+func ioWatchdog5s() {
+    // Ignore the first increment, which could occur at any time in the first interval.
+    // But then, on the second increment, reset the world.
+    if (watchdog5s) {
+        watchdog5sCount = watchdog5sCount + 1
+        switch (watchdog5sCount) {
+        case 1:
+        case 2:
+            fmt.Printf("*** ioWatchdog: Warning!\n")
+        case 3:
+            fmt.Printf("*** ioWatchdog: Reinitializing!\n")
+            cmdReinit(true)
+        }
+    }
 }
 
 func getDeviceID() string {

@@ -45,19 +45,19 @@ var outboundQueue chan OutboundCommand
 var currentState uint16
 var totalMessagesReceived int = 0
 var totalMessagesSent int = 0
-var watchdogCount = 0
 var busyCount = 0
+var watchdog1mCount = 0
 
 func cmdWatchdog1m() {
     // Ignore the first increment, which could occur at any time 0-59s.
     // But then, on the second increment, reset the world.
-    watchdogCount = watchdogCount + 1
-    switch (watchdogCount) {
+    watchdog1mCount = watchdog1mCount + 1
+    switch (watchdog1mCount) {
     case 1:
     case 2:
-        fmt.Printf("*** Watchdog: Warning!\n")
+        fmt.Printf("*** cmdWatchdog: Warning!\n")
     case 3:
-        fmt.Printf("*** Watchdog: Reinitializing!\n")
+        fmt.Printf("*** cmdWatchdog: Reinitializing!\n")
         cmdReinit(true)
     }
 }
@@ -72,7 +72,7 @@ func cmdBusy() {
 }
 
 func cmdWatchdogReset() {
-    watchdogCount = 0
+    watchdog1mCount = 0
 }
 
 func cmdBusyReset() {
@@ -384,7 +384,7 @@ func cmdProcessReceivedProtobuf(buf []byte) {
             fmt.Printf("Received Msg from Device %s: '%s'\n", msg.GetDeviceIDString(), msg.GetMessage())
         }
         if (msg.DeviceIDNumber != nil) {
-            fmt.Printf("Received Msg from Device %u: '%s'\n", msg.GetDeviceIDNumber(), msg.GetMessage())
+            fmt.Printf("Received Msg from Device %d: '%s'\n", msg.GetDeviceIDNumber(), msg.GetMessage())
         }
 
     }
