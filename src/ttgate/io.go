@@ -99,13 +99,11 @@ func InboundMain() {
                 fmt.Printf("serial: read error %v\n", err)
             }
         } else {
-            if (n != 0) {
+            if (n != 0 && n != 128) {
                 if (verboseDebug) {
                     fmt.Printf("read(%d): \n% 02x\n%s\n%s\n", n, thisbuf[:n], thisbuf[:n], append(prevbuf[:], thisbuf[:n]...))
                 }
                 prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
-                // ** When debugging how the input stream actually appears on comm channel
-                // **
             }
         }
     }
