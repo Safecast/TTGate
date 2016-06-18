@@ -19,6 +19,7 @@ import (
 )
 
 var serialPort *serial.Port
+var rpioIsOpen = false
 
 var watchdog5s = false
 var watchdog5sCount = 0
@@ -72,10 +73,13 @@ func ioInitMicrochip() {
 
     discardBufferedReads = true;
 
-    err := rpio.Open()
-    if (err != nil) {
-        fmt.Printf("ioInitMicrochip: err %v\n", err)
-        return;
+    if (!rpioIsOpen) {
+        err := rpio.Open()
+        if (err != nil) {
+            fmt.Printf("ioInitMicrochip: err %v\n", err)
+            return;
+        }
+		rpioIsOpen = true
     }
 
     fmt.Printf("ioInitMicrochip: Hardware reset...\n")
@@ -86,14 +90,13 @@ func ioInitMicrochip() {
     pin := rpio.Pin(24)// BCM pin # on Raspberry Pi Pinout
     pin2 := rpio.Pin(10)
     pin.Output()       // Output mode
-	pin2.Output()
-	for x:=0; x<10; x++ {
-		pin.Toggle()
+    pin2.Output()
+    for x:=0; x<10; x++ {
+        pin.Toggle()
         time.Sleep(100 * time.Millisecond)
-		pin2.Toggle()
+        pin2.Toggle()
         time.Sleep(100 * time.Millisecond)
-	}
-    rpio.Close()
+    }
 
     time.Sleep(5 * time.Second)
     fmt.Printf("ioInitMicrochip: ...completed\n");
