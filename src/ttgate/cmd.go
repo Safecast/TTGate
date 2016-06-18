@@ -384,7 +384,7 @@ func cmdProcessReceivedProtobuf(buf []byte) {
             fmt.Printf("Received Msg from Device %s: '%s'\n", msg.GetDeviceIDString(), msg.GetMessage())
         }
         if (msg.DeviceIDNumber != nil) {
-            fmt.Printf("Received Msg from Device %ul: '%s'\n", msg.GetDeviceIDNumber(), msg.GetMessage())
+            fmt.Printf("Received Msg from Device %u: '%s'\n", msg.GetDeviceIDNumber(), msg.GetMessage())
         }
 
     }
