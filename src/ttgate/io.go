@@ -99,7 +99,7 @@ func InboundMain() {
                 fmt.Printf("serial: read error %v\n", err)
             }
         } else {
-            if (n) {
+            if (n != 0) {
                 if (verboseDebug) {
                     fmt.Printf("read(%d): \n% 02x\n%s\n%s\n", n, thisbuf[:n], thisbuf[:n], append(prevbuf[:], thisbuf[:n]...))
                 }
