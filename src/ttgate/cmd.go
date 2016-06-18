@@ -521,14 +521,14 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     }
 
     if msg.BatterySOC != nil {
-        BatterySOC = fmt.Sprintf("%.1f", msg.GetBatterySOC())
+        BatterySOC = fmt.Sprintf("%.2f", msg.GetBatterySOC())
         hasBatterySOC = true
     } else {
         hasBatterySOC = false;
     }
 
     if msg.BatteryVoltage != nil {
-        BatteryVoltage = fmt.Sprintf("%.1f", msg.GetBatteryVoltage())
+        BatteryVoltage = fmt.Sprintf("%.2f", msg.GetBatteryVoltage())
         hasBatteryVoltage = true
     } else {
         hasBatteryVoltage = false;
