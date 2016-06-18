@@ -89,15 +89,17 @@ func InboundMain() {
     var prevbuf []byte = []byte("")
 
     for {
+		// We sleep before every read just to give the serial package a chance to accumulate
+		// a buffer of characters rather than thrashing on every byte becoming ready.
+        time.Sleep(100 * time.Millisecond)
+		// read
         n, err := serialPort.Read(thisbuf)
         if (err != nil) {
             if (err != io.EOF) {
                 fmt.Printf("serial: read error %v\n", err)
             }
         } else {
-            if (n == 0) {
-                time.Sleep(250 * time.Millisecond)
-            } else {
+            if (n) {
                 if (verboseDebug) {
                     fmt.Printf("read(%d): \n% 02x\n%s\n%s\n", n, thisbuf[:n], thisbuf[:n], append(prevbuf[:], thisbuf[:n]...))
                 }
