@@ -100,6 +100,7 @@ func InboundMain() {
             } else {
 			    if (verboseDebug) {
 			        fmt.Printf("Received: '%s' == '%s'\n", thisbuf, thisbuf[:n])
+				}
                 prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
                 // ** When debugging how the input stream actually appears on comm channel
                 //                if (len(prevbuf) != 0) {
