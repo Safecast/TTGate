@@ -51,11 +51,11 @@ var watchdog1mCount = 0
 
 func cmdWatchdog1m() {
 
-	// Exit if we're not yet initialized
-	
-	if (!cmdInitialized) {
-		return
-	}	
+    // Exit if we're not yet initialized
+
+    if (!cmdInitialized || inReinit) {
+        return
+    }
 
     // Ignore the first increment, which could occur at any time 0-59s.
     // But then, on the second increment, reset the world.
@@ -122,7 +122,7 @@ func cmdReinit(rebootLPWAN bool) {
     // Initialize the state machine and kick off a device reset
 
     cmdSetState(CMD_STATE_LPWAN_RESETREQ);
-    cmdProcess([]byte(""))
+    cmdProcess(nil)
 
     // Done
 
@@ -140,9 +140,9 @@ func cmdInit() {
 
     cmdReinit(true)
 
-	// We're now fully initialized
+    // We're now fully initialized
 
-	cmdInitialized = true
+    cmdInitialized = true
 
 }
 
@@ -158,7 +158,27 @@ func cmdSetState(newState uint16) {
 }
 
 func cmdProcess(cmd []byte) {
-    var cmdstr string = string(cmd)
+    var cmdstr string
+
+    // Special case of the very first init, which is called from outside the inbound task
+
+    if (cmd == nil) {
+
+        cmd = []byte("")
+
+    } else {
+
+        // This is a special, necessary delay because we DO get called here from
+        // the inbound task even in the middle of initialization, and we're simply
+        // not prepared to deal with it yet.
+
+        for (!cmdInitialized || inReinit) {
+            time.Sleep(1 * time.Second)
+        }
+
+    }
+
+    cmdstr = string(cmd)
 
     fmt.Printf("cmdProcess(%s) entry state=%v\n", cmdstr, currentState)
 
@@ -386,17 +406,17 @@ func cmdProcessReceivedProtobuf(buf []byte) {
         return
     }
 
-	// Do various things baed upon the message type
+    // Do various things baed upon the message type
 
     switch msg.GetDeviceType() {
 
-	// Is it something we recognize as being from safecast?
+        // Is it something we recognize as being from safecast?
     case teletype.Telecast_BGEIGIE_NANO:
         fallthrough
     case teletype.Telecast_SIMPLECAST:
         cmdProcessReceivedSafecastMessage(msg)
 
-	// Display what we got from a non-Safecast device
+        // Display what we got from a non-Safecast device
     default:
         if (msg.DeviceIDString != nil) {
             fmt.Printf("Received Msg from Device %s: '%s'\n", msg.GetDeviceIDString(), msg.GetMessage())
@@ -425,8 +445,8 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     // both for convenience and in case a gateway could potentially pick up multiple
     // source devices.
 
-    var rawDeviceID, DeviceID, CapturedAt, Unit, Value, Altitude, Latitude, Longitude, BatteryLevel string
-    var hasBatteryLevel bool
+    var rawDeviceID, DeviceID, CapturedAt, Unit, Value, Altitude, Latitude, Longitude, BatteryVoltage, BatterySOC string
+    var hasBatteryVoltage, hasBatterySOC bool
 
     if (msg.DeviceIDString != nil) {
         rawDeviceID = msg.GetDeviceIDString();
@@ -500,11 +520,18 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         }
     }
 
-    if msg.BatteryLevel != nil {
-        BatteryLevel = fmt.Sprintf("%.1f", msg.GetBatteryLevel())
-        hasBatteryLevel = true
+    if msg.BatterySOC != nil {
+        BatterySOC = fmt.Sprintf("%.1f", msg.GetBatterySOC())
+        hasBatterySOC = true
     } else {
-        hasBatteryLevel = false;
+        hasBatterySOC = false;
+    }
+
+    if msg.BatteryVoltage != nil {
+        BatteryVoltage = fmt.Sprintf("%.1f", msg.GetBatteryVoltage())
+        hasBatteryVoltage = true
+    } else {
+        hasBatteryVoltage = false;
     }
 
     // Get upload parameters
@@ -544,7 +571,8 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         Value        string `json:"value,omitempty"`         // 36
         Latitude     string `json:"latitude,omitempty"`      // 37.0105
         Longitude    string `json:"longitude,omitempty"`     // 140.9253
-        BatteryLevel string `json:"battery_level,omitempty"` // 0%-100%
+        BatVoltage   string `json:"bat_voltage,omitempty"`   // 0-N volts
+        BatSOC       string `json:"bat_soc,omitempty"`       // 0%-100%
         WirelessSNR  string `json:"wireless_snr,omitempty"`  // -127db to +127db
     }
 
@@ -560,8 +588,11 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     sc1 := sc
     sc1.Unit = Unit
     sc1.Value = Value
-    if (hasBatteryLevel) {
-        sc1.BatteryLevel = BatteryLevel
+    if (hasBatteryVoltage) {
+        sc1.BatVoltage = BatteryVoltage
+    }
+    if (hasBatterySOC) {
+        sc1.BatSOC = BatterySOC
     }
     if (gotSNR) {
         fstr := fmt.Sprintf("%.1f", SNR)
@@ -584,12 +615,12 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         fmt.Printf("Success!\n")
     }
 
-    // The second upload has battery level
-    if (hasBatteryLevel) {
+    // The next upload has battery voltage
+    if (hasBatteryVoltage) {
         // Prepare the data
         sc2 := sc
-        sc2.Unit = "battery_level"
-        sc2.Value = sc1.BatteryLevel
+        sc2.Unit = "bat_voltage"
+        sc2.Value = sc1.BatVoltage
         // Do the upload
         scJSON, _ = json.Marshal(sc2)
         req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
@@ -598,20 +629,40 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         httpclient = &http.Client{}
         resp, err = httpclient.Do(req)
         if err != nil {
-            fmt.Printf("*** Error uploading battery_level to Safecast %s\n\n", err)
+            fmt.Printf("*** Error uploading bat_voltage to Safecast %s\n\n", err)
         } else {
             resp.Body.Close()
         }
     }
 
-    // The third upload has SNR
-    if (gotSNR) {
+    // The next upload has battery SOC
+    if (hasBatterySOC) {
         // Prepare the data
         sc3 := sc
-        sc3.Unit = "wireless_snr"
-        sc3.Value = sc1.WirelessSNR
+        sc3.Unit = "bat_SOC"
+        sc3.Value = sc1.BatSOC
         // Do the upload
         scJSON, _ = json.Marshal(sc3)
+        req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
+        req.Header.Set("User-Agent", "TTGATE")
+        req.Header.Set("Content-Type", "application/json")
+        httpclient = &http.Client{}
+        resp, err = httpclient.Do(req)
+        if err != nil {
+            fmt.Printf("*** Error uploading bat_voltage to Safecast %s\n\n", err)
+        } else {
+            resp.Body.Close()
+        }
+    }
+
+    // The next upload has SNR
+    if (gotSNR) {
+        // Prepare the data
+        sc4 := sc
+        sc4.Unit = "wireless_snr"
+        sc4.Value = sc1.WirelessSNR
+        // Do the upload
+        scJSON, _ = json.Marshal(sc4)
         req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
         req.Header.Set("User-Agent", "TTGATE")
         req.Header.Set("Content-Type", "application/json")

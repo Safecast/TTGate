@@ -78,7 +78,7 @@ func ioInitMicrochip() {
     pin.Toggle()       // Toggle pin (Low -> High -> Low)
     rpio.Close()
 
-    time.Sleep(10 * time.Second)
+    time.Sleep(5 * time.Second)
     fmt.Printf("ioInitMicrochip: ...completed\n");
 
 }
@@ -99,7 +99,7 @@ func InboundMain() {
                 time.Sleep(250 * time.Millisecond)
             } else {
 			    if (verboseDebug) {
-			        fmt.Printf("Received: '%s' == '%s'\n", thisbuf, thisbuf[:n])
+			        fmt.Printf("Received(%d): '%s' == '%s'\n", n, thisbuf, thisbuf[:n])
 				}
                 prevbuf = ProcessInbound(bytes.Join([][]byte{prevbuf, thisbuf[:n]}, []byte("")))
                 // ** When debugging how the input stream actually appears on comm channel
