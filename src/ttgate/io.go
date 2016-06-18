@@ -71,8 +71,13 @@ func ioInit() {
 
 func ioInitMicrochip() {
 
+	// The inbound task buffers stuff until it gets a newline.
+	// If we've got stuff that's buffered, cause that goroutine to discard it.
+	
     discardBufferedReads = true;
 
+	// Leave the GPIO open for the entire duration
+	
     if (!rpioIsOpen) {
         err := rpio.Open()
         if (err != nil) {
@@ -82,23 +87,19 @@ func ioInitMicrochip() {
         rpioIsOpen = true
     }
 
-    fmt.Printf("ioInitMicrochip: Hardware reset...\n")
-
     // Note that this requires two things to be true:
     // 1) On the back side of the RN2483/RN2903, use solder to close the gap of SJ1, which brings /RESET to Xbee Pin 17
     // 2) Wire Xbee Pin 17 to the RPi's Pin 18 BCM Pin 24: http://pinout.xyz/pinout/pin18_gpio24
+
+    fmt.Printf("ioInitMicrochip: Hardware reset...\n")
+
     pin := rpio.Pin(24)// BCM pin # on Raspberry Pi Pinout
-    pin.Output()       // Output mode
-
-    pin.Toggle()
-    time.Sleep(100 * time.Millisecond)
-    pin.Toggle()
-    time.Sleep(100 * time.Millisecond)
-    pin.Toggle()
-    time.Sleep(100 * time.Millisecond)
-    pin.Toggle()
-
+    pin.Output() 
+    pin.Low()
+    time.Sleep(250 * time.Millisecond)
+    pin.High()
     time.Sleep(5 * time.Second)
+
     fmt.Printf("ioInitMicrochip: ...completed\n");
 
 }
@@ -233,15 +234,8 @@ func ioWatchdog5s() {
         case 2:
         case 3:
         case 4:
-        case 5:
-            fmt.Printf("*** ioWatchdog: Warning!\n")
-        case 6:
-        case 7:
-        case 8:
-        case 9:
-            fmt.Printf("*** ioWatchdog: Reinitializing!\n")
-            ioWatchdogReset(false);
-            //            cmdReinit(true)
+		default:
+            fmt.Printf("*** ioWatchdog: no cmd reply!\n")
         }
     }
 }
