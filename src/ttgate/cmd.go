@@ -639,7 +639,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     if (hasBatterySOC) {
         // Prepare the data
         sc3 := sc
-        sc3.Unit = "bat_SOC"
+        sc3.Unit = "bat_soc"
         sc3.Value = sc1.BatSOC
         // Do the upload
         scJSON, _ = json.Marshal(sc3)
