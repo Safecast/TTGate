@@ -20,6 +20,7 @@ import (
 
 var serialPort *serial.Port
 var rpioIsOpen = false
+var disableHardwareReset = false
 
 var watchdog5s = false
 var watchdog5sCount = 0
@@ -41,6 +42,10 @@ func ioInit() {
             ioInitMicrochip()
             time.Sleep(10 * time.Second)
         }
+    }
+
+    if (os.Getenv("DISABLERESET") != "") {
+		disableHardwareReset = true
     }
 
     port := os.Getenv("SERIAL")
@@ -76,6 +81,12 @@ func ioInitMicrochip() {
 	
     discardBufferedReads = true;
 
+	// Exit if disabling hardware resets
+
+	if disableHardwareReset {
+		return
+	}
+	
 	// Leave the GPIO open for the entire duration
 	
     if (!rpioIsOpen) {
