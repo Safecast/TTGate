@@ -528,7 +528,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     }
 
     if msg.BatteryVoltage != nil {
-        BatteryVoltage = fmt.Sprintf("%.2f", msg.GetBatteryVoltage())
+        BatteryVoltage = fmt.Sprintf("%.4f", msg.GetBatteryVoltage())
         hasBatteryVoltage = true
     } else {
         hasBatteryVoltage = false;
