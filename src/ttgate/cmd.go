@@ -445,8 +445,8 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     // both for convenience and in case a gateway could potentially pick up multiple
     // source devices.
 
-    var rawDeviceID, DeviceID, CapturedAt, Unit, Value, Altitude, Latitude, Longitude, BatteryVoltage, BatterySOC string
-    var hasBatteryVoltage, hasBatterySOC bool
+    var rawDeviceID, DeviceID, CapturedAt, Unit, Value, Altitude, Latitude, Longitude, BatteryVoltage, BatterySOC, envTemp, envHumid string
+    var hasBatteryVoltage, hasBatterySOC, hasTemp, hasHumid bool
 
     if (msg.DeviceIDString != nil) {
         rawDeviceID = msg.GetDeviceIDString();
@@ -534,6 +534,20 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         hasBatteryVoltage = false;
     }
 
+    if msg.EnvTemperature != nil {
+        envTemp = fmt.Sprintf("%.2f", msg.GetEnvTemperature())
+        hasTemp = true
+    } else {
+        hasTemp = false;
+    }
+
+    if msg.EnvHumidity != nil {
+        envHumid = fmt.Sprintf("%.2f", msg.GetEnvHumidity())
+        hasHumid = true
+    } else {
+        hasHumid = false;
+    }
+
     // Get upload parameters
 
     URL := os.Getenv(prefix + "URL")
@@ -574,6 +588,8 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         BatVoltage   string `json:"bat_voltage,omitempty"`   // 0-N volts
         BatSOC       string `json:"bat_soc,omitempty"`       // 0%-100%
         WirelessSNR  string `json:"wireless_snr,omitempty"`  // -127db to +127db
+        envTemp		 string `json:"env_temp,omitempty"`		 // Degrees centigrade
+        envHumid     string `json:"env_humid,omitempty"`     // Percent RH
     }
 
     // We upload 3 records to the safecast service; here's the stuff in common to all
@@ -597,6 +613,12 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     if (gotSNR) {
         fstr := fmt.Sprintf("%.1f", SNR)
         sc1.WirelessSNR = fstr
+    }
+    if (hasTemp) {
+        sc1.envTemp = envTemp
+    }
+    if (hasHumid) {
+        sc1.envHumid = envHumid
     }
 
     scJSON, _ := json.Marshal(sc1)
@@ -670,6 +692,46 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         resp, err = httpclient.Do(req)
         if err != nil {
             fmt.Printf("*** Error uploading SNR to Safecast %s\n\n", err)
+        } else {
+            resp.Body.Close()
+        }
+    }
+
+    // The next upload has temp
+    if (hasTemp) {
+        // Prepare the data
+        sc5 := sc
+        sc5.Unit = "env_temp"
+        sc5.Value = sc1.envTemp
+        // Do the upload
+        scJSON, _ = json.Marshal(sc5)
+        req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
+        req.Header.Set("User-Agent", "TTGATE")
+        req.Header.Set("Content-Type", "application/json")
+        httpclient = &http.Client{}
+        resp, err = httpclient.Do(req)
+        if err != nil {
+            fmt.Printf("*** Error uploading Temp to Safecast %s\n\n", err)
+        } else {
+            resp.Body.Close()
+        }
+    }
+
+    // The next upload has humidity
+    if (hasHumid) {
+        // Prepare the data
+        sc6 := sc
+        sc6.Unit = "env_humid"
+        sc6.Value = sc1.envHumid
+        // Do the upload
+        scJSON, _ = json.Marshal(sc6)
+        req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
+        req.Header.Set("User-Agent", "TTGATE")
+        req.Header.Set("Content-Type", "application/json")
+        httpclient = &http.Client{}
+        resp, err = httpclient.Do(req)
+        if err != nil {
+            fmt.Printf("*** Error uploading Humidity to Safecast %s\n\n", err)
         } else {
             resp.Body.Close()
         }
