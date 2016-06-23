@@ -48,8 +48,8 @@ func main() {
 	// Infinitely loop here
 
     for {
-        time.Sleep(30 * 60 * time.Second)
-        ioWatchdog5s()
+        time.Sleep(30 * time.Second)
+        ioWatchdog()
     }
 	
 

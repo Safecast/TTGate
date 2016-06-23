@@ -22,8 +22,8 @@ var serialPort *serial.Port
 var rpioIsOpen = false
 var disableHardwareReset = false
 
-var watchdog5s = false
-var watchdog5sCount = 0
+var watchdogTick = false
+var watchdogTickCount = 0
 var verboseDebug = false;
 var discardBufferedReads = false;
 
@@ -176,7 +176,7 @@ func ProcessInbound(buf []byte) []byte  {
                 // Process if non-blank (which it will be on the \n of \r\n)
 
                 if (end > begin) {
-                    watchdog5s = false;
+                    watchdogTick = false;
                     cmdProcess(buf[begin:end])
                 }
 
@@ -196,7 +196,7 @@ func ProcessInbound(buf []byte) []byte  {
 
     // Return unprocessed portion of the buffer for next time
 
-    if (verboseDebug && watchdog5s) {
+    if (verboseDebug && watchdogTick) {
         fmt.Printf("Unprocessed: '%s' -> '%s'\n", buf, buf[begin:])
     }
 
@@ -222,25 +222,25 @@ func ioSendCommand(cmd []byte) {
 }
 
 func ioWatchdogReset(fEnable bool) {
-    watchdog5s = fEnable
-    watchdog5sCount = 0
+    watchdogTick = fEnable
+    watchdogTickCount = 0
 }
 
-func ioWatchdog5s() {
+func ioWatchdog() {
     // Ignore the first increment, which could occur at any time in the first interval.
     // But then, on the second increment, reset the world.
 
     if (verboseDebug) {
-        if (watchdog5s) {
-            fmt.Printf("ioWatchdog5s() %d\n", watchdog5sCount);
+        if (watchdogTick) {
+            fmt.Printf("ioWatchdog() %d\n", watchdogTickCount);
         } else {
-            fmt.Printf("ioWatchdog5s() idle\n");
+            fmt.Printf("ioWatchdog() idle\n");
         }
     }
 
-    if (watchdog5s) {
-        watchdog5sCount = watchdog5sCount + 1
-        switch (watchdog5sCount) {
+    if (watchdogTick) {
+        watchdogTickCount = watchdogTickCount + 1
+        switch (watchdogTickCount) {
         case 1:
         case 2:
         case 3:
