@@ -404,11 +404,11 @@ func cmdProcessReceivedProtobuf(buf []byte) {
         return
     }
 
-    cmdProcessReceivedTelecastMessage(msg)
+    cmdProcessReceivedTelecastMessage(msg, buf)
 
 }
 
-func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast) {
+func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast, pb []byte) {
 
     // Do various things baed upon the message type
 
@@ -423,15 +423,15 @@ func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast) {
         cmdProcessReceivedSafecastMessage(msg)
 
         // If this is a ping request (indicated by null Message), then send that device back the same thing we received,
-		// but WITH a message (so that we don't cause a ping storm among multiple ttgates with visibility to each other)
+        // but WITH a message (so that we don't cause a ping storm among multiple ttgates with visibility to each other)
     case teletype.Telecast_TTGATE:
         if (msg.Message == nil) {
-		    msg.Message = proto.String("ping")
+            msg.Message = proto.String("ping")
             data, err := proto.Marshal(msg)
             if err != nil {
                 fmt.Printf("marshaling error: ", err)
             }
-			// Importantly, sleep for a couple seconds to give the (slow) receiver a chance to get into receive mode
+            // Importantly, sleep for a couple seconds to give the (slow) receiver a chance to get into receive mode
             time.Sleep(2 * time.Second)
             cmdEnqueueOutbound(data)
             fmt.Printf("Sent pingback to device %d\n", msg.GetDeviceIDNumber())
@@ -448,8 +448,64 @@ func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast) {
 
     }
 
-	// Forward the message to the service [and delete the stuff from processreceivedsafecastmessage!]
-//	cmdForwardMessageToTeletypeService(msg)
+    // Forward the message to the service [and delete the stuff from processreceivedsafecastmessage!]
+    cmdForwardMessageToTeletypeService(pb)
+
+}
+
+func cmdForwardMessageToTeletypeService(pb []byte) {
+
+	// TTSERVE url
+	
+    UploadURL := "http://up.teletype.io:8080"
+
+	// Use the same data structure as TTN, because we're simulating TTN inbound
+	
+    msg := &DataUpAppReq{}
+	msg.Payload = pb;
+
+	// Some devices don't have LAT/LON, and in this case the gateway must supply it
+
+    Latitude := os.Getenv("LAT")
+	if (Latitude != "") {
+        f64, err := strconv.ParseFloat(Latitude, 64)
+		if (err == nil) {
+			msg.Metadata[0].Latitude = float32(f64)
+		}
+	}
+    Longitude := os.Getenv("LON")
+	if (Longitude != "") {
+        f64, err := strconv.ParseFloat(Longitude, 64)
+		if (err == nil) {
+			msg.Metadata[0].Longitude = float32(f64)
+		}
+	}
+    Altitude := os.Getenv("ALT")
+	if (Altitude != "") {
+        i64, err := strconv.ParseInt(Altitude, 10, 64)
+		if (err == nil) {
+			msg.Metadata[0].Altitude = int32(i64)
+		}
+	}
+
+	// The service might find it handy to see the SNR of the last message received from the gateway
+	
+	if (gotSNR) {
+		msg.Metadata[0].Lsnr = float32(SNR)
+	}
+
+    msgJSON, _ := json.Marshal(msg)
+
+    req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(msgJSON))
+    req.Header.Set("User-Agent", "TTGATE")
+    req.Header.Set("Content-Type", "application/json")
+    httpclient := &http.Client{}
+    resp, err := httpclient.Do(req)
+    if err != nil {
+        fmt.Printf("*** Error uploading to TTSERVE %s\n\n", err)
+    } else {
+        resp.Body.Close()
+    }
 
 }
 
