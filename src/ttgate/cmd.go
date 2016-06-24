@@ -614,10 +614,10 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 
 func UpdateDisplay() {
 
-    fmt.Printf("\nDevice Status:\n")
+    fmt.Printf("\n**** Device Status:\n")
 
     for _, s := range seenDevices {
-        fmt.Printf("Device %s\n", s.DeviceID)
+        fmt.Printf("**** Device %s\n", s.DeviceID)
         fmt.Printf("  Last Update: %s\n", s.CapturedAt)
         fmt.Printf("  Value: %s%s\n", s.Value, s.Unit)
         fmt.Printf("  Battery: %sVDC (%s%%)\n", s.BatteryVoltage, s.BatterySOC)
