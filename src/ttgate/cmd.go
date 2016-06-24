@@ -37,6 +37,19 @@ type OutboundCommand struct {
     Command []byte
 }
 
+type seenDevice struct {
+    DeviceID string
+    CapturedAt string
+    Unit string
+    Value string
+    BatteryVoltage string
+    BatterySOC string
+    envTemp string
+    envHumid string
+    SNR string
+}
+
+var seenDevices []seenDevice
 var cmdInitialized = false;
 var receivedMessage = false;
 var gotSNR bool = false
@@ -435,7 +448,7 @@ func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast, pb []byte) {
             time.Sleep(2 * time.Second)
             cmdEnqueueOutbound(data)
             fmt.Printf("Sent pingback to device %d\n", msg.GetDeviceIDNumber())
-			return
+            return
         }
 
         // Display what we got from a non-Safecast device
@@ -456,45 +469,45 @@ func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast, pb []byte) {
 
 func cmdForwardMessageToTeletypeService(pb []byte) {
 
-	// TTSERVE url
-	
+    // TTSERVE url
+
     UploadURL := "http://up.teletype.io:8080"
 
-	// Use the same data structure as TTN, because we're simulating TTN inbound
-	
-    msg := &DataUpAppReq{}
-	msg.Metadata = make([]AppMetadata, 1)
-	msg.Payload = pb
+    // Use the same data structure as TTN, because we're simulating TTN inbound
 
-	// Some devices don't have LAT/LON, and in this case the gateway must supply it
+    msg := &DataUpAppReq{}
+    msg.Metadata = make([]AppMetadata, 1)
+    msg.Payload = pb
+
+    // Some devices don't have LAT/LON, and in this case the gateway must supply it
 
     Latitude := os.Getenv("LAT")
-	if (Latitude != "") {
+    if (Latitude != "") {
         f64, err := strconv.ParseFloat(Latitude, 64)
-		if (err == nil) {
-			msg.Metadata[0].Latitude = float32(f64)
-		}
-	}
+        if (err == nil) {
+            msg.Metadata[0].Latitude = float32(f64)
+        }
+    }
     Longitude := os.Getenv("LON")
-	if (Longitude != "") {
+    if (Longitude != "") {
         f64, err := strconv.ParseFloat(Longitude, 64)
-		if (err == nil) {
-			msg.Metadata[0].Longitude = float32(f64)
-		}
-	}
+        if (err == nil) {
+            msg.Metadata[0].Longitude = float32(f64)
+        }
+    }
     Altitude := os.Getenv("ALT")
-	if (Altitude != "") {
+    if (Altitude != "") {
         i64, err := strconv.ParseInt(Altitude, 10, 64)
-		if (err == nil) {
-			msg.Metadata[0].Altitude = int32(i64)
-		}
-	}
+        if (err == nil) {
+            msg.Metadata[0].Altitude = int32(i64)
+        }
+    }
 
-	// The service might find it handy to see the SNR of the last message received from the gateway
-	
-	if (gotSNR) {
-		msg.Metadata[0].Lsnr = float32(SNR)
-	}
+    // The service might find it handy to see the SNR of the last message received from the gateway
+
+    if (gotSNR) {
+        msg.Metadata[0].Lsnr = float32(SNR)
+    }
 
     msgJSON, _ := json.Marshal(msg)
 
@@ -512,311 +525,101 @@ func cmdForwardMessageToTeletypeService(pb []byte) {
 }
 
 func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
+    var dev seenDevice
 
     // Bump stats
 
     totalMessagesReceived = totalMessagesReceived+1
 
-    // Debug
+    // Exit if we can't display the value
 
-    fmt.Printf("Received Safecast Message:\n")
-    fmt.Printf("%s\n", msg)
-
-    // Combine the info with what we can find in the environment vars
-    // Note that we support both unqualified and DeviceID-qualified variables,
-    // both for convenience and in case a gateway could potentially pick up multiple
-    // source devices.
-
-    var rawDeviceID, DeviceID, CapturedAt, Unit, Value, Altitude, Latitude, Longitude, BatteryVoltage, BatterySOC, envTemp, envHumid string
-    var hasBatteryVoltage, hasBatterySOC, hasTemp, hasHumid bool
+    if msg.Value == nil {
+        return
+    }
+    if msg.DeviceIDString == nil && msg.DeviceIDNumber == nil {
+        return
+    }
 
     if (msg.DeviceIDString != nil) {
-        rawDeviceID = msg.GetDeviceIDString();
-    } else if (msg.DeviceIDNumber != nil) {
-        rawDeviceID = strconv.FormatUint(uint64(msg.GetDeviceIDNumber()), 10);
-    } else {
-        rawDeviceID = "UNKNOWN";
+        dev.DeviceID = msg.GetDeviceIDString();
     }
-    prefix := rawDeviceID + "_"
-    DeviceID = os.Getenv(prefix + "ID")
-    if (DeviceID == "") {
-        DeviceID = os.Getenv("ID")
-    }
-    if DeviceID == "" {
-        DeviceID = rawDeviceID;
+    if (msg.DeviceIDNumber != nil) {
+        dev.DeviceID = strconv.FormatUint(uint64(msg.GetDeviceIDNumber()), 10);
     }
 
     if msg.CapturedAt != nil {
-        CapturedAt = msg.GetCapturedAt()
+        dev.CapturedAt = msg.GetCapturedAt()
     } else {
-        CapturedAt = time.Now().Format(time.RFC3339)
+        dev.CapturedAt = time.Now().Format(time.RFC3339)
     }
 
     if (msg.Unit == nil) {
-        Unit = "cpm"
+        dev.Unit = "cpm"
     } else {
-        Unit = fmt.Sprintf("%s", msg.GetUnit())
-    }
-
-    if msg.Value == nil {
-        fmt.Printf("*** error: (Value) is required\n")
-        return
-    }
-    Value = fmt.Sprintf("%d", msg.GetValue())
-
-    if msg.Latitude != nil {
-        Latitude = fmt.Sprintf("%f", msg.GetLatitude())
-    } else {
-        Latitude = os.Getenv(prefix + "LAT")
-        if (Latitude == "") {
-            Latitude = os.Getenv("LAT")
-        }
-        if Latitude == "" {
-            fmt.Printf("*** error: env var LAT (or %sLAT) required\n", prefix)
-            return;
-        }
-    }
-
-    if msg.Longitude != nil {
-        Longitude = fmt.Sprintf("%f", msg.GetLongitude())
-    } else {
-        Longitude = os.Getenv(prefix + "LON")
-        if (Longitude == "") {
-            Longitude = os.Getenv("LON")
-        }
-        if Longitude == "" {
-            fmt.Printf("*** error: env var LON (or %sLON) required\n", prefix)
-            return;
-        }
-    }
-
-    if msg.Altitude != nil {
-        Altitude = fmt.Sprintf("%d", msg.GetAltitude())
-    } else {
-        Altitude = os.Getenv(prefix + "ALT")
-        if (Altitude == "") {
-            Altitude = os.Getenv("ALT")
-        }
-        if Altitude == "" {
-            Altitude = "0"
-        }
+        dev.Unit = fmt.Sprintf("%s", msg.GetUnit())
     }
 
     if msg.BatterySOC != nil {
-        BatterySOC = fmt.Sprintf("%.2f", msg.GetBatterySOC())
-        hasBatterySOC = true
+        dev.BatterySOC = fmt.Sprintf("%.2f", msg.GetBatterySOC())
     } else {
-        hasBatterySOC = false;
+        dev.BatterySOC = "?"
     }
 
     if msg.BatteryVoltage != nil {
-        BatteryVoltage = fmt.Sprintf("%.4f", msg.GetBatteryVoltage())
-        hasBatteryVoltage = true
+        dev.BatteryVoltage = fmt.Sprintf("%.4f", msg.GetBatteryVoltage())
     } else {
-        hasBatteryVoltage = false;
+        dev.BatteryVoltage = "?"
     }
 
     if msg.EnvTemperature != nil {
-        envTemp = fmt.Sprintf("%.2f", msg.GetEnvTemperature())
-        hasTemp = true
+        dev.envTemp = fmt.Sprintf("%.2fF", ((msg.GetEnvTemperature() * 9.0) / 5.0) + 32)
     } else {
-        hasTemp = false;
+        dev.envTemp = "?"
     }
 
     if msg.EnvHumidity != nil {
-        envHumid = fmt.Sprintf("%.2f", msg.GetEnvHumidity())
-        hasHumid = true
+        dev.envHumid = fmt.Sprintf("%.2f", msg.GetEnvHumidity())
     } else {
-        hasHumid = false;
+        dev.envHumid = "?"
     }
 
-    // Get upload parameters
-
-    URL := os.Getenv(prefix + "URL")
-    if (URL == "") {
-        URL = os.Getenv("URL")
-    }
-    if URL == "" {
-        URL = "http://107.161.164.163/scripts/indextest.php?api_key=%s"
-    }
-
-    KEY := os.Getenv(prefix + "KEY")
-    if (KEY == "") {
-        KEY = os.Getenv("KEY")
-    }
-    if KEY == "" {
-        KEY = "z3sHhgousVDDrCVXhzMT"
-    }
-    UploadURL := fmt.Sprintf(URL, KEY)
-
-    // Upload it to safecast
-
-    type SafecastData struct {
-        CapturedAt   string `json:"captured_at,omitempty"`   // 2016-02-20T14:02:25Z
-        ChannelID    string `json:"channel_id,omitempty"`    // nil
-        DeviceID     string `json:"device_id,omitempty"`     // 140
-        DeviceTypeID string `json:"devicetype_id,omitempty"` // nil
-        Height       string `json:"height,omitempty"`        // 123
-        ID           string `json:"id,omitempty"`            // 972298
-        LocationName string `json:"location_name,omitempty"` // nil
-        OriginalID   string `json:"original_id,omitempty"`   // 972298
-        SensorID     string `json:"sensor_id,omitempty"`     // nil
-        StationID    string `json:"station_id,omitempty"`    // nil
-        Unit         string `json:"unit,omitempty"`          // cpm
-        UserID       string `json:"user_id,omitempty"`       // 304
-        Value        string `json:"value,omitempty"`         // 36
-        Latitude     string `json:"latitude,omitempty"`      // 37.0105
-        Longitude    string `json:"longitude,omitempty"`     // 140.9253
-        BatVoltage   string `json:"bat_voltage,omitempty"`   // 0-N volts
-        BatSOC       string `json:"bat_soc,omitempty"`       // 0%-100%
-        WirelessSNR  string `json:"wireless_snr,omitempty"`  // -127db to +127db
-        envTemp      string `json:"env_temp,omitempty"`      // Degrees centigrade
-        envHumid     string `json:"env_humid,omitempty"`     // Percent RH
-    }
-
-    // We upload 3 records to the safecast service; here's the stuff in common to all
-    sc := &SafecastData{}
-    sc.DeviceID = rawDeviceID
-    sc.CapturedAt = CapturedAt
-    sc.Latitude = Latitude
-    sc.Longitude = Longitude
-    sc.Height = Altitude
-
-    // The first upload has everything
-    sc1 := sc
-    sc1.Unit = Unit
-    sc1.Value = Value
-    if (hasBatteryVoltage) {
-        sc1.BatVoltage = BatteryVoltage
-    }
-    if (hasBatterySOC) {
-        sc1.BatSOC = BatterySOC
-    }
     if (gotSNR) {
-        fstr := fmt.Sprintf("%.1f", SNR)
-        sc1.WirelessSNR = fstr
-    }
-    if (hasTemp) {
-        sc1.envTemp = envTemp
-    }
-    if (hasHumid) {
-        sc1.envHumid = envHumid
-    }
-
-    scJSON, _ := json.Marshal(sc1)
-    fmt.Printf("About to upload to %s:\n%s\n", UploadURL, scJSON)
-    req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
-    req.Header.Set("User-Agent", "TTGATE")
-    req.Header.Set("Content-Type", "application/json")
-    httpclient := &http.Client{}
-    resp, err := httpclient.Do(req)
-    if err != nil {
-        fmt.Printf("*** Error uploading to Safecast %s\n\n", err)
+        dev.SNR = fmt.Sprintf("%.1f", SNR)
     } else {
-        resp.Body.Close()
-        // Bump stats
-        totalMessagesSent = totalMessagesSent+1
-        fmt.Printf("Success!\n")
+        dev.SNR = "?"
     }
 
-    // The next upload has battery voltage
-    if (hasBatteryVoltage) {
-        // Prepare the data
-        sc2 := sc
-        sc2.Unit = "bat_voltage"
-        sc2.Value = sc1.BatVoltage
-        // Do the upload
-        scJSON, _ = json.Marshal(sc2)
-        req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
-        req.Header.Set("User-Agent", "TTGATE")
-        req.Header.Set("Content-Type", "application/json")
-        httpclient = &http.Client{}
-        resp, err = httpclient.Do(req)
-        if err != nil {
-            fmt.Printf("*** Error uploading bat_voltage to Safecast %s\n\n", err)
-        } else {
-            resp.Body.Close()
+    // Add it or update it as the case may be
+
+    var found bool = false
+    for _, s := range seenDevices {
+        if (dev.DeviceID == s.DeviceID) {
+            s = dev;
+            found = true
         }
     }
 
-    // The next upload has battery SOC
-    if (hasBatterySOC) {
-        // Prepare the data
-        sc3 := sc
-        sc3.Unit = "bat_soc"
-        sc3.Value = sc1.BatSOC
-        // Do the upload
-        scJSON, _ = json.Marshal(sc3)
-        req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
-        req.Header.Set("User-Agent", "TTGATE")
-        req.Header.Set("Content-Type", "application/json")
-        httpclient = &http.Client{}
-        resp, err = httpclient.Do(req)
-        if err != nil {
-            fmt.Printf("*** Error uploading bat_voltage to Safecast %s\n\n", err)
-        } else {
-            resp.Body.Close()
-        }
+    if !found {
+        seenDevices = append(seenDevices, dev)
     }
 
-    // The next upload has SNR
-    if (gotSNR) {
-        // Prepare the data
-        sc4 := sc
-        sc4.Unit = "wireless_snr"
-        sc4.Value = sc1.WirelessSNR
-        // Do the upload
-        scJSON, _ = json.Marshal(sc4)
-        req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
-        req.Header.Set("User-Agent", "TTGATE")
-        req.Header.Set("Content-Type", "application/json")
-        httpclient = &http.Client{}
-        resp, err = httpclient.Do(req)
-        if err != nil {
-            fmt.Printf("*** Error uploading SNR to Safecast %s\n\n", err)
-        } else {
-            resp.Body.Close()
-        }
-    }
+    // Display them
 
-    // The next upload has temp
-    if (hasTemp) {
-        // Prepare the data
-        sc5 := sc
-        sc5.Unit = "env_temp"
-        sc5.Value = sc1.envTemp
-        // Do the upload
-        scJSON, _ = json.Marshal(sc5)
-        req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
-        req.Header.Set("User-Agent", "TTGATE")
-        req.Header.Set("Content-Type", "application/json")
-        httpclient = &http.Client{}
-        resp, err = httpclient.Do(req)
-        if err != nil {
-            fmt.Printf("*** Error uploading Temp to Safecast %s\n\n", err)
-        } else {
-            resp.Body.Close()
-        }
-    }
+    UpdateDisplay()
 
-    // The next upload has humidity
-    if (hasHumid) {
-        // Prepare the data
-        sc6 := sc
-        sc6.Unit = "env_humid"
-        sc6.Value = sc1.envHumid
-        // Do the upload
-        scJSON, _ = json.Marshal(sc6)
-        req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(scJSON))
-        req.Header.Set("User-Agent", "TTGATE")
-        req.Header.Set("Content-Type", "application/json")
-        httpclient = &http.Client{}
-        resp, err = httpclient.Do(req)
-        if err != nil {
-            fmt.Printf("*** Error uploading Humidity to Safecast %s\n\n", err)
-        } else {
-            resp.Body.Close()
-        }
+}
+
+func UpdateDisplay() {
+
+    fmt.Printf("\nDevice Status:\n")
+
+    for _, s := range seenDevices {
+        fmt.Printf("Device %s\n", s.DeviceID)
+        fmt.Printf("  Last Update: %s\n", s.CapturedAt)
+        fmt.Printf("  Value: %s%s\n", s.Value, s.Unit)
+        fmt.Printf("  Battery: %sVDC (%s%%)\n", s.BatteryVoltage, s.BatterySOC)
+        fmt.Printf("  Wireless Quality: %s\n", s.SNR)
+        fmt.Printf("  Outdoors: %sF %s%%RH\n", s.envTemp, s.envHumid)
     }
 
 }
