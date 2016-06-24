@@ -435,6 +435,7 @@ func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast, pb []byte) {
             time.Sleep(2 * time.Second)
             cmdEnqueueOutbound(data)
             fmt.Printf("Sent pingback to device %d\n", msg.GetDeviceIDNumber())
+			return
         }
 
         // Display what we got from a non-Safecast device
@@ -462,7 +463,8 @@ func cmdForwardMessageToTeletypeService(pb []byte) {
 	// Use the same data structure as TTN, because we're simulating TTN inbound
 	
     msg := &DataUpAppReq{}
-	msg.Payload = pb;
+	msg.Metadata = make([]AppMetadata, 1)
+	msg.Payload = pb
 
 	// Some devices don't have LAT/LON, and in this case the gateway must supply it
 
