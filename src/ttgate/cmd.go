@@ -432,7 +432,7 @@ func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast) {
                 fmt.Printf("marshaling error: ", err)
             }
             cmdEnqueueOutbound(data)
-            fmt.Printf("Sent pingback to device %d: '%s'\n", msg.GetDeviceIDNumber())
+            fmt.Printf("Sent pingback to device %d\n", msg.GetDeviceIDNumber())
         }
 
         // Display what we got from a non-Safecast device
