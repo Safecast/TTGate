@@ -397,8 +397,6 @@ func cmdProcessReceived(hex []byte) {
 
 func cmdProcessReceivedProtobuf(buf []byte) {
 
-    // Unmarshal the buffer into a golang object
-
     msg := &teletype.Telecast{}
     err := proto.Unmarshal(buf, msg)
     if err != nil {
@@ -406,15 +404,36 @@ func cmdProcessReceivedProtobuf(buf []byte) {
         return
     }
 
+    cmdProcessReceivedTelecastMessage(msg)
+
+}
+
+func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast) {
+
     // Do various things baed upon the message type
 
     switch msg.GetDeviceType() {
 
-        // Is it something we recognize as being from safecast?
-    case teletype.Telecast_BGEIGIE_NANO:
-        fallthrough
+        // processing a simplecast message?
     case teletype.Telecast_SIMPLECAST:
         cmdProcessReceivedSafecastMessage(msg)
+
+        // Forwarding a message from a nano?
+    case teletype.Telecast_BGEIGIE_NANO:
+        cmdProcessReceivedSafecastMessage(msg)
+
+        // If this is a ping request (indicated by null Message), then send that device back the same thing we received,
+		// but WITH a message (so that we don't cause a ping storm among multiple ttgates with visibility to each other)
+    case teletype.Telecast_TTGATE:
+        if (msg.Message == nil) {
+		    msg.Message = proto.String("ping")
+            data, err := proto.Marshal(msg)
+            if err != nil {
+                fmt.Printf("marshaling error: ", err)
+            }
+            cmdEnqueueOutbound(data)
+            fmt.Printf("Sent pingback to device %d: '%s'\n", msg.GetDeviceIDNumber())
+        }
 
         // Display what we got from a non-Safecast device
     default:
@@ -426,6 +445,9 @@ func cmdProcessReceivedProtobuf(buf []byte) {
         }
 
     }
+
+	// Forward the message to the service [and delete the stuff from processreceivedsafecastmessage!]
+//	cmdForwardMessageToTeletypeService(msg)
 
 }
 
@@ -588,7 +610,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         BatVoltage   string `json:"bat_voltage,omitempty"`   // 0-N volts
         BatSOC       string `json:"bat_soc,omitempty"`       // 0%-100%
         WirelessSNR  string `json:"wireless_snr,omitempty"`  // -127db to +127db
-        envTemp		 string `json:"env_temp,omitempty"`		 // Degrees centigrade
+        envTemp      string `json:"env_temp,omitempty"`      // Degrees centigrade
         envHumid     string `json:"env_humid,omitempty"`     // Percent RH
     }
 
