@@ -533,9 +533,6 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 
     // Exit if we can't display the value
 
-    if msg.Value == nil {
-        return
-    }
     if msg.DeviceIDString == nil && msg.DeviceIDNumber == nil {
         return
     }
@@ -551,6 +548,12 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         dev.CapturedAt = msg.GetCapturedAt()
     } else {
         dev.CapturedAt = time.Now().Format(time.RFC3339)
+    }
+
+    if (msg.Value == nil) {
+        dev.Value = "?"
+    } else {
+        dev.Value = fmt.Sprintf("%d", msg.GetValue())
     }
 
     if (msg.Unit == nil) {
@@ -592,9 +595,9 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     // Add it or update it as the case may be
 
     var found bool = false
-    for _, s := range seenDevices {
-        if (dev.DeviceID == s.DeviceID) {
-            s = dev;
+	for i:=0; i<len(seenDevices); i++ {
+        if (dev.DeviceID == seenDevices[i].DeviceID) {
+            seenDevices[i] = dev;
             found = true
         }
     }
@@ -621,6 +624,8 @@ func UpdateDisplay() {
         fmt.Printf("  Wireless Quality: %s\n", s.SNR)
         fmt.Printf("  Outdoors: %sF %s%%RH\n", s.envTemp, s.envHumid)
     }
+
+    fmt.Printf("\n")
 
 }
 
