@@ -431,6 +431,8 @@ func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast) {
             if err != nil {
                 fmt.Printf("marshaling error: ", err)
             }
+			// Importantly, sleep for a couple seconds to give the (slow) receiver a chance to get into receive mode
+            time.Sleep(2 * time.Second)
             cmdEnqueueOutbound(data)
             fmt.Printf("Sent pingback to device %d\n", msg.GetDeviceIDNumber())
         }
