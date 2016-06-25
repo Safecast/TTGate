@@ -8,6 +8,7 @@ ENV INITSYSTEM on
 
 # Install apt deps
 RUN apt-get update && apt-get install -y \
+ iceweasel \
  apt-utils \
  xserver-xorg-core \
  xserver-xorg-input-all \
