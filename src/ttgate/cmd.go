@@ -14,6 +14,7 @@ import (
     "time"
     "encoding/json"
     "net/http"
+	"io/ioutil"
     "github.com/golang/protobuf/proto"
     "github.com/rayozzie/teletype-proto/golang"
 )
@@ -61,6 +62,7 @@ var totalMessagesReceived int = 0
 var totalMessagesSent int = 0
 var busyCount = 0
 var watchdog1mCount = 0
+var ipinfo string = ""
 
 func cmdWatchdog1m() {
 
@@ -473,6 +475,19 @@ func cmdForwardMessageToTeletypeService(pb []byte) {
 
     UploadURL := "http://up.teletype.io:8080"
 
+	// The first time through here, let's fetch our IPINFO
+
+	if ipinfo == "" {
+		response, err := http.Get("http://ipinfo.io/json")
+		if err == nil {
+			defer response.Body.Close()
+			contents, err := ioutil.ReadAll(response.Body)
+			if err == nil {
+				ipinfo = string(contents)
+			}
+		}
+	}
+	
     // Use the same data structure as TTN, because we're simulating TTN inbound
 
     msg := &DataUpAppReq{}
@@ -509,6 +524,12 @@ func cmdForwardMessageToTeletypeService(pb []byte) {
         msg.Metadata[0].Lsnr = float32(SNR)
     }
 
+	// Augment with ip info
+
+	msg.Metadata[0].GatewayEUI = ipinfo
+	
+	// Send it
+	
     msgJSON, _ := json.Marshal(msg)
 
     req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(msgJSON))
