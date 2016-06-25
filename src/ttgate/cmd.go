@@ -54,6 +54,7 @@ var seenDevices []seenDevice
 var cmdInitialized = false;
 var receivedMessage = false;
 var gotSNR bool = false
+var getSNR bool = false
 var inReinit bool = false;
 var SNR float64
 var outboundQueue chan OutboundCommand
@@ -132,6 +133,7 @@ func cmdReinit(rebootLPWAN bool) {
     // Init statics
 
     gotSNR = false
+	getSNR = false
     receivedMessage = false
 
     // Initialize the state machine and kick off a device reset
@@ -253,7 +255,7 @@ func cmdProcess(cmd []byte) {
             if (!SentPendingOutbound()) {
                 {
                     // Update the SNR stat if and only if we've received a message
-                    if (receivedMessage && !gotSNR) {
+                    if (receivedMessage && getSNR) {
                         ioSendCommandString("radio get snr")
                         cmdSetState(CMD_STATE_LPWAN_SNRRPL)
                     } else {
@@ -278,7 +280,7 @@ func cmdProcess(cmd []byte) {
             }
             // Remember that we received at least one message
             receivedMessage = true
-            gotSNR = false
+            getSNR = true
             // Parse and process the received message
             cmdProcessReceived(cmd[hexstarts:])
             // if there's a pending outbound, transmit it (which will change state)
