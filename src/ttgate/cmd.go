@@ -583,7 +583,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     } else {
         dev.CapturedAt = time.Now().Format(time.RFC3339)
     }
-	dev.Captured, _ = time.ParseInLocation(time.RFC3339, dev.CapturedAt, OurTimezone)
+	dev.Captured, _ = time.ParseInLocation(time.RFC3339, dev.CapturedAt, time.UTC)
 
     if (msg.Value == nil) {
         Value = "?"
@@ -722,7 +722,19 @@ func UpdateDisplay() {
 		s := sorted[i]
         fmt.Printf("**** Device %s\n", s.DeviceID)
 
-		fmt.Printf("Update: %s\n", s.Captured.Format(time.RFC822))
+		fmt.Printf("Update: %s\n", s.Captured.In(OurTimezone).Format(time.RFC822))
+
+		fmt.Printf("0: '%v'\n1: '%v'\n", s.Value0, s.Value1)
+		if s.Value0 == "" {
+			fmt.Printf("Value0 is blank\n");
+		} else {
+			fmt.Printf("Value0 is nonblank\n");
+		}
+		if s.Value1 == "" {
+			fmt.Printf("Value1 is blank\n");
+		} else {
+			fmt.Printf("Vale1 is nonblank\n");
+		}
 
 		if s.Value0 != "" && s.Value1 == "" {
 	        fmt.Printf("Value: %s%s\n", s.Value0, s.Unit)
