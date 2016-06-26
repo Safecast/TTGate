@@ -10,6 +10,8 @@ import (
     "fmt"
     "os"
     "runtime"
+    "net/http"
+    "io"
     "github.com/golang/protobuf/proto"
     "github.com/rayozzie/teletype-proto/golang"
 )
@@ -31,6 +33,10 @@ func main() {
     s = os.Getenv("DEBUG")      // For verbose debugging info
     debug = s != ""
 
+	// Spawn our localhost web server
+
+	go localHTTPServer()
+	
 	// Spawn various timer tasks
 
     go timer15m()
@@ -44,7 +50,7 @@ func main() {
     // Initialize the command processing and state machine
 
     cmdInit()
-
+	
 	// Infinitely loop here
 
     for {
@@ -105,6 +111,15 @@ func heartbeat15m() {
     fmt.Printf("mem.HeapAlloc: %d\n", mem.HeapAlloc)
     fmt.Printf("mem.HeapSys: %d\n", mem.HeapSys)
 
+}
+
+func localHTTPServer () {
+    http.HandleFunc("/", handleInboundRequests)
+    http.ListenAndServe(":8080", nil)
+}
+
+func handleInboundRequests(rw http.ResponseWriter, req *http.Request) {
+    io.WriteString(rw, "This is the ttgate web server.")
 }
 
 // eof
