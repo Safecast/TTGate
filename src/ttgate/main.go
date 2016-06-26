@@ -55,6 +55,7 @@ func main() {
 
 	// Spawn our localhost web server
 
+	loadLocalTimezone()
 	go localHTTPServer()
 	
 	// Spawn various timer tasks
