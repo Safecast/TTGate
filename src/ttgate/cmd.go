@@ -9,6 +9,7 @@ package main
 import (
     "os"
     "fmt"
+	"sort"
     "strconv"
     "bytes"
     "time"
@@ -39,9 +40,11 @@ type OutboundCommand struct {
 }
 
 type SeenDevice struct {
+	SortKey string
 	DeviceNo uint64
     DeviceID string
     CapturedAt string
+	Captured time.Time
     Unit string
     Value0 string
     Value1 string
@@ -51,6 +54,11 @@ type SeenDevice struct {
     envHumid string
     SNR string
 }
+
+type ByKey []SeenDevice
+func (a ByKey) Len() int           { return len(a) }
+func (a ByKey) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByKey) Less(i, j int) bool { return a[i].SortKey < a[j].SortKey }
 
 var seenDevices []SeenDevice
 var cmdInitialized = false;
@@ -575,6 +583,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     } else {
         dev.CapturedAt = time.Now().Format(time.RFC3339)
     }
+	dev.Captured, _ = time.ParseInLocation(time.RFC3339, dev.CapturedAt, OurTimezone)
 
     if (msg.Value == nil) {
         Value = "?"
@@ -684,18 +693,50 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 
 }
 
+func GetSortedDeviceList() []SeenDevice {
+
+	// Duplicate the device list
+	sortedDevices := seenDevices
+	
+	// Zip through the devices, generating a sort key based on criteria that buckets
+	// anything captured within the same rough period, and then orders based on device ID
+	t := time.Now()
+    for _, s := range sortedDevices {
+        s.SortKey = fmt.Sprintf("%12d.%12d", t.Sub(s.Captured)/(time.Duration(15)*time.Minute), s.DeviceNo)
+	}
+
+	// Now do a sort with that sort key
+	sort.Sort(ByKey(sortedDevices))
+	
+	return(sortedDevices)
+	
+}
+
 func UpdateDisplay() {
 
     fmt.Printf("\n**** Device Status:\n")
 
-    for _, s := range seenDevices {
+	sorted := GetSortedDeviceList()
+	
+	for i:=0; i<len(sorted); i++ {
+		s := sorted[i]
         fmt.Printf("**** Device %s\n", s.DeviceID)
-        fmt.Printf("  Last Update: %s\n", s.CapturedAt)
-        fmt.Printf("  Value0: %s%s\n", s.Value0, s.Unit)
-        fmt.Printf("  Value1: %s%s\n", s.Value1, s.Unit)
-        fmt.Printf("  Battery: %sVDC (%s%%)\n", s.BatteryVoltage, s.BatterySOC)
-        fmt.Printf("  Wireless Quality: %s\n", s.SNR)
-        fmt.Printf("  Outdoors: %sF %s%%RH\n", s.envTemp, s.envHumid)
+
+		fmt.Printf("Update: %s\n", s.Captured.Format(time.RFC822))
+
+		if s.Value0 != "" && s.Value1 == "" {
+	        fmt.Printf("Value: %s%s\n", s.Value0, s.Unit)
+		} else if s.Value0 == "" && s.Value1 != "" {
+	        fmt.Printf("Value: %s%s\n", s.Value1, s.Unit)
+		} else {
+	        fmt.Printf("Value #0: %s%s\n", s.Value0, s.Unit)
+	        fmt.Printf("Value #1: %s%s\n", s.Value1, s.Unit)
+		}
+
+        fmt.Printf("Battery: %sVDC (%s%%)\n", s.BatteryVoltage, s.BatterySOC)
+        fmt.Printf("Wireless Quality: %s\n", s.SNR)
+        fmt.Printf("Outdoors: %sF %s%%RH\n", s.envTemp, s.envHumid)
+
     }
 
     fmt.Printf("\n")

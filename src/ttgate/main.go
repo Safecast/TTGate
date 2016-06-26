@@ -36,7 +36,7 @@ type IPInfoData struct {
 }
 
 var debug bool = false
-var ourTimezone *time.Location
+var OurTimezone *time.Location
 
 func main() {
     var s string
@@ -141,7 +141,7 @@ func loadLocalTimezone () {
 	// https://golang.org/src/time/example_test.go
 	// https://golang.org/pkg/time
 	
-	ourTimezone, _ = time.LoadLocation("UTC")
+	OurTimezone, _ = time.LoadLocation("UTC")
 	
 	response, err := http.Get("http://ip-api.com/json/")
 	if err == nil {
@@ -151,7 +151,7 @@ func loadLocalTimezone () {
 			var info IPInfoData
 			err = json.Unmarshal(contents, &info)
 			if (err == nil) {
-				ourTimezone, _ = time.LoadLocation(info.Timezone)
+				OurTimezone, _ = time.LoadLocation(info.Timezone)
 			}
 		}
 	}
