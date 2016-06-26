@@ -133,7 +133,7 @@ func heartbeat15m() {
 
 }
 
-func localHTTPServer () {
+func loadLocalTimezone () {
 
 	// Get our local time zone, defaulting to UTC
 	// Note:
@@ -142,22 +142,28 @@ func localHTTPServer () {
 	
 	ourTimezone, _ = time.LoadLocation("UTC")
 	
+	fmt.Printf("TZ\n");
 	response, err := http.Get("http://ip-api.com/json/")
 	if err == nil {
 		defer response.Body.Close()
+		fmt.Printf("TZ body: \n%v\n", response.Body);
 		contents, err := ioutil.ReadAll(response.Body)
 		if err == nil {
 			var info IPInfoData
+			fmt.Printf("TZ contents: \n%v\n", contents);
 			err = json.Unmarshal(contents, &info)
 			if (err == nil) {
 				fmt.Printf("TIMEZONE: %s\n", info.Timezone)
 				ourTimezone, _ = time.LoadLocation(info.Timezone)
+			} else {
+	            fmt.Printf("unmarshaling error: ", err);
 			}
 		}
 	}
-	
-	// Spawn the server
-	
+
+}
+
+func localHTTPServer () {
     http.HandleFunc("/", handleInboundRequests)
     http.ListenAndServe(":8080", nil)
 }
