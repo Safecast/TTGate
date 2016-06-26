@@ -159,7 +159,8 @@ func loadLocalTimezone () {
 }
 
 func localHTTPServer () {
-    http.HandleFunc("/", handleInboundRequests)
+	http.Handl("/", http.FileServer(http.Dir("./web")))
+//    http.HandleFunc("/", handleInboundRequests)
     http.ListenAndServe(":8080", nil)
 }
 
