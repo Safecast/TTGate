@@ -630,6 +630,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     // Add or update the seen entry, as the case may be.
     // Note that we handle the case of 2 geiger units in a single device by always folding both together via device ID mask
 
+	fmt.Printf("DEVICEID: '%s'\n", dev.DeviceID);
 	deviceno, err := strconv.ParseInt(dev.DeviceID, 10, 64)
 	if (err != nil) {
 		dev.DeviceNo = 0
@@ -641,6 +642,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 		}
         dev.DeviceID = fmt.Sprintf("%d", dev.DeviceNo)
 	}
+	fmt.Printf("and DEVICEID/NO: %s %d\n", dev.DeviceID, dev.DeviceNo);
 	
     var found bool = false
     for i:=0; i<len(seenDevices); i++ {
