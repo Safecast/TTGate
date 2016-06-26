@@ -41,8 +41,9 @@ type OutboundCommand struct {
 
 type SeenDevice struct {
 	SortKey string
-	DeviceNo uint64
     DeviceID string
+	OriginalDeviceNo uint64
+	NormalizedDeviceNo uint64
     CapturedAt string
 	Captured time.Time
     Unit string
@@ -630,23 +631,23 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     // Add or update the seen entry, as the case may be.
     // Note that we handle the case of 2 geiger units in a single device by always folding both together via device ID mask
 
+	dev.OriginalDeviceNo = 0
+	dev.NormalizedDeviceNo = dev.OriginalDeviceNo
 	deviceno, err := strconv.ParseInt(dev.DeviceID, 10, 64)
-	if (err != nil) {
-		dev.DeviceNo = 0
-	} else {
-		if ((deviceno & 0x01) == 0) {
-			dev.DeviceNo = uint64(deviceno)
-		} else {
-			dev.DeviceNo = uint64(deviceno-1)
+	if (err == nil) {
+		dev.OriginalDeviceNo = uint64(deviceno)
+		dev.NormalizedDeviceNo = dev.OriginalDeviceNo
+		if ((dev.OriginalDeviceNo & 0x01) != 0) {
+			dev.NormalizedDeviceNo = uint64(dev.NormalizedDeviceNo-1)
+	        dev.DeviceID = fmt.Sprintf("%d", dev.NormalizedDeviceNo)
 		}
-        dev.DeviceID = fmt.Sprintf("%d", dev.DeviceNo)
 	}
 	
     var found bool = false
     for i:=0; i<len(seenDevices); i++ {
 
 		// Handle non-numeric device ID
-		if (dev.DeviceNo == 0 && dev.DeviceID == seenDevices[i].DeviceID) {
+		if (dev.OriginalDeviceNo == 0 && dev.DeviceID == seenDevices[i].DeviceID) {
 			dev.Value0 = Value
 			dev.Value1 = ""
 			seenDevices[i] = dev
@@ -655,9 +656,9 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 		}
 
 		// For numerics, folder the even/odd devices into a single device (dual-geigers)
-        if (dev.DeviceNo != 0 && dev.DeviceNo == seenDevices[i].DeviceNo) {
-            if ((dev.DeviceNo & 0x01) == 0) {
-                dev.Value0 = ""
+        if (dev.OriginalDeviceNo != 0 && dev.NormalizedDeviceNo == seenDevices[i].NormalizedDeviceNo) {
+            if ((dev.OriginalDeviceNo & 0x01) == 0) {
+                dev.Value0 = Value
                 dev.Value1 = seenDevices[i].Value1
             } else {
                 dev.Value0 = seenDevices[i].Value0
@@ -671,11 +672,11 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     }
 
     if !found {
-		if (dev.DeviceNo == 0) {
+		if (dev.OriginalDeviceNo == 0) {
 			dev.Value0 = Value
 			dev.Value1 = ""
 		} else {
-            if ((dev.DeviceNo & 0x01) == 0) {
+            if ((dev.OriginalDeviceNo & 0x01) == 0) {
                 dev.Value0 = Value
                 dev.Value1 = ""
             } else {
@@ -702,7 +703,7 @@ func GetSortedDeviceList() []SeenDevice {
 	// anything captured within the same rough period, and then orders based on device ID
 	t := time.Now()
     for _, s := range sortedDevices {
-        s.SortKey = fmt.Sprintf("%12d.%12d", t.Sub(s.Captured)/(time.Duration(15)*time.Minute), s.DeviceNo)
+        s.SortKey = fmt.Sprintf("%12d.%12d", t.Sub(s.Captured)/(time.Duration(15)*time.Minute), s.NormalizedDeviceNo)
 	}
 
 	// Now do a sort with that sort key
@@ -723,18 +724,6 @@ func UpdateDisplay() {
         fmt.Printf("**** Device %s\n", s.DeviceID)
 
 		fmt.Printf("Update: %s\n", s.Captured.In(OurTimezone).Format(time.RFC822))
-
-		fmt.Printf("0: '%v'\n1: '%v'\n", s.Value0, s.Value1)
-		if s.Value0 == "" {
-			fmt.Printf("Value0 is blank\n");
-		} else {
-			fmt.Printf("Value0 is nonblank\n");
-		}
-		if s.Value1 == "" {
-			fmt.Printf("Value1 is blank\n");
-		} else {
-			fmt.Printf("Vale1 is nonblank\n");
-		}
 
 		if s.Value0 != "" && s.Value1 == "" {
 	        fmt.Printf("Value: %s%s\n", s.Value0, s.Unit)
