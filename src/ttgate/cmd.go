@@ -14,7 +14,7 @@ import (
     "time"
     "encoding/json"
     "net/http"
-	"io/ioutil"
+    "io/ioutil"
     "github.com/golang/protobuf/proto"
     "github.com/rayozzie/teletype-proto/golang"
 )
@@ -38,11 +38,13 @@ type OutboundCommand struct {
     Command []byte
 }
 
-type seenDevice struct {
+type SeenDevice struct {
+	DeviceNo uint64
     DeviceID string
     CapturedAt string
     Unit string
-    Value string
+    Value0 string
+    Value1 string
     BatteryVoltage string
     BatterySOC string
     envTemp string
@@ -50,7 +52,7 @@ type seenDevice struct {
     SNR string
 }
 
-var seenDevices []seenDevice
+var seenDevices []SeenDevice
 var cmdInitialized = false;
 var receivedMessage = false;
 var gotSNR bool = false
@@ -133,7 +135,7 @@ func cmdReinit(rebootLPWAN bool) {
     // Init statics
 
     gotSNR = false
-	getSNR = false
+    getSNR = false
     receivedMessage = false
 
     // Initialize the state machine and kick off a device reset
@@ -477,19 +479,19 @@ func cmdForwardMessageToTeletypeService(pb []byte) {
 
     UploadURL := "http://up.teletype.io:8080"
 
-	// The first time through here, let's fetch our IPINFO
+    // The first time through here, let's fetch our IPINFO
 
-	if ipinfo == "" {
-		response, err := http.Get("http://ip-api.com/json/")
-		if err == nil {
-			defer response.Body.Close()
-			contents, err := ioutil.ReadAll(response.Body)
-			if err == nil {
-				ipinfo = string(contents)
-			}
-		}
-	}
-	
+    if ipinfo == "" {
+        response, err := http.Get("http://ip-api.com/json/")
+        if err == nil {
+            defer response.Body.Close()
+            contents, err := ioutil.ReadAll(response.Body)
+            if err == nil {
+                ipinfo = string(contents)
+            }
+        }
+    }
+
     // Use the same data structure as TTN, because we're simulating TTN inbound
 
     msg := &DataUpAppReq{}
@@ -526,12 +528,12 @@ func cmdForwardMessageToTeletypeService(pb []byte) {
         msg.Metadata[0].Lsnr = float32(SNR)
     }
 
-	// Augment with ip info
+    // Augment with ip info
 
-	msg.Metadata[0].GatewayEUI = ipinfo
-	
-	// Send it
-	
+    msg.Metadata[0].GatewayEUI = ipinfo
+
+    // Send it
+
     msgJSON, _ := json.Marshal(msg)
 
     req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(msgJSON))
@@ -548,7 +550,8 @@ func cmdForwardMessageToTeletypeService(pb []byte) {
 }
 
 func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
-    var dev seenDevice
+    var dev SeenDevice
+    var Value string
 
     // Bump stats
 
@@ -574,9 +577,9 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     }
 
     if (msg.Value == nil) {
-        dev.Value = "?"
+        Value = "?"
     } else {
-        dev.Value = fmt.Sprintf("%d", msg.GetValue())
+        Value = fmt.Sprintf("%d", msg.GetValue())
     }
 
     if (msg.Unit == nil) {
@@ -615,18 +618,64 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         dev.SNR = "?"
     }
 
-    // Add it or update it as the case may be
+    // Add or update the seen entry, as the case may be.
+    // Note that we handle the case of 2 geiger units in a single device by always folding both together via device ID mask
 
+	deviceno, err := strconv.ParseInt(dev.DeviceID, 10, 64)
+	if (err != nil) {
+		dev.DeviceNo = 0
+	} else {
+		if ((deviceno & 0x01) == 0) {
+			dev.DeviceNo = uint64(deviceno)
+		} else {
+			dev.DeviceNo = dev.DeviceNo - 1
+		}
+        dev.DeviceID = fmt.Sprintf("%d", dev.DeviceNo)
+	}
+	
     var found bool = false
-	for i:=0; i<len(seenDevices); i++ {
-        if (dev.DeviceID == seenDevices[i].DeviceID) {
+    for i:=0; i<len(seenDevices); i++ {
+
+		// Handle non-numeric device ID
+		if (dev.DeviceNo == 0 && dev.DeviceID == seenDevices[i].DeviceID) {
+			dev.Value0 = Value
+			dev.Value1 = ""
+			seenDevices[i] = dev
+			found = true
+			break
+		}
+
+		// For numerics, folder the even/odd devices into a single device (dual-geigers)
+        if (dev.DeviceNo != 0 && dev.DeviceNo == seenDevices[i].DeviceNo) {
+            if ((dev.DeviceNo & 0x01) == 0) {
+                dev.Value0 = ""
+                dev.Value1 = seenDevices[i].Value1
+            } else {
+                dev.Value0 = seenDevices[i].Value0
+                dev.Value1 = Value
+			}
             seenDevices[i] = dev;
             found = true
+			break
         }
+
     }
 
     if !found {
+		if (dev.DeviceNo == 0) {
+			dev.Value0 = Value
+			dev.Value1 = ""
+		} else {
+            if ((dev.DeviceNo & 0x01) == 0) {
+                dev.Value0 = Value
+                dev.Value1 = ""
+            } else {
+                dev.Value0 = ""
+                dev.Value1 = Value
+			}
+		}
         seenDevices = append(seenDevices, dev)
+
     }
 
     // Display them
@@ -642,7 +691,8 @@ func UpdateDisplay() {
     for _, s := range seenDevices {
         fmt.Printf("**** Device %s\n", s.DeviceID)
         fmt.Printf("  Last Update: %s\n", s.CapturedAt)
-        fmt.Printf("  Value: %s%s\n", s.Value, s.Unit)
+        fmt.Printf("  Value0: %s%s\n", s.Value0, s.Unit)
+        fmt.Printf("  Value1: %s%s\n", s.Value1, s.Unit)
         fmt.Printf("  Battery: %sVDC (%s%%)\n", s.BatteryVoltage, s.BatterySOC)
         fmt.Printf("  Wireless Quality: %s\n", s.SNR)
         fmt.Printf("  Outdoors: %sF %s%%RH\n", s.envTemp, s.envHumid)
