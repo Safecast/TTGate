@@ -480,7 +480,7 @@ func cmdForwardMessageToTeletypeService(pb []byte) {
 	// The first time through here, let's fetch our IPINFO
 
 	if ipinfo == "" {
-		response, err := http.Get("http://ipinfo.io/json")
+		response, err := http.Get("http://ip-api.com/json/")
 		if err == nil {
 			defer response.Body.Close()
 			contents, err := ioutil.ReadAll(response.Body)

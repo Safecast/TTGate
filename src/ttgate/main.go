@@ -9,14 +9,34 @@ import (
     "time"
     "fmt"
     "os"
+    "encoding/json"
     "runtime"
+	"net"
     "net/http"
     "io"
+    "io/ioutil"
     "github.com/golang/protobuf/proto"
     "github.com/rayozzie/teletype-proto/golang"
 )
 
+type IPInfoData struct {
+	AS			 string `json:"as"`
+	City         string `json:"city"`
+	Country      string `json:"country"`
+	CountryCode  string `json:"countryCode"`
+	ISP			 string `json:"isp"`
+	Latitude	 string `json:"lat"`
+	Longitude	 string `json:"lon"`
+	Organization string `json:"org"`
+	IP           net.IP `json:"query"`
+	Region       string `json:"region"`
+	RegionName   string `json:"regionName"`
+	Timezone     string `json:"timezone"`
+	Zip			 string `json:"zip"`
+}
+
 var debug bool = false
+var ourTimezone *time.Location
 
 func main() {
     var s string
@@ -114,6 +134,30 @@ func heartbeat15m() {
 }
 
 func localHTTPServer () {
+
+	// Get our local time zone, defaulting to UTC
+	// Note:
+	// https://golang.org/src/time/example_test.go
+	// https://golang.org/pkg/time
+	
+	ourTimezone, _ = time.LoadLocation("UTC")
+	
+	response, err := http.Get("http://ip-api.com/json/")
+	if err == nil {
+		defer response.Body.Close()
+		contents, err := ioutil.ReadAll(response.Body)
+		if err == nil {
+			var info IPInfoData
+			err = json.Unmarshal(contents, &info)
+			if (err == nil) {
+				fmt.Printf("TIMEZONE: %s\n", info.Timezone)
+				ourTimezone, _ = time.LoadLocation(info.Timezone)
+			}
+		}
+	}
+	
+	// Spawn the server
+	
     http.HandleFunc("/", handleInboundRequests)
     http.ListenAndServe(":8080", nil)
 }
