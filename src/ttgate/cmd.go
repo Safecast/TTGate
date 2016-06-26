@@ -9,7 +9,7 @@ package main
 import (
     "os"
     "fmt"
-	"sort"
+    "sort"
     "strconv"
     "bytes"
     "time"
@@ -40,12 +40,11 @@ type OutboundCommand struct {
 }
 
 type SeenDevice struct {
-	SortKey string
     DeviceID string
-	OriginalDeviceNo uint64
-	NormalizedDeviceNo uint64
+    OriginalDeviceNo uint64
+    NormalizedDeviceNo uint64
     CapturedAt string
-	Captured time.Time
+    Captured time.Time
     Unit string
     Value0 string
     Value1 string
@@ -59,7 +58,28 @@ type SeenDevice struct {
 type ByKey []SeenDevice
 func (a ByKey) Len() int           { return len(a) }
 func (a ByKey) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByKey) Less(i, j int) bool { return a[i].SortKey < a[j].SortKey }
+func (a ByKey) Less(i, j int) bool {
+	// Treat things captured reasonably coincident  as all being equivalent
+    if (time.Now().Sub(a[i].Captured)/(time.Duration(15)*time.Minute) < time.Now().Sub(a[j].Captured)/(time.Duration(15)*time.Minute)) {
+        return true
+    }
+	// Treat things with higher SNR as being more significant than things with lower SNR
+    iSNR, err := strconv.ParseInt(a[i].SNR, 10, 64)
+    if (err == nil) {
+        jSNR, err := strconv.ParseInt(a[j].SNR, 10, 64)
+        if (err == nil) {
+			if (iSNR > jSNR) {
+				return true
+			}
+        }
+    }
+	// In an attempt to keep things reasonably deterministic, use device number
+	if (a[i].NormalizedDeviceNo < a[j].NormalizedDeviceNo) {
+		return true
+	}
+	
+	return false
+}
 
 var seenDevices []SeenDevice
 var cmdInitialized = false;
@@ -584,7 +604,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     } else {
         dev.CapturedAt = time.Now().Format(time.RFC3339)
     }
-	dev.Captured, _ = time.ParseInLocation(time.RFC3339, dev.CapturedAt, time.UTC)
+    dev.Captured, _ = time.ParseInLocation(time.RFC3339, dev.CapturedAt, time.UTC)
 
     if (msg.Value == nil) {
         Value = "?"
@@ -631,31 +651,31 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     // Add or update the seen entry, as the case may be.
     // Note that we handle the case of 2 geiger units in a single device by always folding both together via device ID mask
 
-	dev.OriginalDeviceNo = 0
-	dev.NormalizedDeviceNo = dev.OriginalDeviceNo
-	deviceno, err := strconv.ParseInt(dev.DeviceID, 10, 64)
-	if (err == nil) {
-		dev.OriginalDeviceNo = uint64(deviceno)
-		dev.NormalizedDeviceNo = dev.OriginalDeviceNo
-		if ((dev.OriginalDeviceNo & 0x01) != 0) {
-			dev.NormalizedDeviceNo = uint64(dev.NormalizedDeviceNo-1)
-	        dev.DeviceID = fmt.Sprintf("%d", dev.NormalizedDeviceNo)
-		}
-	}
-	
+    dev.OriginalDeviceNo = 0
+    dev.NormalizedDeviceNo = dev.OriginalDeviceNo
+    deviceno, err := strconv.ParseInt(dev.DeviceID, 10, 64)
+    if (err == nil) {
+        dev.OriginalDeviceNo = uint64(deviceno)
+        dev.NormalizedDeviceNo = dev.OriginalDeviceNo
+        if ((dev.OriginalDeviceNo & 0x01) != 0) {
+            dev.NormalizedDeviceNo = uint64(dev.NormalizedDeviceNo-1)
+            dev.DeviceID = fmt.Sprintf("%d", dev.NormalizedDeviceNo)
+        }
+    }
+
     var found bool = false
     for i:=0; i<len(seenDevices); i++ {
 
-		// Handle non-numeric device ID
-		if (dev.OriginalDeviceNo == 0 && dev.DeviceID == seenDevices[i].DeviceID) {
-			dev.Value0 = Value
-			dev.Value1 = ""
-			seenDevices[i] = dev
-			found = true
-			break
-		}
+        // Handle non-numeric device ID
+        if (dev.OriginalDeviceNo == 0 && dev.DeviceID == seenDevices[i].DeviceID) {
+            dev.Value0 = Value
+            dev.Value1 = ""
+            seenDevices[i] = dev
+            found = true
+            break
+        }
 
-		// For numerics, folder the even/odd devices into a single device (dual-geigers)
+        // For numerics, folder the even/odd devices into a single device (dual-geigers)
         if (dev.OriginalDeviceNo != 0 && dev.NormalizedDeviceNo == seenDevices[i].NormalizedDeviceNo) {
             if ((dev.OriginalDeviceNo & 0x01) == 0) {
                 dev.Value0 = Value
@@ -663,27 +683,27 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
             } else {
                 dev.Value0 = seenDevices[i].Value0
                 dev.Value1 = Value
-			}
+            }
             seenDevices[i] = dev;
             found = true
-			break
+            break
         }
 
     }
 
     if !found {
-		if (dev.OriginalDeviceNo == 0) {
-			dev.Value0 = Value
-			dev.Value1 = ""
-		} else {
+        if (dev.OriginalDeviceNo == 0) {
+            dev.Value0 = Value
+            dev.Value1 = ""
+        } else {
             if ((dev.OriginalDeviceNo & 0x01) == 0) {
                 dev.Value0 = Value
                 dev.Value1 = ""
             } else {
                 dev.Value0 = ""
                 dev.Value1 = Value
-			}
-		}
+            }
+        }
         seenDevices = append(seenDevices, dev)
 
     }
@@ -696,43 +716,36 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 
 func GetSortedDeviceList() []SeenDevice {
 
-	// Duplicate the device list
-	sortedDevices := seenDevices
-	
-	// Zip through the devices, generating a sort key based on criteria that buckets
-	// anything captured within the same rough period, and then orders based on device ID
-	t := time.Now()
-    for _, s := range sortedDevices {
-        s.SortKey = fmt.Sprintf("%12d.%12d", t.Sub(s.Captured)/(time.Duration(15)*time.Minute), s.NormalizedDeviceNo)
-	}
+    // Duplicate the device list
+    sortedDevices := seenDevices
 
-	// Now do a sort with that sort key
-	sort.Sort(ByKey(sortedDevices))
-	
-	return(sortedDevices)
-	
+    // Sort it
+    sort.Sort(ByKey(sortedDevices))
+
+    return(sortedDevices)
+
 }
 
 func UpdateDisplay() {
 
     fmt.Printf("\n**** Device Status:\n")
 
-	sorted := GetSortedDeviceList()
-	
-	for i:=0; i<len(sorted); i++ {
-		s := sorted[i]
+    sorted := GetSortedDeviceList()
+
+    for i:=0; i<len(sorted); i++ {
+        s := sorted[i]
         fmt.Printf("**** Device %s\n", s.DeviceID)
 
-		fmt.Printf("Update: %s\n", s.Captured.In(OurTimezone).Format(time.RFC822))
+        fmt.Printf("Update: %s\n", s.Captured.In(OurTimezone).Format(time.RFC822))
 
-		if s.Value0 != "" && s.Value1 == "" {
-	        fmt.Printf("Value: %s%s\n", s.Value0, s.Unit)
-		} else if s.Value0 == "" && s.Value1 != "" {
-	        fmt.Printf("Value: %s%s\n", s.Value1, s.Unit)
-		} else {
-	        fmt.Printf("Value #0: %s%s\n", s.Value0, s.Unit)
-	        fmt.Printf("Value #1: %s%s\n", s.Value1, s.Unit)
-		}
+        if s.Value0 != "" && s.Value1 == "" {
+            fmt.Printf("Value: %s%s\n", s.Value0, s.Unit)
+        } else if s.Value0 == "" && s.Value1 != "" {
+            fmt.Printf("Value: %s%s\n", s.Value1, s.Unit)
+        } else {
+            fmt.Printf("Value #0: %s%s\n", s.Value0, s.Unit)
+            fmt.Printf("Value #1: %s%s\n", s.Value1, s.Unit)
+        }
 
         fmt.Printf("Battery: %sVDC (%s%%)\n", s.BatteryVoltage, s.BatterySOC)
         fmt.Printf("Wireless Quality: %s\n", s.SNR)
