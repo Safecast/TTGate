@@ -571,8 +571,6 @@ func cmdForwardMessageToTeletypeService(pb []byte) {
     // Send it
 
     msgJSON, _ := json.Marshal(msg)
-	fmt.Printf("Forwarding to TTSERVE:\n%s\n", msgJSON)
-	
     req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(msgJSON))
     req.Header.Set("User-Agent", "TTGATE")
     req.Header.Set("Content-Type", "application/json")
@@ -613,7 +611,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         dev.CapturedAt = time.Now().Format(time.RFC3339)
     }
     dev.Captured, _ = time.Parse(time.RFC3339, dev.CapturedAt)
-    dev.CapturedAtLocal = dev.Captured.In(OurTimezone).Format("02-Jan 1:04pm MST")
+    dev.CapturedAtLocal = dev.Captured.In(OurTimezone).Format("Mon Jan 2 3:04pm")
 
     if (msg.Value == nil) {
         Value = ""
