@@ -571,7 +571,8 @@ func cmdForwardMessageToTeletypeService(pb []byte) {
     // Send it
 
     msgJSON, _ := json.Marshal(msg)
-
+	fmt.Printf("Forwarding to TTSERVE:\n%s\n", msgJSON)
+	
     req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(msgJSON))
     req.Header.Set("User-Agent", "TTGATE")
     req.Header.Set("Content-Type", "application/json")
@@ -611,7 +612,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     } else {
         dev.CapturedAt = time.Now().Format(time.RFC3339)
     }
-    dev.Captured, _ = time.ParseInLocation(time.RFC3339, dev.CapturedAt, time.UTC)
+    dev.Captured, _ = time.Parse(time.RFC3339, dev.CapturedAt)
     dev.CapturedAtLocal = dev.Captured.In(OurTimezone).Format("02-Jan 1:04pm MST")
 
     if (msg.Value == nil) {
@@ -695,9 +696,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         if (dev.OriginalDeviceNo == 0 && dev.DeviceID == seenDevices[i].DeviceID) {
             dev.Value0 = Value
             dev.Value1 = ""
-            seenDevices[i] = dev
             found = true
-            break
         }
 
         // For numerics, folder the even/odd devices into a single device (dual-geigers)
@@ -709,10 +708,29 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
                 dev.Value0 = seenDevices[i].Value0
                 dev.Value1 = Value
             }
-            seenDevices[i] = dev;
             found = true
-            break
         }
+
+		// Retain values for those items that are only transmitted occasionaly
+		if (found) {
+			if (dev.BatteryVoltage == "") {
+				dev.BatteryVoltage = seenDevices[i].BatteryVoltage
+			}
+			if (dev.BatterySOC == "") {
+				dev.BatterySOC = seenDevices[i].BatterySOC
+			}
+			if (dev.EnvTemp == "") {
+				dev.EnvTemp = seenDevices[i].EnvTemp
+			}
+			if (dev.EnvHumid == "") {
+				dev.EnvHumid = seenDevices[i].EnvHumid
+			}
+			if (dev.SNR == "") {
+				dev.SNR = seenDevices[i].SNR
+			}
+	        seenDevices[i] = dev
+			break;
+		}
 
     }
 
