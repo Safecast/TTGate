@@ -608,7 +608,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         dev.CapturedAt = time.Now().Format(time.RFC3339)
     }
     dev.Captured, _ = time.ParseInLocation(time.RFC3339, dev.CapturedAt, time.UTC)
-    dev.CapturedAtLocal = dev.Captured.In(OurTimezone).Format(time.RFC822)
+    dev.CapturedAtLocal = dev.Captured.In(OurTimezone).Format("02-Jan 11:04PM MST")
 
     if (msg.Value == nil) {
         Value = ""

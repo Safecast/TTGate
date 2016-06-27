@@ -171,6 +171,8 @@ func webUpdateData() {
 
 	// Marshall it to text
     buffer, _ := json.MarshalIndent(sorted, "", "    ")
+	fmt.Printf("Writing to file: \n%v\n", sorted)
+	fmt.Printf("...as json: \n%v\n", buffer)
 
 	// Write it
 	ioutil.WriteFile("./web/data.json", buffer, 0644)
