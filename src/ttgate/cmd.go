@@ -611,7 +611,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         dev.CapturedAt = time.Now().Format(time.RFC3339)
     }
     dev.Captured, _ = time.Parse(time.RFC3339, dev.CapturedAt)
-    dev.CapturedAtLocal = dev.Captured.In(OurTimezone).Format("Mon Jan 2 3:04pm")
+    dev.CapturedAtLocal = dev.Captured.In(OurTimezone).Format("Mon 02-Jan 3:04pm")
 
     if (msg.Value == nil) {
         Value = ""
