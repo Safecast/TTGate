@@ -40,45 +40,48 @@ type OutboundCommand struct {
 }
 
 type SeenDevice struct {
-    DeviceID string
-    OriginalDeviceNo uint64
-    NormalizedDeviceNo uint64
-    CapturedAt string
-    Captured time.Time
-    Unit string
-    Value0 string
-    Value1 string
-    BatteryVoltage string
-    BatterySOC string
-    envTemp string
-    envHumid string
-    SNR string
+    DeviceID string             `json:"device_id"`
+    OriginalDeviceNo uint64     `json:"-"`
+    NormalizedDeviceNo uint64   `json:"-"`
+    CapturedAt string           `json:"-"`
+    Captured time.Time          `json:"-"`
+    CapturedAtLocal string      `json:"captured_local"`
+    Unit string                 `json:"unit"`
+    Value0 string               `json:"value0"`
+    Value1 string               `json:"value1"`
+    BatteryVoltage string       `json:"bat_voltage"`
+    BatterySOC string           `json:"bat_soc"`
+    envTemp string              `json:"env_temp"`
+    envHumid string             `json:"env_humid"`
+    SNR string                  `json:"snr"`
 }
 
 type ByKey []SeenDevice
 func (a ByKey) Len() int           { return len(a) }
 func (a ByKey) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByKey) Less(i, j int) bool {
-	// Treat things captured reasonably coincident  as all being equivalent
+    // Treat things captured reasonably coincident  as all being equivalent
     if (time.Now().Sub(a[i].Captured)/(time.Duration(15)*time.Minute) < time.Now().Sub(a[j].Captured)/(time.Duration(15)*time.Minute)) {
         return true
     }
-	// Treat things with higher SNR as being more significant than things with lower SNR
-    iSNR, err := strconv.ParseInt(a[i].SNR, 10, 64)
-    if (err == nil) {
-        jSNR, err := strconv.ParseInt(a[j].SNR, 10, 64)
+    // Treat things with higher SNR as being more significant than things with lower SNR
+    if (a[i].SNR != "" && a[j].SNR != "") {
+        iSNR, err := strconv.ParseInt(a[i].SNR, 10, 64)
         if (err == nil) {
-			if (iSNR > jSNR) {
-				return true
-			}
+            jSNR, err := strconv.ParseInt(a[j].SNR, 10, 64)
+            if (err == nil) {
+                if (iSNR > jSNR) {
+                    return true
+                }
+            }
         }
     }
-	// In an attempt to keep things reasonably deterministic, use device number
-	if (a[i].NormalizedDeviceNo < a[j].NormalizedDeviceNo) {
-		return true
-	}
-	
-	return false
+    // In an attempt to keep things reasonably deterministic, use device number
+    if (a[i].NormalizedDeviceNo < a[j].NormalizedDeviceNo) {
+        return true
+    }
+
+    return false
 }
 
 var seenDevices []SeenDevice
@@ -605,6 +608,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         dev.CapturedAt = time.Now().Format(time.RFC3339)
     }
     dev.Captured, _ = time.ParseInLocation(time.RFC3339, dev.CapturedAt, time.UTC)
+    dev.CapturedAtLocal = dev.Captured.In(OurTimezone).Format(time.RFC822)
 
     if (msg.Value == nil) {
         Value = ""
@@ -736,7 +740,7 @@ func UpdateDisplay() {
         s := sorted[i]
         fmt.Printf("**** Device %s\n", s.DeviceID)
 
-        fmt.Printf("Update: %s\n", s.Captured.In(OurTimezone).Format(time.RFC822))
+        fmt.Printf("Update: %s\n", s.CapturedAtLocal)
 
         if s.Value0 != "" && s.Value1 == "" {
             fmt.Printf("Value: %s%s\n", s.Value0, s.Unit)

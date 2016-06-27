@@ -3,7 +3,54 @@
         <title>Main Kiosk Page</title>
         <meta http-equiv="refresh" content="30">
     </head>
-    <body>
+    <body onload="loadData()">
+        <script>
+         function loadData()
+         {
+             var xhr = new XMLHttpRequest();
+             xhr.onreadystatechange = function()
+             {
+                 if (xhr.readyState === XMLHttpRequest.DONE) {
+                     if (xhr.status === 200) {
+                         processData(JSON.parse(xhr.responseText));
+                     }
+                 }
+             };
+             xhr.open("GET", "data.json", true);
+             xhr.send();
+         }
+         function processData(data) {
+             var tr;
+             for (var i = 0; i < data.length; i++) {
+                 tr = $('<tr/>');
+                 tr.append("<td>" + data[i].device_id + "</td>");
+                 tr.append("<td>" + data[i].captured_local + "</td>");
+                 tr.append("<td>" + data[i].unit + "</td>");
+                 tr.append("<td>" + data[i].value0 + "</td>");
+                 tr.append("<td>" + data[i].value1 + "</td>");
+                 tr.append("<td>" + data[i].bat_voltage + "</td>");
+                 tr.append("<td>" + data[i].bat_soc + "</td>");
+                 tr.append("<td>" + data[i].env_temp + "</td>");
+                 tr.append("<td>" + data[i].env_humid + "</td>");
+                 tr.append("<td>" + data[i].snr + "</td>");
+                 $('table').append(tr);
+             }
+         }
+        </script>
         This is the ttgate web server!
+        <table>
+            <tr>
+                <th>DeviceID</th>
+                <th>Captured</th>
+                <th>Unit</th>
+                <th>Value#0</th>
+                <th>Value#1</th>
+                <th>BatVoltage</th>
+                <th>BatSOC</th>
+                <th>Temperature</th>
+                <th>Humidity</th>
+                <th>Wireless</th>
+            </tr>
+        </table>
     </body>
 </html>
