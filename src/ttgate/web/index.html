@@ -11,7 +11,6 @@
              xhr.onreadystatechange = function()
              {
                  if (xhr.readyState === XMLHttpRequest.DONE) {
-document.write("[[["+xhr.status+"]]]")
                      if (xhr.status === 200) {
                          processData(JSON.parse(xhr.responseText));
                      }
@@ -21,39 +20,38 @@ document.write("[[["+xhr.status+"]]]")
              xhr.send();
          }
          function processData(data) {
+             var table = document.getElementById("datatable");
              var tr;
              for (var i = 0; i < data.length; i++) {
-                 tr = $('<tr/>');
-                 tr.append("<td>" + data[i].device_id + "</td>");
-                 tr.append("<td>" + data[i].captured_local + "</td>");
-                 tr.append("<td>" + data[i].unit + "</td>");
-                 tr.append("<td>" + data[i].value0 + "</td>");
-                 tr.append("<td>" + data[i].value1 + "</td>");
-                 tr.append("<td>" + data[i].bat_voltage + "</td>");
-                 tr.append("<td>" + data[i].bat_soc + "</td>");
-                 tr.append("<td>" + data[i].env_temp + "</td>");
-                 tr.append("<td>" + data[i].env_humid + "</td>");
-                 tr.append("<td>" + data[i].snr + "</td>");
-                 $('table').append(tr);
+                 tr = table.insertRow(-1);
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].device_id;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].captured_local;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].unit;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].value0;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].value1;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].bat_voltage;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].bat_soc;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].env_temp;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].env_humid;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].snr;
              }
          }
         </script>
-        Updated:
         <script type="text/javascript">
-                  var currentTime = new Date()
-                  var hours = currentTime.getHours()
-                  var minutes = currentTime.getMinutes()
-                  if (minutes < 10){
-                      minutes = "0" + minutes
-                  }
-                  document.write(hours + ":" + minutes + " ")
-                  if(hours > 11){
-                      document.write("PM")
-                  } else {
-                      document.write("AM")
-                  }
-
+         var currentTime = new Date()
+         var hours = currentTime.getHours()
+         var minutes = currentTime.getMinutes()
+         if (minutes < 10){
+             minutes = "0" + minutes
+         }
+         document.write(hours + ":" + minutes + " ")
+         if(hours > 11){
+             document.write("PM")
+         } else {
+             document.write("AM")
+         }
         </script>
+        <p/>
         <table>
             <tr>
                 <th>DeviceID</th>
