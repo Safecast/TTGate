@@ -51,8 +51,8 @@ type SeenDevice struct {
     Value1 string               `json:"value1"`
     BatteryVoltage string       `json:"bat_voltage"`
     BatterySOC string           `json:"bat_soc"`
-    envTemp string              `json:"env_temp"`
-    envHumid string             `json:"env_humid"`
+    EnvTemp string              `json:"env_temp"`
+    EnvHumid string             `json:"env_humid"`
     SNR string                  `json:"snr"`
 }
 
@@ -608,7 +608,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         dev.CapturedAt = time.Now().Format(time.RFC3339)
     }
     dev.Captured, _ = time.ParseInLocation(time.RFC3339, dev.CapturedAt, time.UTC)
-    dev.CapturedAtLocal = dev.Captured.In(OurTimezone).Format("02-Jan 11:04PM MST")
+    dev.CapturedAtLocal = dev.Captured.In(OurTimezone).Format("02-Jan 1:04pm MST")
 
     if (msg.Value == nil) {
         Value = ""
@@ -635,15 +635,15 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     }
 
     if msg.EnvTemperature != nil {
-        dev.envTemp = fmt.Sprintf("%.2fF", ((msg.GetEnvTemperature() * 9.0) / 5.0) + 32)
+        dev.EnvTemp = fmt.Sprintf("%.2fF", ((msg.GetEnvTemperature() * 9.0) / 5.0) + 32)
     } else {
-        dev.envTemp = ""
+        dev.EnvTemp = ""
     }
 
     if msg.EnvHumidity != nil {
-        dev.envHumid = fmt.Sprintf("%.2f", msg.GetEnvHumidity())
+        dev.EnvHumid = fmt.Sprintf("%.2f", msg.GetEnvHumidity())
     } else {
-        dev.envHumid = ""
+        dev.EnvHumid = ""
     }
 
     if (gotSNR) {
@@ -753,7 +753,7 @@ func UpdateDisplay() {
 
         fmt.Printf("Battery: %sVDC (%s%%)\n", s.BatteryVoltage, s.BatterySOC)
         fmt.Printf("Wireless Quality: %s\n", s.SNR)
-        fmt.Printf("Outdoors: %sF %s%%RH\n", s.envTemp, s.envHumid)
+        fmt.Printf("Outdoors: %sF %s%%RH\n", s.EnvTemp, s.EnvHumid)
 
     }
 

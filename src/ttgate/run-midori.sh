@@ -1,4 +1,3 @@
-sleep 15s
 while [ : ]; do
     # disable DPMS (Energy Star) features
     xset -dpms
