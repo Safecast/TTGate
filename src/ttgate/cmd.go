@@ -54,6 +54,10 @@ type SeenDevice struct {
     EnvTemp string              `json:"env_temp"`
     EnvHumid string             `json:"env_humid"`
     SNR string                  `json:"snr"`
+	DeviceType string			`json:"device_type"`
+	Latitude string				`json:"lat"`
+	Longitude string			`json:"lon"`
+	Altitude string				`json:"alt"`
 }
 
 type ByKey []SeenDevice
@@ -652,6 +656,23 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         dev.SNR = ""
     }
 
+	dev.DeviceType = msg.GetDeviceType().String()
+    if msg.Latitude != nil {
+        dev.Latitude = fmt.Sprintf("%f", msg.GetLatitude())
+	} else {
+		dev.Latitude = ""
+	}
+    if msg.Longitude != nil {
+        dev.Longitude = fmt.Sprintf("%f", msg.GetLongitude())
+	} else {
+		dev.Longitude = ""
+	}
+    if msg.Altitude != nil {
+		dev.Altitude = string(msg.GetAltitude())
+	} else {
+		dev.Altitude = ""
+	}
+	
     // Add or update the seen entry, as the case may be.
     // Note that we handle the case of 2 geiger units in a single device by always folding both together via device ID mask
 
@@ -750,10 +771,6 @@ func UpdateDisplay() {
             fmt.Printf("Value #0: %s%s\n", s.Value0, s.Unit)
             fmt.Printf("Value #1: %s%s\n", s.Value1, s.Unit)
         }
-
-        fmt.Printf("Battery: %sVDC (%s%%)\n", s.BatteryVoltage, s.BatterySOC)
-        fmt.Printf("Wireless Quality: %s\n", s.SNR)
-        fmt.Printf("Outdoors: %sF %s%%RH\n", s.EnvTemp, s.EnvHumid)
 
     }
 

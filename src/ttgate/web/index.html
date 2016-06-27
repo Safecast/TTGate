@@ -24,11 +24,15 @@
              var tr;
              for (var i = 0; i < data.length; i++) {
                  tr = table.insertRow(-1);
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].device_type;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].device_id;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].captured_local;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].unit;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].value0;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].value1;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].lat;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].lon;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].alt;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].bat_voltage;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].bat_soc;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].env_temp;
@@ -54,14 +58,18 @@
         <p/>
         <table id="datatable" cellpadding="8" border="1">
             <tr>
-                <th>DeviceID</th>
+                <th>Type</th>
+                <th>ID</th>
                 <th>Captured</th>
                 <th>Unit</th>
                 <th>Value#0</th>
                 <th>Value#1</th>
-                <th>BatVoltage</th>
+                <th>Lat</th>
+                <th>Lon</th>
+                <th>Alt</th>
+                <th>Voltage</th>
                 <th>BatSOC</th>
-                <th>Temperature</th>
+                <th>Temp</th>
                 <th>Humidity</th>
                 <th>Wireless</th>
             </tr>
