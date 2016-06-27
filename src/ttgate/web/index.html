@@ -11,6 +11,7 @@
              xhr.onreadystatechange = function()
              {
                  if (xhr.readyState === XMLHttpRequest.DONE) {
+document.write("[[["+xhr.status+"]]]")
                      if (xhr.status === 200) {
                          processData(JSON.parse(xhr.responseText));
                      }
@@ -37,7 +38,22 @@
              }
          }
         </script>
-        This is the ttgate web server!
+        Updated:
+        <script type="text/javascript">
+                  var currentTime = new Date()
+                  var hours = currentTime.getHours()
+                  var minutes = currentTime.getMinutes()
+                  if (minutes < 10){
+                      minutes = "0" + minutes
+                  }
+                  document.write(hours + ":" + minutes + " ")
+                  if(hours > 11){
+                      document.write("PM")
+                  } else {
+                      document.write("AM")
+                  }
+
+        </script>
         <table>
             <tr>
                 <th>DeviceID</th>
