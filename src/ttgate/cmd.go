@@ -41,11 +41,13 @@ type OutboundCommand struct {
 
 type SeenDevice struct {
     DeviceID string             `json:"device_id"`
-    OriginalDeviceNo uint64     `json:"-"`
-    NormalizedDeviceNo uint64   `json:"-"`
-    CapturedAt string           `json:"-"`
-    Captured time.Time          `json:"-"`
+    originalDeviceNo uint64     `json:"-"`
+    normalizedDeviceNo uint64   `json:"-"`
+    capturedAt string           `json:"-"`
+    captured time.Time          `json:"-"`
     CapturedAtLocal string      `json:"captured_local"`
+	MinutesAgo int64			`json:"minutes_ago"`
+	minutesApproxAgo int64		`json:"-"`
     Unit string                 `json:"unit"`
     Value0 string               `json:"value0"`
     Value1 string               `json:"value1"`
@@ -65,7 +67,7 @@ func (a ByKey) Len() int           { return len(a) }
 func (a ByKey) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByKey) Less(i, j int) bool {
     // Treat things captured reasonably coincident  as all being equivalent
-    if (time.Now().Sub(a[i].Captured)/(time.Duration(15)*time.Minute) < time.Now().Sub(a[j].Captured)/(time.Duration(15)*time.Minute)) {
+    if (a[i].minutesApproxAgo < a[j].minutesApproxAgo) {
         return true
     }
     // Treat things with higher SNR as being more significant than things with lower SNR
@@ -81,7 +83,7 @@ func (a ByKey) Less(i, j int) bool {
         }
     }
     // In an attempt to keep things reasonably deterministic, use device number
-    if (a[i].NormalizedDeviceNo < a[j].NormalizedDeviceNo) {
+    if (a[i].normalizedDeviceNo < a[j].normalizedDeviceNo) {
         return true
     }
 
@@ -607,12 +609,12 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     }
 
     if msg.CapturedAt != nil {
-        dev.CapturedAt = msg.GetCapturedAt()
+        dev.capturedAt = msg.GetCapturedAt()
     } else {
-        dev.CapturedAt = time.Now().Format(time.RFC3339)
+        dev.capturedAt = time.Now().Format(time.RFC3339)
     }
-    dev.Captured, _ = time.Parse(time.RFC3339, dev.CapturedAt)
-    dev.CapturedAtLocal = dev.Captured.In(OurTimezone).Format("Mon 02-Jan 3:04pm")
+    dev.captured, _ = time.Parse(time.RFC3339, dev.capturedAt)
+    dev.CapturedAtLocal = dev.captured.In(OurTimezone).Format("Mon 02-Jan 3:04pm")
 
     if (msg.Value == nil) {
         Value = ""
@@ -676,15 +678,15 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     // Add or update the seen entry, as the case may be.
     // Note that we handle the case of 2 geiger units in a single device by always folding both together via device ID mask
 
-    dev.OriginalDeviceNo = 0
-    dev.NormalizedDeviceNo = dev.OriginalDeviceNo
+    dev.originalDeviceNo = 0
+    dev.normalizedDeviceNo = dev.originalDeviceNo
     deviceno, err := strconv.ParseInt(dev.DeviceID, 10, 64)
     if (err == nil) {
-        dev.OriginalDeviceNo = uint64(deviceno)
-        dev.NormalizedDeviceNo = dev.OriginalDeviceNo
-        if ((dev.OriginalDeviceNo & 0x01) != 0) {
-            dev.NormalizedDeviceNo = uint64(dev.NormalizedDeviceNo-1)
-            dev.DeviceID = fmt.Sprintf("%d", dev.NormalizedDeviceNo)
+        dev.originalDeviceNo = uint64(deviceno)
+        dev.normalizedDeviceNo = dev.originalDeviceNo
+        if ((dev.originalDeviceNo & 0x01) != 0) {
+            dev.normalizedDeviceNo = uint64(dev.normalizedDeviceNo-1)
+            dev.DeviceID = fmt.Sprintf("%d", dev.normalizedDeviceNo)
         }
     }
 
@@ -692,15 +694,15 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     for i:=0; i<len(seenDevices); i++ {
 
         // Handle non-numeric device ID
-        if (dev.OriginalDeviceNo == 0 && dev.DeviceID == seenDevices[i].DeviceID) {
+        if (dev.originalDeviceNo == 0 && dev.DeviceID == seenDevices[i].DeviceID) {
             dev.Value0 = Value
             dev.Value1 = ""
             found = true
         }
 
         // For numerics, folder the even/odd devices into a single device (dual-geigers)
-        if (dev.OriginalDeviceNo != 0 && dev.NormalizedDeviceNo == seenDevices[i].NormalizedDeviceNo) {
-            if ((dev.OriginalDeviceNo & 0x01) == 0) {
+        if (dev.originalDeviceNo != 0 && dev.normalizedDeviceNo == seenDevices[i].normalizedDeviceNo) {
+            if ((dev.originalDeviceNo & 0x01) == 0) {
                 dev.Value0 = Value
                 dev.Value1 = seenDevices[i].Value1
             } else {
@@ -734,11 +736,11 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     }
 
     if !found {
-        if (dev.OriginalDeviceNo == 0) {
+        if (dev.originalDeviceNo == 0) {
             dev.Value0 = Value
             dev.Value1 = ""
         } else {
-            if ((dev.OriginalDeviceNo & 0x01) == 0) {
+            if ((dev.originalDeviceNo & 0x01) == 0) {
                 dev.Value0 = Value
                 dev.Value1 = ""
             } else {
@@ -761,6 +763,13 @@ func GetSortedDeviceList() []SeenDevice {
     // Duplicate the device list
     sortedDevices := seenDevices
 
+	// Zip through the list, updating how many minutes it was captured ago
+	t := time.Now()
+	for _, s := range sortedDevices {
+		s.MinutesAgo = int64(t.Sub(s.captured)/time.Minute)
+		s.minutesApproxAgo = int64(t.Sub(s.captured)/(time.Duration(15)*time.Minute))
+	}
+	
     // Sort it
     sort.Sort(ByKey(sortedDevices))
 
