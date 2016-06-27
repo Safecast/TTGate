@@ -46,8 +46,8 @@ type SeenDevice struct {
     capturedAt string           `json:"-"`
     captured time.Time          `json:"-"`
     CapturedAtLocal string      `json:"captured_local"`
-	MinutesAgo int64			`json:"minutes_ago"`
-	minutesApproxAgo int64		`json:"-"`
+    MinutesAgo int64            `json:"minutes_ago"`
+    minutesApproxAgo int64      `json:"-"`
     Unit string                 `json:"unit"`
     Value0 string               `json:"value0"`
     Value1 string               `json:"value1"`
@@ -56,21 +56,26 @@ type SeenDevice struct {
     EnvTemp string              `json:"env_temp"`
     EnvHumid string             `json:"env_humid"`
     SNR string                  `json:"snr"`
-	DeviceType string			`json:"device_type"`
-	Latitude string				`json:"lat"`
-	Longitude string			`json:"lon"`
-	Altitude string				`json:"alt"`
+    DeviceType string           `json:"device_type"`
+    Latitude string             `json:"lat"`
+    Longitude string            `json:"lon"`
+    Altitude string             `json:"alt"`
 }
 
 type ByKey []SeenDevice
 func (a ByKey) Len() int           { return len(a) }
 func (a ByKey) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByKey) Less(i, j int) bool {
-    // Treat things captured reasonably coincident  as all being equivalent
+    // Primary:
+	// Treat things captured reasonably coincident  as all being equivalent
     if (a[i].minutesApproxAgo < a[j].minutesApproxAgo) {
         return true
+    } else if (a[i].minutesApproxAgo > a[j].minutesApproxAgo) {
+        return false
     }
-    // Treat things with higher SNR as being more significant than things with lower SNR
+
+    // Secondary:
+	// Treat things with higher SNR as being more significant than things with lower SNR
     if (a[i].SNR != "" && a[j].SNR != "") {
         iSNR, err := strconv.ParseInt(a[i].SNR, 10, 64)
         if (err == nil) {
@@ -78,14 +83,21 @@ func (a ByKey) Less(i, j int) bool {
             if (err == nil) {
                 if (iSNR > jSNR) {
                     return true
+                } else if (iSNR < jSNR) {
+                    return false
                 }
             }
         }
     }
+
+	// Tertiary:
     // In an attempt to keep things reasonably deterministic, use device number
     if (a[i].normalizedDeviceNo < a[j].normalizedDeviceNo) {
         return true
-    }
+    } else if (a[i].normalizedDeviceNo > a[j].normalizedDeviceNo) {
+        return false
+	}
+
 
     return false
 }
@@ -320,7 +332,7 @@ func cmdProcess(cmd []byte) {
             }
             // Remember that we received at least one message
             receivedMessage = true
-			getSNR = true
+            getSNR = true
             // Parse and process the received message
             cmdProcessReceived(cmd[hexstarts:])
             // if there's a pending outbound, transmit it (which will change state)
@@ -343,7 +355,7 @@ func cmdProcess(cmd []byte) {
             if (err == nil) {
                 SNR = f
                 gotSNR = true
-	            getSNR = false
+                getSNR = false
             }
             // Always restart receive
             RestartReceive()
@@ -658,23 +670,23 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         dev.SNR = ""
     }
 
-	dev.DeviceType = msg.GetDeviceType().String()
+    dev.DeviceType = msg.GetDeviceType().String()
     if msg.Latitude != nil {
         dev.Latitude = fmt.Sprintf("%f", msg.GetLatitude())
-	} else {
-		dev.Latitude = ""
-	}
+    } else {
+        dev.Latitude = ""
+    }
     if msg.Longitude != nil {
         dev.Longitude = fmt.Sprintf("%f", msg.GetLongitude())
-	} else {
-		dev.Longitude = ""
-	}
+    } else {
+        dev.Longitude = ""
+    }
     if msg.Altitude != nil {
         dev.Altitude = fmt.Sprintf("%d", msg.GetAltitude())
-	} else {
-		dev.Altitude = ""
-	}
-	
+    } else {
+        dev.Altitude = ""
+    }
+
     // Add or update the seen entry, as the case may be.
     // Note that we handle the case of 2 geiger units in a single device by always folding both together via device ID mask
 
@@ -712,26 +724,26 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
             found = true
         }
 
-		// Retain values for those items that are only transmitted occasionaly
-		if (found) {
-			if (dev.BatteryVoltage == "") {
-				dev.BatteryVoltage = seenDevices[i].BatteryVoltage
-			}
-			if (dev.BatterySOC == "") {
-				dev.BatterySOC = seenDevices[i].BatterySOC
-			}
-			if (dev.EnvTemp == "") {
-				dev.EnvTemp = seenDevices[i].EnvTemp
-			}
-			if (dev.EnvHumid == "") {
-				dev.EnvHumid = seenDevices[i].EnvHumid
-			}
-			if (dev.SNR == "") {
-				dev.SNR = seenDevices[i].SNR
-			}
-	        seenDevices[i] = dev
-			break;
-		}
+        // Retain values for those items that are only transmitted occasionaly
+        if (found) {
+            if (dev.BatteryVoltage == "") {
+                dev.BatteryVoltage = seenDevices[i].BatteryVoltage
+            }
+            if (dev.BatterySOC == "") {
+                dev.BatterySOC = seenDevices[i].BatterySOC
+            }
+            if (dev.EnvTemp == "") {
+                dev.EnvTemp = seenDevices[i].EnvTemp
+            }
+            if (dev.EnvHumid == "") {
+                dev.EnvHumid = seenDevices[i].EnvHumid
+            }
+            if (dev.SNR == "") {
+                dev.SNR = seenDevices[i].SNR
+            }
+            seenDevices[i] = dev
+            break;
+        }
 
     }
 
@@ -763,13 +775,13 @@ func GetSortedDeviceList() []SeenDevice {
     // Duplicate the device list
     sortedDevices := seenDevices
 
-	// Zip through the list, updating how many minutes it was captured ago
-	t := time.Now()
-	for i:=0; i<len(sortedDevices); i++ {
-		sortedDevices[i].MinutesAgo = int64(t.Sub(sortedDevices[i].captured)/time.Minute)
-		sortedDevices[i].minutesApproxAgo = int64(t.Sub(sortedDevices[i].captured)/(time.Duration(15)*time.Minute))
-	}
-	
+    // Zip through the list, updating how many minutes it was captured ago
+    t := time.Now()
+    for i:=0; i<len(sortedDevices); i++ {
+        sortedDevices[i].MinutesAgo = int64(t.Sub(sortedDevices[i].captured)/time.Minute)
+        sortedDevices[i].minutesApproxAgo = int64(t.Sub(sortedDevices[i].captured)/(time.Duration(15)*time.Minute))
+    }
+
     // Sort it
     sort.Sort(ByKey(sortedDevices))
 
