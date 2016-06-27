@@ -607,7 +607,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     dev.Captured, _ = time.ParseInLocation(time.RFC3339, dev.CapturedAt, time.UTC)
 
     if (msg.Value == nil) {
-        Value = "?"
+        Value = ""
     } else {
         Value = fmt.Sprintf("%d", msg.GetValue())
     }
@@ -621,31 +621,31 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
     if msg.BatterySOC != nil {
         dev.BatterySOC = fmt.Sprintf("%.2f", msg.GetBatterySOC())
     } else {
-        dev.BatterySOC = "?"
+        dev.BatterySOC = ""
     }
 
     if msg.BatteryVoltage != nil {
         dev.BatteryVoltage = fmt.Sprintf("%.4f", msg.GetBatteryVoltage())
     } else {
-        dev.BatteryVoltage = "?"
+        dev.BatteryVoltage = ""
     }
 
     if msg.EnvTemperature != nil {
         dev.envTemp = fmt.Sprintf("%.2fF", ((msg.GetEnvTemperature() * 9.0) / 5.0) + 32)
     } else {
-        dev.envTemp = "?"
+        dev.envTemp = ""
     }
 
     if msg.EnvHumidity != nil {
         dev.envHumid = fmt.Sprintf("%.2f", msg.GetEnvHumidity())
     } else {
-        dev.envHumid = "?"
+        dev.envHumid = ""
     }
 
     if (gotSNR) {
         dev.SNR = fmt.Sprintf("%.1f", SNR)
     } else {
-        dev.SNR = "?"
+        dev.SNR = ""
     }
 
     // Add or update the seen entry, as the case may be.
