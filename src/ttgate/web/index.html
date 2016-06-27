@@ -26,7 +26,7 @@
                  tr = table.insertRow(-1);
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].device_type;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].device_id;
-                 cell = tr.insertCell(-1); cell.innerHTML = data[i].captured_local + "(" + data[i].minutes_ago + "m ago)";
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].captured_local + " (" + data[i].minutes_ago + "m ago)";
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].unit;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].value0;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].value1;
@@ -42,7 +42,7 @@
          }
         </script>
         <p/>
-        <table id="datatable" cellpadding="8" border="1" align="center">
+        <table id="datatable" cellpadding="8" border="1">
             <tr>
                 <th>Type</th>
                 <th>ID</th>
