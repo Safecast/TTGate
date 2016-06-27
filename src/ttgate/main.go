@@ -13,7 +13,6 @@ import (
     "runtime"
 	"net"
     "net/http"
-    "io"
     "io/ioutil"
     "github.com/golang/protobuf/proto"
     "github.com/rayozzie/teletype-proto/golang"
@@ -56,7 +55,8 @@ func main() {
 	// Spawn our localhost web server
 
 	loadLocalTimezone()
-	go localHTTPServer()
+
+	go webServer()
 	
 	// Spawn various timer tasks
 
@@ -92,6 +92,7 @@ func timer1m() {
     for {
         time.Sleep(1 * 60 * time.Second)
         cmdWatchdog1m()
+		webUpdateData()
     }
 }
 
@@ -158,14 +159,22 @@ func loadLocalTimezone () {
 
 }
 
-func localHTTPServer () {
+func webServer() {
 	http.Handle("/", http.FileServer(http.Dir("./web")))
-//    http.HandleFunc("/", handleInboundRequests)
     http.ListenAndServe(":8080", nil)
 }
 
-func handleInboundRequests(rw http.ResponseWriter, req *http.Request) {
-    io.WriteString(rw, "This is the ttgate web server.")
+func webUpdateData() {
+
+	// Get the sorted list of device info
+    sorted := GetSortedDeviceList()
+
+	// Marshall it to text
+    buffer, _ := json.MarshalIndent(sorted, "", "    ")
+
+	// Write it
+	ioutil.WriteFile("./web/data.json", buffer, 0644)
+	
 }
 
 // eof
