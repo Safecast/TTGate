@@ -318,7 +318,7 @@ func cmdProcess(cmd []byte) {
             }
             // Remember that we received at least one message
             receivedMessage = true
-            getSNR = true
+			getSNR = true
             // Parse and process the received message
             cmdProcessReceived(cmd[hexstarts:])
             // if there's a pending outbound, transmit it (which will change state)
@@ -341,6 +341,7 @@ func cmdProcess(cmd []byte) {
             if (err == nil) {
                 SNR = f
                 gotSNR = true
+	            getSNR = false
             }
             // Always restart receive
             RestartReceive()
