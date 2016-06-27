@@ -765,9 +765,9 @@ func GetSortedDeviceList() []SeenDevice {
 
 	// Zip through the list, updating how many minutes it was captured ago
 	t := time.Now()
-	for _, s := range sortedDevices {
-		s.MinutesAgo = int64(t.Sub(s.captured)/time.Minute)
-		s.minutesApproxAgo = int64(t.Sub(s.captured)/(time.Duration(15)*time.Minute))
+	for i:=0; i<len(sortedDevices); i++ {
+		sortedDevices[i].MinutesAgo = int64(t.Sub(sortedDevices[i].captured)/time.Minute)
+		sortedDevices[i].minutesApproxAgo = int64(t.Sub(sortedDevices[i].captured)/(time.Duration(15)*time.Minute))
 	}
 	
     // Sort it
