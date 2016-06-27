@@ -669,7 +669,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
 		dev.Longitude = ""
 	}
     if msg.Altitude != nil {
-		dev.Altitude = string(msg.GetAltitude())
+        dev.Altitude = fmt.Sprintf("%d", msg.GetAltitude())
 	} else {
 		dev.Altitude = ""
 	}
