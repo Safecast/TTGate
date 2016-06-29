@@ -662,7 +662,8 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast, snr float32) {
 
     if (snr != invalidSNR) {
         dev.snr = snr
-        dev.SNR = fmt.Sprintf("%fdB", snr)
+		iSNR := int32(snr)
+        dev.SNR = fmt.Sprintf("%ddB", iSNR)
     } else {
         dev.snr = 0.0
         dev.SNR = ""
