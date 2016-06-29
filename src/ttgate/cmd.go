@@ -48,7 +48,6 @@ type SeenDevice struct {
     CapturedAtLocal string      `json:"captured_local"`
     MinutesAgo int64            `json:"minutes_ago"`
     minutesApproxAgo int64      `json:"-"`
-    Unit string                 `json:"unit"`
     Value0 string               `json:"value0"`
     Value1 string               `json:"value1"`
     BatteryVoltage string       `json:"bat_voltage"`
@@ -578,6 +577,7 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 
 func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast, snr float32) {
     var dev SeenDevice
+	var Unit string
     var Value string
 
     // Bump stats
@@ -606,15 +606,15 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast, snr float32) {
     dev.CapturedAtLocal = dev.captured.In(OurTimezone).Format("Mon 02-Jan 3:04pm")
 
     if (msg.Unit == nil) {
-        dev.Unit = "cpm"
+        Unit = "cpm"
     } else {
-        dev.Unit = fmt.Sprintf("%s", msg.GetUnit())
+        Unit = fmt.Sprintf("%s", msg.GetUnit())
     }
 
     if (msg.Value == nil) {
         Value = ""
     } else {
-        Value = fmt.Sprintf("%d%s", msg.GetValue(), dev.Unit)
+        Value = fmt.Sprintf("%d%s", msg.GetValue(), Unit)
     }
 
     if msg.BatterySOC != nil {
