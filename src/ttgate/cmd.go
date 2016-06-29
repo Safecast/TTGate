@@ -528,7 +528,7 @@ func cmdForwardMessageToTeletypeService(pb []byte) {
 
     // TTSERVE url
 
-    UploadURL := "http://api.teletype.io/send:8080"
+    UploadURL := "http://api.teletype.io:8080/send"
 
     // The first time through here, let's fetch our IPINFO
 
