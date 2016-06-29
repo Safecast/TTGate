@@ -1,4 +1,4 @@
-/*
+A/*
  * Teletype Command Processing
  *
  * This module contains the command state machine
@@ -618,7 +618,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast, snr float32) {
     }
 
     if msg.BatterySOC != nil {
-        dev.BatterySOC = fmt.Sprintf("%.2f%%", msg.GetBatterySOC())
+        dev.BatterySOC = fmt.Sprintf("%.2f%", msg.GetBatterySOC())
     } else {
         dev.BatterySOC = ""
     }
@@ -655,7 +655,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast, snr float32) {
     }
 
     if msg.EnvHumidity != nil {
-        dev.EnvHumid = fmt.Sprintf("%.1f%%", msg.GetEnvHumidity())
+        dev.EnvHumid = fmt.Sprintf("%.1f%", msg.GetEnvHumidity())
     } else {
         dev.EnvHumid = ""
     }
