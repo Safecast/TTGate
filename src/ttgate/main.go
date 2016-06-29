@@ -160,7 +160,8 @@ func loadLocalTimezone () {
 }
 
 func webServer() {
-	http.Handle("/", http.FileServer(http.Dir("./web")))
+	http.Handle("/send", http.FileServer(http.Dir("./web")))
+	http.HandleFunc("/test", testHandler)
     http.ListenAndServe(":8080", nil)
 }
 
@@ -175,6 +176,26 @@ func webUpdateData() {
 	// Write it
 	ioutil.WriteFile("./web/data.json", buffer, 0644)
 	
+}
+
+type test_struct struct {
+	Test string
+}
+
+func testHandler(rw http.ResponseWriter, req *http.Request) {
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		fmt.Printf("error reading body:", err)
+		return
+	}
+	fmt.Printf("\nReceived Request on HTTP\nBody:\n%s\n", string(body))
+	var t test_struct
+	err = json.Unmarshal(body, &t)
+	if err != nil {
+		fmt.Printf("error unmarshaling body:", err)
+		return
+	}
+	fmt.Printf("Unmarshaled:\n%s\n", string(t.Test))
 }
 
 // eof
