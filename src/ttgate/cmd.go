@@ -67,7 +67,7 @@ func (a ByKey) Len() int           { return len(a) }
 func (a ByKey) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByKey) Less(i, j int) bool {
     // Primary:
-	// Treat things captured reasonably coincident  as all being equivalent
+    // Treat things captured reasonably coincident  as all being equivalent
     if (a[i].minutesApproxAgo < a[j].minutesApproxAgo) {
         return true
     } else if (a[i].minutesApproxAgo > a[j].minutesApproxAgo) {
@@ -75,7 +75,7 @@ func (a ByKey) Less(i, j int) bool {
     }
 
     // Secondary:
-	// Treat things with higher SNR as being more significant than things with lower SNR
+    // Treat things with higher SNR as being more significant than things with lower SNR
     if (a[i].SNR != "" && a[j].SNR != "") {
         iSNR, err := strconv.ParseInt(a[i].SNR, 10, 64)
         if (err == nil) {
@@ -90,25 +90,23 @@ func (a ByKey) Less(i, j int) bool {
         }
     }
 
-	// Tertiary:
+    // Tertiary:
     // In an attempt to keep things reasonably deterministic, use device number
     if (a[i].normalizedDeviceNo < a[j].normalizedDeviceNo) {
         return true
     } else if (a[i].normalizedDeviceNo > a[j].normalizedDeviceNo) {
         return false
-	}
+    }
 
 
     return false
 }
 
 var seenDevices []SeenDevice
-var cmdInitialized = false;
-var receivedMessage = false;
-var gotSNR bool = false
-var getSNR bool = false
-var inReinit bool = false;
-var SNR float64
+var cmdInitialized bool = false
+var receivedMessage []byte
+var inReinit bool = false
+var invalidSNR float32 = 123.456
 var outboundQueue chan OutboundCommand
 var currentState uint16
 var totalMessagesReceived int = 0
@@ -181,12 +179,6 @@ func cmdReinit(rebootLPWAN bool) {
     if rebootLPWAN {
         ioInitMicrochip()
     }
-
-    // Init statics
-
-    gotSNR = false
-    getSNR = false
-    receivedMessage = false
 
     // Initialize the state machine and kick off a device reset
 
@@ -305,15 +297,7 @@ func cmdProcess(cmd []byte) {
             // if there's a pending outbound, transmit it (which will change state)
             // else restart the receive
             if (!SentPendingOutbound()) {
-                {
-                    // Update the SNR stat if and only if we've received a message
-                    if (receivedMessage && getSNR) {
-                        ioSendCommandString("radio get snr")
-                        cmdSetState(CMD_STATE_LPWAN_SNRRPL)
-                    } else {
-                        RestartReceive()
-                    }
-                }
+                RestartReceive()
             }
         } else if bytes.HasPrefix(cmd, []byte("busy")) {
             // This is not at all expected, but it means that we're
@@ -323,23 +307,18 @@ func cmdProcess(cmd []byte) {
             // reset the world if too many consecutive busy errors
             cmdBusy()
         } else if bytes.HasPrefix(cmd, []byte("radio_rx")) {
-            // skip whitespace (there is more than one space)
+            // skip whitespace, then remember the message that we received,
+            // because we'll need it after we get the SNR of the transmission
             var hexstarts int
             for hexstarts = len("radio_rx"); hexstarts<len(cmd); hexstarts++ {
                 if (cmd[hexstarts] > ' ') {
                     break
                 }
             }
-            // Remember that we received at least one message
-            receivedMessage = true
-            getSNR = true
-            // Parse and process the received message
-            cmdProcessReceived(cmd[hexstarts:])
-            // if there's a pending outbound, transmit it (which will change state)
-            // else restart the receive
-            if (!SentPendingOutbound()) {
-                RestartReceive()
-            }
+            receivedMessage = cmd[hexstarts:]
+            // Get the SNR of the last message received
+            ioSendCommandString("radio get snr")
+            cmdSetState(CMD_STATE_LPWAN_SNRRPL)
         } else {
             // Totally unknown error, but since we cannot just
             // leave things in a state without a pending receive,
@@ -351,14 +330,17 @@ func cmdProcess(cmd []byte) {
     case CMD_STATE_LPWAN_SNRRPL:
         {
             // Get the number in the commanbd buffer
-            f, err := strconv.ParseFloat(cmdstr, 64)
-            if (err == nil) {
-                SNR = f
-                gotSNR = true
-                getSNR = false
+            snr64, err := strconv.ParseFloat(cmdstr, 64)
+            if (err != nil) {
+                snr64 = float64(invalidSNR)
             }
-            // Always restart receive
-            RestartReceive()
+            // Parse and process the received message
+            cmdProcessReceived(receivedMessage, float32(snr64))
+            // If there's a pending outbound, transmit it (which will change state)
+            // else restart the receive
+            if (!SentPendingOutbound()) {
+                RestartReceive()
+            }
         }
 
     case CMD_STATE_LPWAN_TXRPL1:
@@ -425,7 +407,7 @@ func SentPendingOutbound() bool {
     return false
 }
 
-func cmdProcessReceived(hex []byte) {
+func cmdProcessReceived(hex []byte, snr float32) {
 
     // Convert received message from hex to binary
     bin := make([]byte, len(hex)/2)
@@ -461,11 +443,11 @@ func cmdProcessReceived(hex []byte) {
 
     // Process the received protocol buffer
 
-    cmdProcessReceivedProtobuf(bin)
+    cmdProcessReceivedProtobuf(bin, snr)
 
 }
 
-func cmdProcessReceivedProtobuf(buf []byte) {
+func cmdProcessReceivedProtobuf(buf []byte, snr float32) {
 
     msg := &teletype.Telecast{}
     err := proto.Unmarshal(buf, msg)
@@ -474,11 +456,11 @@ func cmdProcessReceivedProtobuf(buf []byte) {
         return
     }
 
-    cmdProcessReceivedTelecastMessage(msg, buf)
+    cmdProcessReceivedTelecastMessage(msg, buf, snr)
 
 }
 
-func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast, pb []byte) {
+func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast, pb []byte, snr float32) {
 
     // Do various things baed upon the message type
 
@@ -486,11 +468,11 @@ func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast, pb []byte) {
 
         // processing a simplecast message?
     case teletype.Telecast_SIMPLECAST:
-        cmdProcessReceivedSafecastMessage(msg)
+        cmdProcessReceivedSafecastMessage(msg, snr)
 
         // Forwarding a message from a nano?
     case teletype.Telecast_BGEIGIE_NANO:
-        cmdProcessReceivedSafecastMessage(msg)
+        cmdProcessReceivedSafecastMessage(msg, snr)
 
         // If this is a ping request (indicated by null Message), then send that device back the same thing we received,
         // but WITH a message (so that we don't cause a ping storm among multiple ttgates with visibility to each other)
@@ -520,11 +502,11 @@ func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast, pb []byte) {
     }
 
     // Forward the message to the service [and delete the stuff from processreceivedsafecastmessage!]
-    cmdForwardMessageToTeletypeService(pb)
+    cmdForwardMessageToTeletypeService(pb, snr)
 
 }
 
-func cmdForwardMessageToTeletypeService(pb []byte) {
+func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 
     // TTSERVE url
 
@@ -575,8 +557,8 @@ func cmdForwardMessageToTeletypeService(pb []byte) {
 
     // The service might find it handy to see the SNR of the last message received from the gateway
 
-    if (gotSNR) {
-        msg.Metadata[0].Lsnr = float32(SNR)
+    if (snr != invalidSNR) {
+        msg.Metadata[0].Lsnr = float32(snr)
     }
 
     // Augment with ip info
@@ -599,7 +581,7 @@ func cmdForwardMessageToTeletypeService(pb []byte) {
 
 }
 
-func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
+func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast, snr float32) {
     var dev SeenDevice
     var Value string
 
@@ -664,8 +646,8 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast) {
         dev.EnvHumid = ""
     }
 
-    if (gotSNR) {
-        dev.SNR = fmt.Sprintf("%.1f", SNR)
+    if (snr != invalidSNR) {
+        dev.SNR = fmt.Sprintf("%.1f", snr)
     } else {
         dev.SNR = ""
     }
