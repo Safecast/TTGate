@@ -56,6 +56,7 @@ type SeenDevice struct {
     EnvTemp string              `json:"env_temp"`
     EnvHumid string             `json:"env_humid"`
     SNR string                  `json:"snr"`
+    snr float32                 `json:"-"`
     DeviceType string           `json:"device_type"`
     Latitude string             `json:"lat"`
     Longitude string            `json:"lon"`
@@ -77,16 +78,10 @@ func (a ByKey) Less(i, j int) bool {
     // Secondary:
     // Treat things with higher SNR as being more significant than things with lower SNR
     if (a[i].SNR != "" && a[j].SNR != "") {
-        iSNR, err := strconv.ParseInt(a[i].SNR, 10, 64)
-        if (err == nil) {
-            jSNR, err := strconv.ParseInt(a[j].SNR, 10, 64)
-            if (err == nil) {
-                if (iSNR > jSNR) {
-                    return true
-                } else if (iSNR < jSNR) {
-                    return false
-                }
-            }
+        if (a[i].snr > a[j].snr) {
+            return true
+        } else if (a[i].snr < a[j].snr) {
+            return false
         }
     }
 
@@ -647,8 +642,10 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast, snr float32) {
     }
 
     if (snr != invalidSNR) {
+        dev.snr = snr
         dev.SNR = fmt.Sprintf("%.1f", snr)
     } else {
+        dev.snr = 0.0
         dev.SNR = ""
     }
 
@@ -721,6 +718,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast, snr float32) {
                 dev.EnvHumid = seenDevices[i].EnvHumid
             }
             if (dev.SNR == "") {
+                dev.snr = seenDevices[i].snr
                 dev.SNR = seenDevices[i].SNR
             }
             seenDevices[i] = dev
