@@ -605,45 +605,64 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast, snr float32) {
     dev.captured, _ = time.Parse(time.RFC3339, dev.capturedAt)
     dev.CapturedAtLocal = dev.captured.In(OurTimezone).Format("Mon 02-Jan 3:04pm")
 
-    if (msg.Value == nil) {
-        Value = ""
-    } else {
-        Value = fmt.Sprintf("%d", msg.GetValue())
-    }
-
     if (msg.Unit == nil) {
         dev.Unit = "cpm"
     } else {
         dev.Unit = fmt.Sprintf("%s", msg.GetUnit())
     }
 
+    if (msg.Value == nil) {
+        Value = ""
+    } else {
+        Value = fmt.Sprintf("%d%s", msg.GetValue(), dev.Unit)
+    }
+
     if msg.BatterySOC != nil {
-        dev.BatterySOC = fmt.Sprintf("%.2f", msg.GetBatterySOC())
+        dev.BatterySOC = fmt.Sprintf("%.2f%", msg.GetBatterySOC())
     } else {
         dev.BatterySOC = ""
     }
 
     if msg.BatteryVoltage != nil {
-        dev.BatteryVoltage = fmt.Sprintf("%.4f", msg.GetBatteryVoltage())
+        dev.BatteryVoltage = fmt.Sprintf("%.2fV", msg.GetBatteryVoltage())
     } else {
         dev.BatteryVoltage = ""
     }
 
     if msg.EnvTemperature != nil {
-        dev.EnvTemp = fmt.Sprintf("%.2fF", ((msg.GetEnvTemperature() * 9.0) / 5.0) + 32)
+        switch OurCountryCode {
+        case "BS":      // Bahamas
+            fallthrough
+        case "BZ":      // Belize
+            fallthrough
+        case "GU":      // Guam
+            fallthrough
+        case "KY":      // Cayman Islands
+            fallthrough
+        case "PW":      // Palau
+            fallthrough
+        case "PR":      // Puerto Rico
+            fallthrough
+        case "US":      // United States
+            fallthrough
+        case "VI":      // US Virgin Islands
+            dev.EnvTemp = fmt.Sprintf("%.1fF", ((msg.GetEnvTemperature() * 9.0) / 5.0) + 32)
+        default:
+            dev.EnvTemp = fmt.Sprintf("%.1fC", msg.GetEnvTemperature())
+        }
     } else {
         dev.EnvTemp = ""
     }
 
     if msg.EnvHumidity != nil {
-        dev.EnvHumid = fmt.Sprintf("%.2f", msg.GetEnvHumidity())
+        dev.EnvHumid = fmt.Sprintf("%.1f%", msg.GetEnvHumidity())
     } else {
         dev.EnvHumid = ""
     }
 
     if (snr != invalidSNR) {
         dev.snr = snr
-        dev.SNR = fmt.Sprintf("%.1f", snr)
+        dev.SNR = fmt.Sprintf("%fdB", snr)
     } else {
         dev.snr = 0.0
         dev.SNR = ""
@@ -661,7 +680,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast, snr float32) {
         dev.Longitude = ""
     }
     if msg.Altitude != nil {
-        dev.Altitude = fmt.Sprintf("%d", msg.GetAltitude())
+        dev.Altitude = fmt.Sprintf("%dm", msg.GetAltitude())
     } else {
         dev.Altitude = ""
     }

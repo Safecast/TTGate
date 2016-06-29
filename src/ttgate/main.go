@@ -36,6 +36,7 @@ type IPInfoData struct {
 
 var debug bool = false
 var OurTimezone *time.Location
+var OurCountryCode string = ""
 
 func main() {
     var s string
@@ -153,6 +154,7 @@ func loadLocalTimezone () {
 			err = json.Unmarshal(contents, &info)
 			if (err == nil) {
 				OurTimezone, _ = time.LoadLocation(info.Timezone)
+				OurCountryCode = info.CountryCode
 			}
 		}
 	}
