@@ -68,15 +68,11 @@ func (a ByKey) Len() int           { return len(a) }
 func (a ByKey) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByKey) Less(i, j int) bool {
 
-	fmt.Printf("Compare(i=%d,j=%d):\na[i]:\n%v\na[j]:\n%v\n", i, j, a[i], a[j])
-	
     // Primary:
     // Treat things captured reasonably coincident  as all being equivalent
     if (a[i].minutesApproxAgo < a[j].minutesApproxAgo) {
-		fmt.Printf("Result: TRUE (minutesapproxago %d<%d)\n", a[i].minutesApproxAgo, a[j].minutesApproxAgo)
         return true
     } else if (a[i].minutesApproxAgo > a[j].minutesApproxAgo) {
-		fmt.Printf("Result: FALSE (minutesapproxago %d>%d)\n", a[i].minutesApproxAgo, a[j].minutesApproxAgo)
         return false
     }
 
@@ -84,10 +80,8 @@ func (a ByKey) Less(i, j int) bool {
     // Treat things with higher SNR as being more significant than things with lower SNR
     if (a[i].SNR != "" && a[j].SNR != "") {
         if (a[i].snr > a[j].snr) {
-			fmt.Printf("Result: TRUE (snr %d>%d)\n", int64(a[i].snr), int64(a[j].snr))
             return true
         } else if (a[i].snr < a[j].snr) {
-			fmt.Printf("Result: FALSE (snr %d<%d)\n", int64(a[i].snr), int64(a[j].snr))
             return false
         }
     }
@@ -95,14 +89,11 @@ func (a ByKey) Less(i, j int) bool {
     // Tertiary:
     // In an attempt to keep things reasonably deterministic, use device number
     if (a[i].normalizedDeviceNo < a[j].normalizedDeviceNo) {
-		fmt.Printf("Result: TRUE (devno %d>%d)\n", a[i].normalizedDeviceNo, a[j].normalizedDeviceNo)
         return true
     } else if (a[i].normalizedDeviceNo > a[j].normalizedDeviceNo) {
-		fmt.Printf("Result: FALSE (devno %d<%d)\n", a[i].normalizedDeviceNo, a[j].normalizedDeviceNo)
         return false
     }
 
-	fmt.Printf("Result: CANNOT HAPPEN\n");
     return false
 }
 
