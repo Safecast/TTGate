@@ -24,9 +24,10 @@
              var tr;
              for (var i = 0; i < data.length; i++) {
                  tr = table.insertRow(-1);
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].minutes_ago;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].captured_local;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].device_type;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].device_id;
-                 cell = tr.insertCell(-1); cell.innerHTML = data[i].captured_local + " (" + data[i].minutes_ago + "m-ago)";
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].value0;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].value1;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].lat;
@@ -43,9 +44,10 @@
         <p/>
         <table id="datatable" cellpadding="8" border="1">
             <tr>
+                <th>When</th>
+                <th>Captured</th>
                 <th>Type</th>
                 <th>ID</th>
-                <th>Captured</th>
                 <th>Value#0</th>
                 <th>Value#1</th>
                 <th>Lat</th>

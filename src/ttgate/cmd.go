@@ -46,7 +46,8 @@ type SeenDevice struct {
     capturedAt string           `json:"-"`
     captured time.Time          `json:"-"`
     CapturedAtLocal string      `json:"captured_local"`
-    MinutesAgo int64            `json:"minutes_ago"`
+	MinutesAgoStr string		`json:"minutes_ago"`
+    minutesAgo int64            `json:"-"`
     minutesApproxAgo int64      `json:"-"`
     Value0 string               `json:"value0"`
     Value1 string               `json:"value1"`
@@ -603,7 +604,7 @@ func cmdProcessReceivedSafecastMessage(msg *teletype.Telecast, snr float32) {
         dev.capturedAt = time.Now().Format(time.RFC3339)
     }
     dev.captured, _ = time.Parse(time.RFC3339, dev.capturedAt)
-    dev.CapturedAtLocal = dev.captured.In(OurTimezone).Format("Mon 02-Jan 3:04pm")
+    dev.CapturedAtLocal = dev.captured.In(OurTimezone).Format("Mon 3:04pm")
 
     if (msg.Unit == nil) {
         Unit = "cpm"
@@ -778,7 +779,8 @@ func GetSortedDeviceList() []SeenDevice {
     // Zip through the list, updating how many minutes it was captured ago
     t := time.Now()
     for i:=0; i<len(sortedDevices); i++ {
-        sortedDevices[i].MinutesAgo = int64(t.Sub(sortedDevices[i].captured)/time.Minute)
+        sortedDevices[i].minutesAgo = int64(t.Sub(sortedDevices[i].captured)/time.Minute)
+        sortedDevices[i].MinutesAgoStr = fmt.Sprintf("%dm", sortedDevices[i].minutesAgo)
         sortedDevices[i].minutesApproxAgo = int64(t.Sub(sortedDevices[i].captured)/(time.Duration(15)*time.Minute))
     }
 
