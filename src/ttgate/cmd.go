@@ -804,12 +804,12 @@ func UpdateDisplay() {
         fmt.Printf("Update: %s\n", s.CapturedAtLocal)
 
         if s.Value0 != "" && s.Value1 == "" {
-            fmt.Printf("Value: %s%s\n", s.Value0)
+            fmt.Printf("Value: %s\n", s.Value0)
         } else if s.Value0 == "" && s.Value1 != "" {
-            fmt.Printf("Value: %s%s\n", s.Value1)
+            fmt.Printf("Value: %s\n", s.Value1)
         } else {
-            fmt.Printf("Value #0: %s%s\n", s.Value0)
-            fmt.Printf("Value #1: %s%s\n", s.Value1)
+            fmt.Printf("Value #0: %s\n", s.Value0)
+            fmt.Printf("Value #1: %s\n", s.Value1)
         }
 
     }
