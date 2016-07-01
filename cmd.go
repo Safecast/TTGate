@@ -106,7 +106,6 @@ var invalidSNR float32 = 123.456
 var outboundQueue chan OutboundCommand
 var currentState uint16
 var totalMessagesReceived int = 0
-var totalMessagesSent int = 0
 var busyCount = 0
 var watchdog1mCount = 0
 var ipinfo string = ""
@@ -155,8 +154,8 @@ func cmdBusyReset() {
 	busyCount = 0
 }
 
-func cmdGetStats() (received int, sent int) {
-	return totalMessagesReceived, totalMessagesSent
+func cmdGetStats() (received int) {
+	return totalMessagesReceived
 }
 
 func cmdReinit(rebootLPWAN bool) {

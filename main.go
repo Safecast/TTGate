@@ -8,13 +8,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/golang/protobuf/proto"
-	"github.com/rayozzie/teletype-proto/golang"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
-	"runtime"
 	"time"
 )
 
@@ -105,33 +102,7 @@ func timer15m() {
 
 func heartbeat15m() {
 
-	// Get the stats in the form of a message
-
-	totalReceived, totalSent := cmdGetStats()
-	message := fmt.Sprintf("#gateway received %d sent %d", totalReceived, totalSent)
-	fmt.Printf("%s\n", message)
-
-	// Broadcast a test message
-
-	deviceType := teletype.Telecast_TTGATE
-	msg := &teletype.Telecast{}
-	msg.DeviceType = &deviceType
-	msg.DeviceIDString = proto.String(getDeviceID())
-	msg.Message = proto.String(message)
-	data, err := proto.Marshal(msg)
-	if err != nil {
-		fmt.Printf("marshaling error: ", err)
-	}
-	cmdEnqueueOutbound(data)
-
-	// Print resource usage, just as an FYI
-
-	var mem runtime.MemStats
-	runtime.ReadMemStats(&mem)
-	fmt.Printf("mem.Alloc: %d\n", mem.Alloc)
-	fmt.Printf("mem.TotalAlloc: %d\n", mem.TotalAlloc)
-	fmt.Printf("mem.HeapAlloc: %d\n", mem.HeapAlloc)
-	fmt.Printf("mem.HeapSys: %d\n", mem.HeapSys)
+	fmt.Printf("\nSTATS: %d received since boot\n\n", cmdGetStats())
 
 }
 
