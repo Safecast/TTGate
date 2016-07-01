@@ -33,12 +33,14 @@ type IPInfoData struct {
 
 var debug bool = false
 var OurTimezone *time.Location
+var bootedAt time.Time
 var OurCountryCode string = ""
 
 func main() {
 	var s string
 
 	fmt.Printf("Teletype Gateway\n")
+	bootedAt = time.Now()
 
 	s = os.Getenv("HALT") // Resin debugging via terminal requires quitting the main instance
 	if s != "" {
@@ -95,15 +97,16 @@ func timer1m() {
 
 func timer15m() {
 	for {
-		time.Sleep(15 * 60 * time.Second)
 		heartbeat15m()
+		time.Sleep(15 * 60 * time.Second)
 	}
 }
 
 func heartbeat15m() {
-
-	fmt.Printf("\nSTATS: %d received since boot\n\n", cmdGetStats())
-
+	t := time.Now()
+	hoursAgo :=  int64(t.Sub(bootedAt) / time.Hour)
+	minutesAgo := int64(t.Sub(bootedAt) / time.Minute) - (hoursAgo * 60)
+	fmt.Printf("\nSTATS: %d received in the last %dh %dm\n\n", cmdGetStats(), hoursAgo, minutesAgo)
 }
 
 func loadLocalTimezone() {
