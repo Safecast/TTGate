@@ -792,29 +792,30 @@ func GetSortedDeviceList() []SeenDevice {
 
 func UpdateDisplay() {
 
-	fmt.Printf("\n**** Device Status:\n")
-
 	sorted := GetSortedDeviceList()
 
+	found := false
 	for i := 0; i < len(sorted); i++ {
 		s := sorted[i]
-		fmt.Printf("**** Device %s\n", s.DeviceID)
-
-		fmt.Printf("Update: %s\n", s.CapturedAtLocal)
-
+		if (i == 0) {
+			found = true
+			fmt.Printf("\n")
+		}
+		fmt.Printf("**** Device %s (%s) ", s.DeviceID, s.CapturedAtLocal)
 		if s.Value0 != "" && s.Value1 == "" {
-			fmt.Printf("Value: %s\n", s.Value0)
+			fmt.Printf("%s\n", s.Value0)
 		} else if s.Value0 == "" && s.Value1 != "" {
-			fmt.Printf("Value: %s\n", s.Value1)
+			fmt.Printf("%s\n", s.Value1)
 		} else {
-			fmt.Printf("Value #0: %s\n", s.Value0)
-			fmt.Printf("Value #1: %s\n", s.Value1)
+			fmt.Printf("%s %s\n", s.Value0, s.Value1)
 		}
 
 	}
 
-	fmt.Printf("\n")
-
+	if (found) {
+		fmt.Printf("\n")
+	}
+	
 }
 
 // eof
