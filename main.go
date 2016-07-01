@@ -74,6 +74,8 @@ func main() {
 
 	// Infinitely loop here
 
+	fmt.Printf("\n");
+	
 	for {
 		time.Sleep(30 * time.Second)
 	}
@@ -97,8 +99,8 @@ func timer1m() {
 
 func timer15m() {
 	for {
-		heartbeat15m()
 		time.Sleep(15 * 60 * time.Second)
+		heartbeat15m()
 	}
 }
 

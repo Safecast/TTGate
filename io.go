@@ -102,8 +102,6 @@ func ioInitMicrochip() {
 	// 1) On the back side of the RN2483/RN2903, use solder to close the gap of SJ1, which brings /RESET to Xbee Pin 17
 	// 2) Wire Xbee Pin 17 to the RPi's Pin 18 BCM Pin 24: http://pinout.xyz/pinout/pin18_gpio24
 
-	fmt.Printf("ioInitMicrochip: Hardware reset...\n")
-
 	pin := rpio.Pin(24) // BCM pin # on Raspberry Pi Pinout
 	pin.Output()
 	pin.Low()
@@ -111,7 +109,7 @@ func ioInitMicrochip() {
 	pin.High()
 	time.Sleep(5 * time.Second)
 
-	fmt.Printf("ioInitMicrochip: ...completed\n")
+	fmt.Printf("LPWAN Hardware Reset Completed\n")
 
 }
 
