@@ -73,8 +73,6 @@ func main() {
 	cmdInit()
 
 	// Infinitely loop here
-
-	fmt.Printf("\n");
 	
 	for {
 		time.Sleep(30 * time.Second)
