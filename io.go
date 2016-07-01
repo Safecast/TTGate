@@ -109,7 +109,7 @@ func ioInitMicrochip() {
 	pin.High()
 	time.Sleep(5 * time.Second)
 
-	fmt.Printf("LPWAN Hardware Reset Completed\n")
+	fmt.Printf("\nLPWAN Hardware Reset\n\n")
 
 }
 
