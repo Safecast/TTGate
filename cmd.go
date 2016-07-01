@@ -801,7 +801,7 @@ func UpdateDisplay() {
 			found = true
 			fmt.Printf("\n")
 		}
-		fmt.Printf("**** Device %s (%s) ", s.DeviceID, s.CapturedAtLocal)
+		fmt.Printf("%s %s: ", s.CapturedAtLocal, s.DeviceID)
 		if s.Value0 != "" && s.Value1 == "" {
 			fmt.Printf("%s\n", s.Value0)
 		} else if s.Value0 == "" && s.Value1 != "" {
