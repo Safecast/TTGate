@@ -10,7 +10,7 @@ ENV INITSYSTEM on
 RUN apt-get update && apt-get upgrade && apt-get install -y xorg midori matchbox unclutter screen
 
 # Copy all the source code to the place where golang will find it
-COPY ./src $GOPATH/src/$PKG
+COPY . $GOPATH/src/$PKG
 
 # Build all the golang source
 WORKDIR $GOPATH/src/$PKG

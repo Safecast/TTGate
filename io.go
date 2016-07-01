@@ -210,7 +210,7 @@ func ioSendCommandString(cmd string) {
 
 func ioSendCommand(cmd []byte) {
 
-	fmt.Printf("ioSendCommand(%s)\n", cmd)
+	fmt.Printf("send(%s)\n", cmd)
 
 	_, err := serialPort.Write(bytes.Join([][]byte{cmd, []byte("")}, []byte("\r\n")))
 	if err != nil {

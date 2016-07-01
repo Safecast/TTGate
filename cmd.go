@@ -237,7 +237,7 @@ func cmdProcess(cmd []byte) {
 
 	cmdstr = string(cmd)
 
-	fmt.Printf("cmdProcess(%s) entry state=%v\n", cmdstr, currentState)
+	fmt.Printf("recv(%s)\n", cmdstr)
 
 	switch currentState {
 
@@ -366,8 +366,6 @@ func cmdProcess(cmd []byte) {
 		}
 
 	}
-
-	fmt.Printf("cmdProcess exit state=%v\n", currentState)
 
 }
 
