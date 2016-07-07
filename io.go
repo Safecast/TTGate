@@ -1,94 +1,71 @@
-/*
- * Teletype Gateway Serial I/O
- *
- * This module contains the actual I/O interface, as well as the goroutines
- * that dispatch inbound and outbound traffic.
- */
-
+// Low-level I/O functions for Teletype Gateway
 package main
 
 import (
 	"bytes"
 	"fmt"
-	"github.com/stianeikeland/go-rpio"
-	"github.com/tarm/serial"
 	"io"
-	"net"
 	"os"
 	"time"
+	"github.com/tarm/serial"
+	"github.com/stianeikeland/go-rpio"
 )
 
+// Statics
+var verboseDebug = false
 var serialPort *serial.Port
 var rpioIsOpen = false
-var disableHardwareReset = false
-
-var watchdogTick = false
-var watchdogTickCount = 0
-var verboseDebug = false
-var discardBufferedReads = false
+var replyWatchdogEnabled = false
+var replyWatchdogTickCount = 0
+var flushBufferedData = false
 
 // Initialize the i/o subsystem
-
 func ioInit() {
 
+	// Has been useful for hardware reset & serial port I/O debugging
 	verboseDebug = false
 	verbose := os.Getenv("VERBOSE")
 	if verbose != "" {
 		verboseDebug = true
 	}
 
-	if os.Getenv("GPIOTEST") != "" {
-		for {
-			ioInitMicrochip()
-			time.Sleep(10 * time.Second)
-		}
-	}
-
-	if os.Getenv("DISABLERESET") != "" {
-		disableHardwareReset = true
-	}
-
+	// Useful for debugging in non-RPi environments, like your Mac
 	port := os.Getenv("SERIAL")
 	if port == "" {
 		port = "/dev/ttyS0"
 	}
 
+	// This is the default speed for the Microchip RN2483/2903
 	speed := 57600
 
+	// Open the serial port
 	s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed})
 	if err != nil {
 		fmt.Printf("Cannot open %s\n", port)
 		return
 	}
 	serialPort = s
-
-	time.Sleep(2 * time.Second)
-
 	fmt.Printf("Serial I/O Initialized\n")
 
-	// Reset the watchdog timer
-	ioWatchdogReset(false)
+	// Allow for noise on the newly-opened serial port to get buffered in one large chunk
+	time.Sleep(2 * time.Second)
 
-	// Process receives on a different thread because I/O is synchronous
+	// Reset the watchdog timer used to notify us that the chip is wedged
+	ioReplyWatchdogReset(false)
+
+	// Process receives in a different goroutine because I/O is synchronous
 	go InboundMain()
 
 }
 
+// Initialize the Microchip RN2483/RN2903 LPWAN controller
 func ioInitMicrochip() {
 
-	// The inbound task buffers stuff until it gets a newline.
-	// If we've got stuff that's buffered, cause that goroutine to discard it.
+	// The inbound task buffers incoming data until it gets a newline.
+	// If we've accumulated buffered data, we need to force that goroutine to discard it.
+	flushBufferedData = true
 
-	discardBufferedReads = true
-
-	// Exit if disabling hardware resets
-
-	if disableHardwareReset {
-		return
-	}
-
-	// Leave the GPIO open for the entire duration
-
+	// Leave the Raspberry Pi's GPIO open forever while we are running
 	if !rpioIsOpen {
 		err := rpio.Open()
 		if err != nil {
@@ -98,10 +75,10 @@ func ioInitMicrochip() {
 		rpioIsOpen = true
 	}
 
-	// Note that this requires two things to be true:
+	// Perform a hardware reset of the device. Note that this requires two things to be true:
 	// 1) On the back side of the RN2483/RN2903, use solder to close the gap of SJ1, which brings /RESET to Xbee Pin 17
 	// 2) Wire Xbee Pin 17 to the RPi's Pin 18 BCM Pin 24: http://pinout.xyz/pinout/pin18_gpio24
-
+	// Note that the 250ms reset and 5s settling period have been carefully determined and are very reliable.
 	pin := rpio.Pin(24) // BCM pin # on Raspberry Pi Pinout
 	pin.Output()
 	pin.Low()
@@ -113,38 +90,56 @@ func ioInitMicrochip() {
 
 }
 
+// The inbound I/O goroutine used for handling of inbound synchronous serial I/O
 func InboundMain() {
 
-	var thisbuf = make([]byte, 128)
+	// Two I/O buffers - one for the current read, and
+	// the other containing the previous read's unprocessed data
+	const bufsize = 128
+	var thisbuf = make([]byte, bufsize)
 	var prevbuf []byte = []byte("")
 
+	// Primary I/O loop
 	for {
+
 		// We sleep before every read just to give the serial package a chance to accumulate
 		// a buffer of characters rather than thrashing on every byte becoming ready.
 		time.Sleep(100 * time.Millisecond)
-		// read
+
+		// Do the read
 		n, err := serialPort.Read(thisbuf)
 		if err != nil {
 			if err != io.EOF {
 				fmt.Printf("serial: read error %v\n", err)
 			}
+
 		} else {
-			if n != 0 && n != 128 {
+
+			// The bufsize check is a sledgehammer that we use because just after reset
+			// we've observed that we get LARGE buffers of zero and other noise.
+			// If we ever get a full buffer, we just discard it.
+			if n != 0 && n != bufsize {
+
 				if verboseDebug {
 					fmt.Printf("read(%d): '%s'\n% 02x\n", n, thisbuf[:n], thisbuf[:n])
 				}
-				if discardBufferedReads {
-					discardBufferedReads = false
+
+				// If we've been asked to flush the data because this is the first
+				// read after a hardware reset, do so.  Else, process it.
+				if flushBufferedData {
+					flushBufferedData = false
 					ProcessInbound(thisbuf[:n])
 				} else {
 					prevbuf = ProcessInbound(append(prevbuf[:], thisbuf[:n]...))
 				}
+
 			}
 		}
 	}
 
 }
 
+// Process data that has come inbound on the serial port
 func ProcessInbound(buf []byte) []byte {
 
 	length := len(buf)
@@ -152,7 +147,6 @@ func ProcessInbound(buf []byte) []byte {
 	end := 0
 
 	// Skip over leading trash (such as nulls) that we see after a reset; this is an ASCII protocol
-
 	for begin = 0; begin < length; begin++ {
 		if buf[begin] == '\r' || buf[begin] == '\n' || (buf[begin] >= ' ' && buf[begin] < 0x7f) {
 			break
@@ -160,41 +154,41 @@ func ProcessInbound(buf []byte) []byte {
 	}
 
 	// Loop over the buffer, which could have multiple lines in it
-
 	for begin < length {
 
 		// Parse out a single line delineated by begin:end
-
 		for end = begin; end < length; end++ {
 
 			// Process the line if it ends in \r\n or \r or \n
-
 			if buf[end] == '\r' || buf[end] == '\n' {
 
 				// Process if non-blank (which it will be on the \n of \r\n)
-
 				if end > begin {
-					watchdogTick = false
+
+					// Reset the command watchdog because we received a reply
+					ioReplyWatchdogReset(false)
+
+					// Feed this line buffer to the state machine
 					cmdProcess(buf[begin:end])
+
 				}
 
 				// Skip past this delimeter and look for the next command
-
 				begin = end + 1
 				break
 
 			}
 		}
 
+		// Done with buffer?
 		if end >= length {
 			break
 		}
 
 	}
 
-	// Return unprocessed portion of the buffer for next time
-
-	if verboseDebug && watchdogTick {
+	// Return the unprocessed portion of the buffer for next time
+	if verboseDebug && replyWatchdogEnabled {
 		fmt.Printf("Unprocessed: '%s' -> '%s'\n", buf, buf[begin:])
 	}
 
@@ -202,63 +196,41 @@ func ProcessInbound(buf []byte) []byte {
 
 }
 
+// Reset the watchdog timer as enabled or disabled
+func ioReplyWatchdogReset(fEnable bool) {
+	replyWatchdogEnabled = fEnable
+	replyWatchdogTickCount = 0
+}
+
+// Monitor serial I/O as a way of handling the Microchip getting into a locked state
+func io5sWatchdog() {
+	// Process the watchdog monitoring request/response from the LPWAN chip
+	if replyWatchdogEnabled {
+		replyWatchdogTickCount = replyWatchdogTickCount + 1
+		if (replyWatchdogTickCount >= 5) {
+			fmt.Printf("*** ioReplyWatchdog: no cmd reply!\n")
+		}
+	}
+}
+
+// Send a string as a full newline-delimited command to the serial port
 func ioSendCommandString(cmd string) {
 	ioSendCommand([]byte(cmd))
 }
 
+// Send bytes to the serial port as a full newline-delimited command
 func ioSendCommand(cmd []byte) {
 
 	fmt.Printf("send(%s)\n", cmd)
 
+	// Write this, appending newline
 	_, err := serialPort.Write(bytes.Join([][]byte{cmd, []byte("")}, []byte("\r\n")))
 	if err != nil {
 		fmt.Printf("write err: %d", err)
 	}
 
-	ioWatchdogReset(true)
+	// Set the watchdog timer because we've successfully written to the port,
+	// and we are now awaiting a reply from the chip.
+	ioReplyWatchdogReset(true)
 
 }
-
-func ioWatchdogReset(fEnable bool) {
-	watchdogTick = fEnable
-	watchdogTickCount = 0
-}
-
-func ioWatchdog() {
-	// Ignore the first increment, which could occur at any time in the first interval.
-	// But then, on the second increment, reset the world.
-
-	if verboseDebug {
-		if watchdogTick {
-			fmt.Printf("ioWatchdog() %d\n", watchdogTickCount)
-		} else {
-			fmt.Printf("ioWatchdog() idle\n")
-		}
-	}
-
-	if watchdogTick {
-		watchdogTickCount = watchdogTickCount + 1
-		switch watchdogTickCount {
-		case 1:
-		case 2:
-		case 3:
-		case 4:
-		default:
-			fmt.Printf("*** ioWatchdog: no cmd reply!\n")
-		}
-	}
-}
-
-func getDeviceID() string {
-	ifs, _ := net.Interfaces()
-	for _, v := range ifs {
-		h := v.HardwareAddr.String()
-		if len(h) == 0 {
-			continue
-		}
-		return (h)
-	}
-	return ("")
-}
-
-// eof

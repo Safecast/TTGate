@@ -1,155 +1,112 @@
-/*
- *	Teletype Gateway
- *
- */
-
+// Teletype Gateway
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net"
-	"net/http"
-	"os"
-	"time"
+    "encoding/json"
+    "fmt"
+    "io/ioutil"
+    "net/http"
+    "os"
+    "time"
+    "./ipapi"
 )
 
-type IPInfoData struct {
-	AS           string  `json:"as"`
-	City         string  `json:"city"`
-	Country      string  `json:"country"`
-	CountryCode  string  `json:"countryCode"`
-	ISP          string  `json:"isp"`
-	Latitude     float32 `json:"lat"`
-	Longitude    float32 `json:"lon"`
-	Organization string  `json:"org"`
-	IP           net.IP  `json:"query"`
-	Region       string  `json:"region"`
-	RegionName   string  `json:"regionName"`
-	Timezone     string  `json:"timezone"`
-	Zip          string  `json:"zip"`
-}
-
-var debug bool = false
-var OurTimezone *time.Location
+// Statics
 var bootedAt time.Time
+var OurTimezone *time.Location
 var OurCountryCode string = ""
 
+// Main entry point when launched by run.sh
 func main() {
-	var s string
 
-	fmt.Printf("Teletype Gateway\n")
-	bootedAt = time.Now()
+    // Remember boot time for statistics logging
+    fmt.Printf("Teletype Gateway\n")
+    bootedAt = time.Now()
 
-	s = os.Getenv("HALT") // Resin debugging via terminal requires quitting the main instance
-	if s != "" {
-		fmt.Printf("HALT environment variable detected\n")
-		fmt.Printf("Exiting.\n")
-		os.Exit(0)
-	}
+    // Load localization information to be used for the HDMI status display
+    loadLocalTimezone()
 
-	s = os.Getenv("DEBUG") // For verbose debugging info
-	debug = s != ""
+    // Resin debugging via Terminal requires halting the main instance via env var
+    s := os.Getenv("HALT")
+    if s != "" {
+        fmt.Printf("HALT environment variable detected\n")
+        fmt.Printf("Exiting.\n")
+        os.Exit(0)
+    }
 
-	// Spawn our localhost web server
+    // Spawn our localhost web server, used to update the HDMI status display
+    go webServer()
 
-	loadLocalTimezone()
+    // Spawn housekeeping and watchdog tasks
+    go timer1m()
+    go timer5s()
 
-	go webServer()
+    // Initialize I/O devices
+    ioInit()
 
-	// Spawn various timer tasks
+    // Initialize the state machine and command processing
+    cmdInit()
 
-	go timer15m()
-	go timer1m()
-	go timer5s()
-
-	// Initialize I/O devices
-
-	ioInit()
-
-	// Initialize the command processing and state machine
-
-	cmdInit()
-
-	// Infinitely loop here
-	
-	for {
-		time.Sleep(30 * time.Second)
-	}
+    // Infinitely loop, updating statistics
+    for {
+        time.Sleep(15 * 60 * time.Second)
+        t := time.Now()
+        hoursAgo :=  int64(t.Sub(bootedAt) / time.Hour)
+        minutesAgo := int64(t.Sub(bootedAt) / time.Minute) - (hoursAgo * 60)
+        fmt.Printf("\nSTATS: %d received in the last %dh %dm\n\n", cmdGetStats(), hoursAgo, minutesAgo)
+    }
 
 }
 
+// Timer functions
 func timer5s() {
-	for {
-		time.Sleep(5 * time.Second)
-		ioWatchdog()
-	}
+    for {
+        time.Sleep(5 * time.Second)
+        io5sWatchdog()
+    }
 }
 
 func timer1m() {
-	for {
-		time.Sleep(1 * 60 * time.Second)
-		cmdWatchdog1m()
-		webUpdateData()
-	}
+    for {
+        time.Sleep(1 * 60 * time.Second)
+        cmd1mWatchdog()
+        webUpdateData()
+    }
 }
 
-func timer15m() {
-	for {
-		time.Sleep(15 * 60 * time.Second)
-		heartbeat15m()
-	}
-}
-
-func heartbeat15m() {
-	t := time.Now()
-	hoursAgo :=  int64(t.Sub(bootedAt) / time.Hour)
-	minutesAgo := int64(t.Sub(bootedAt) / time.Minute) - (hoursAgo * 60)
-	fmt.Printf("\nSTATS: %d received in the last %dh %dm\n\n", cmdGetStats(), hoursAgo, minutesAgo)
-}
-
+// Load localization information
 func loadLocalTimezone() {
 
-	// Get our local time zone, defaulting to UTC
-	// Note:
-	// https://golang.org/src/time/example_test.go
-	// https://golang.org/pkg/time
+	// Default to UTC, with NO country standards, if we can't find our own info
+    OurTimezone, _ = time.LoadLocation("UTC")
+	OurCountryCode = ""
 
-	OurTimezone, _ = time.LoadLocation("UTC")
-
-	response, err := http.Get("http://ip-api.com/json/")
-	if err == nil {
-		defer response.Body.Close()
-		contents, err := ioutil.ReadAll(response.Body)
-		if err == nil {
-			var info IPInfoData
-			err = json.Unmarshal(contents, &info)
-			if err == nil {
-				OurTimezone, _ = time.LoadLocation(info.Timezone)
-				OurCountryCode = info.CountryCode
-			}
-		}
-	}
+	// Use the ip-api service, which handily provides the needed info
+    response, err := http.Get("http://ip-api.com/json/")
+    if err == nil {
+        defer response.Body.Close()
+        contents, err := ioutil.ReadAll(response.Body)
+        if err == nil {
+            var info ipapi.IPInfoData
+            err = json.Unmarshal(contents, &info)
+            if err == nil {
+                OurTimezone, _ = time.LoadLocation(info.Timezone)
+                OurCountryCode = info.CountryCode
+            }
+        }
+    }
 
 }
 
+// The localhost server used exclusively to update the local HDMI display
 func webServer() {
-	http.Handle("/", http.FileServer(http.Dir("./web")))
-	http.ListenAndServe(":8080", nil)
+    http.Handle("/", http.FileServer(http.Dir("./web")))
+    http.ListenAndServe(":8080", nil)
 }
 
+// This periodically updates the JSON data file periodically reloaded by index.html 
 func webUpdateData() {
-
-	// Get the sorted list of device info
-	sorted := GetSortedDeviceList()
-
-	// Marshall it to text
-	buffer, _ := json.MarshalIndent(sorted, "", "    ")
-
-	// Write it
-	ioutil.WriteFile("./web/data.json", buffer, 0644)
-
+    buffer := GetSafecastDataAsJSON()
+    ioutil.WriteFile("./web/data.json", buffer, 0644)
 }
 
-// eof
