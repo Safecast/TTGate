@@ -12,7 +12,6 @@ import (
     "os"
     "strconv"
     "time"
-    "./ttn"
 )
 
 // Statics
@@ -80,8 +79,8 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
     }
 
     // Pack the data into the same data structure as TTN, because we're simulating TTN inbound
-    msg := &ttn.DataUpAppReq{}
-    msg.Metadata = make([]ttn.AppMetadata, 1)
+    msg := &DataUpAppReq{}
+    msg.Metadata = make([]AppMetadata, 1)
     msg.Payload = pb
 
     // Some devices don't have LAT/LON, and in this case the gateway will supply it (if configured)

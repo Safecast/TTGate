@@ -8,7 +8,6 @@ import (
     "net/http"
     "os"
     "time"
-    "./ipapi"
 )
 
 // Statics
@@ -87,7 +86,7 @@ func loadLocalTimezone() {
         defer response.Body.Close()
         contents, err := ioutil.ReadAll(response.Body)
         if err == nil {
-            var info ipapi.IPInfoData
+            var info IPInfoData
             err = json.Unmarshal(contents, &info)
             if err == nil {
                 OurTimezone, _ = time.LoadLocation(info.Timezone)
