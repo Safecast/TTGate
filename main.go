@@ -11,16 +11,13 @@ import (
 )
 
 // Statics
-var bootedAt time.Time
 var OurTimezone *time.Location
 var OurCountryCode string = ""
 
 // Main entry point when launched by run.sh
 func main() {
 
-    // Remember boot time for statistics logging
     fmt.Printf("Teletype Gateway\n")
-    bootedAt = time.Now()
 
     // Load localization information to be used for the HDMI status display
     loadLocalTimezone()
@@ -47,6 +44,7 @@ func main() {
     cmdInit()
 
     // Infinitely loop, updating statistics
+    bootedAt := time.Now()
     for {
         time.Sleep(15 * 60 * time.Second)
         t := time.Now()
