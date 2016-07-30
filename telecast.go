@@ -140,24 +140,18 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
             fmt.Printf("*** Error resolving UDP address: %v\n", err)
         } else {
 
-            LocalAddr, err := net.ResolveUDPAddr("udp", "127.0.0.1:0")
+            Conn, err := net.DialUDP("udp", nil, ServerAddr)
             if err != nil {
-                fmt.Printf("*** Error resolving local UDP address: %v\n", err)
+                fmt.Printf("*** Error dialing UDP: %v\n", err)
             } else {
 
-                Conn, err := net.DialUDP("udp", LocalAddr, ServerAddr)
+                _, err := Conn.Write(pb)
                 if err != nil {
-                    fmt.Printf("*** Error dialing UDP: %v\n", err)
-                } else {
-
-                    _, err := Conn.Write(pb)
-                    if err != nil {
-                        fmt.Printf("*** Error writing UDP: %v\n", err)
-                    }
-
-					Conn.Close()
-
+                    fmt.Printf("*** Error writing UDP: %v\n", err)
                 }
+
+                Conn.Close()
+
             }
         }
 
