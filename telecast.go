@@ -130,9 +130,8 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
         resp.Body.Close()
     }
 
-    // Also send the message via UDP when testing
-    testUDP := true
-
+    // For testing purposes only, Also send the message via UDP
+    testUDP := false
     if testUDP {
 
         ServerAddr, err := net.ResolveUDPAddr("udp", "api.teletype.io:8081")
