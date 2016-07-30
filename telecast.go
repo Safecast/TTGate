@@ -8,6 +8,7 @@ import (
     "github.com/golang/protobuf/proto"
     "github.com/rayozzie/teletype-proto/golang"
     "io/ioutil"
+    "net"
     "net/http"
     "os"
     "strconv"
@@ -66,7 +67,7 @@ func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast, pb []byte, snr fl
 func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 
     // The first time through here, let's fetch info about our IP.
-	// We embrace the ip-api.com data definitions as our native format.
+    // We embrace the ip-api.com data definitions as our native format.
     if ipinfo == "" {
         response, err := http.Get("http://ip-api.com/json/")
         if err == nil {
@@ -112,10 +113,10 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
     }
 
     // Augment the outbound metadata with ip info, overloading the
-	// GatewayEUI data structure for this purpose
+    // GatewayEUI data structure for this purpose
     msg.Metadata[0].GatewayEUI = ipinfo
 
-    // Send it to the teletype service
+    // Send it to the teletype service via HTTP
     UploadURL := "http://api.teletype.io:8080/send"
     msgJSON, _ := json.Marshal(msg)
     req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(msgJSON))
@@ -127,6 +128,39 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
         fmt.Printf("*** Error uploading to TTSERVE %s\n\n", err)
     } else {
         resp.Body.Close()
+    }
+
+    // Also send the message via UDP when testing
+    testUDP := true
+
+    if testUDP {
+
+        ServerAddr, err := net.ResolveUDPAddr("udp", "api.teletype.io:8081")
+        if err != nil {
+            fmt.Printf("*** Error resolving UDP address: %v\n", err)
+        } else {
+
+            LocalAddr, err := net.ResolveUDPAddr("udp", "127.0.0.1:0")
+            if err != nil {
+                fmt.Printf("*** Error resolving local UDP address: %v\n", err)
+            } else {
+
+                Conn, err := net.DialUDP("udp", LocalAddr, ServerAddr)
+                if err != nil {
+                    fmt.Printf("*** Error dialing UDP: %v\n", err)
+                } else {
+
+                    _, err := Conn.Write(pb)
+                    if err != nil {
+                        fmt.Printf("*** Error writing UDP: %v\n", err)
+                    }
+
+					Conn.Close()
+
+                }
+            }
+        }
+
     }
 
 }
