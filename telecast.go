@@ -3,6 +3,7 @@ package main
 
 import (
     "bytes"
+	"encoding/hex"
     "encoding/json"
     "fmt"
     "github.com/golang/protobuf/proto"
@@ -129,8 +130,16 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
     } else {
 		contents, err := ioutil.ReadAll(resp.Body)
 		if err == nil {
-			payload := string(contents)
-			fmt.Printf("*** Post returned reply: %s\n", payload);
+			payloadstr := string(contents)
+			if payloadstr != "" {
+				payload, err := hex.DecodeString(payloadstr)
+				if err == nil {
+					cmdEnqueueOutbound(payload)
+					fmt.Printf("Sent reply: %s\n", payloadstr)
+				} else {
+					fmt.Printf("Error %v: %s\n", err, payloadstr)
+				}
+			}
 		}
 		resp.Body.Close()
     }
