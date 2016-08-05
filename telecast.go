@@ -127,7 +127,12 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
     if err != nil {
         fmt.Printf("*** Error uploading to TTSERVE %s\n\n", err)
     } else {
-        resp.Body.Close()
+		contents, err := ioutil.ReadAll(resp.Body)
+		if err == nil {
+			payload := string(contents)
+			fmt.Printf("*** Post returned reply: %s\n", payload);
+		}
+		resp.Body.Close()
     }
 
     // For testing purposes only, Also send the message via UDP
