@@ -241,7 +241,7 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
 	} else {
 		dev.PmsCount_10_0 = ""
 	}
-x	
+	
     dev.DeviceType = msg.GetDeviceType().String()
     if msg.Latitude != nil {
         dev.Latitude = fmt.Sprintf("%f", msg.GetLatitude())
