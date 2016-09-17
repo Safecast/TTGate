@@ -217,31 +217,31 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
 		dev.PmsCount_00_3 = ""
 	}
     if msg.PmsCount_00_5 != nil {
-		dev.PmsCount_00_5 = fmt.Sprintf("%d>0.3um", msg.GetPmsCount_00_5())
+		dev.PmsCount_00_5 = fmt.Sprintf("%d>0.5um", msg.GetPmsCount_00_5())
 	} else {
 		dev.PmsCount_00_5 = ""
 	}
     if msg.PmsCount_01_0 != nil {
-		dev.PmsCount_01_0 = fmt.Sprintf("%d>0.3um", msg.GetPmsCount_01_0())
+		dev.PmsCount_01_0 = fmt.Sprintf("%d>1um", msg.GetPmsCount_01_0())
 	} else {
 		dev.PmsCount_01_0 = ""
 	}
     if msg.PmsCount_02_5 != nil {
-		dev.PmsCount_02_5 = fmt.Sprintf("%d>0.3um", msg.GetPmsCount_02_5())
+		dev.PmsCount_02_5 = fmt.Sprintf("%d>2.5um", msg.GetPmsCount_02_5())
 	} else {
 		dev.PmsCount_02_5 = ""
 	}
     if msg.PmsCount_05_0 != nil {
-		dev.PmsCount_05_0 = fmt.Sprintf("%d>0.3um", msg.GetPmsCount_05_0())
+		dev.PmsCount_05_0 = fmt.Sprintf("%d>5um", msg.GetPmsCount_05_0())
 	} else {
 		dev.PmsCount_05_0 = ""
 	}
     if msg.PmsCount_10_0 != nil {
-		dev.PmsCount_10_0 = fmt.Sprintf("%d>0.3um", msg.GetPmsCount_10_0())
+		dev.PmsCount_10_0 = fmt.Sprintf("%d>10um", msg.GetPmsCount_10_0())
 	} else {
 		dev.PmsCount_10_0 = ""
 	}
-	
+x	
     dev.DeviceType = msg.GetDeviceType().String()
     if msg.Latitude != nil {
         dev.Latitude = fmt.Sprintf("%f", msg.GetLatitude())
