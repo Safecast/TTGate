@@ -6,7 +6,7 @@ import (
     "sort"
     "time"
     "strconv"
-	"encoding/json"
+    "encoding/json"
     "github.com/rayozzie/teletype-proto/golang"
 )
 
@@ -33,6 +33,18 @@ type SeenDevice struct {
     Latitude           string    `json:"lat"`
     Longitude          string    `json:"lon"`
     Altitude           string    `json:"alt"`
+    PmsTsi_01_0        string    `json:"pms_tsi_01_0"`
+    PmsTsi_02_5        string    `json:"pms_tsi_02_5"`
+    PmsTsi_10_0        string    `json:"pms_tsi_10_0"`
+    PmsStd_01_0        string    `json:"pms_std_01_0"`
+    PmsStd_02_5        string    `json:"pms_std_02_5"`
+    PmsStd_10_0        string    `json:"pms_std_10_0"`
+    PmsCount_00_3      string    `json:"pms_count_00_3"`
+    PmsCount_00_5      string    `json:"pms_count_00_5"`
+    PmsCount_01_0      string    `json:"pms_count_01_0"`
+    PmsCount_02_5      string    `json:"pms_count_02_5"`
+    PmsCount_05_0      string    `json:"pms_count_05_0"`
+    PmsCount_10_0      string    `json:"pms_count_10_0"`
 }
 var seenDevices []SeenDevice
 
@@ -167,6 +179,69 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
         dev.SNR = ""
     }
 
+    if msg.PmsTsi_01_0 != nil {
+		dev.PmsTsi_01_0 = fmt.Sprintf("%dug/m3", msg.GetPmsTsi_01_0())
+	} else {
+		dev.PmsTsi_01_0 = ""
+	}
+    if msg.PmsTsi_02_5 != nil {
+		dev.PmsTsi_02_5 = fmt.Sprintf("%dug/m3", msg.GetPmsTsi_02_5())
+	} else {
+		dev.PmsTsi_02_5 = ""
+	}
+    if msg.PmsTsi_10_0 != nil {
+		dev.PmsTsi_10_0 = fmt.Sprintf("%dug/m3", msg.GetPmsTsi_10_0())
+	} else {
+		dev.PmsTsi_10_0 = ""
+	}
+
+    if msg.PmsStd_01_0 != nil {
+		dev.PmsStd_01_0 = fmt.Sprintf("%dug/m3", msg.GetPmsStd_01_0())
+	} else {
+		dev.PmsStd_01_0 = ""
+	}
+    if msg.PmsStd_02_5 != nil {
+		dev.PmsStd_02_5 = fmt.Sprintf("%dug/m3", msg.GetPmsStd_02_5())
+	} else {
+		dev.PmsStd_02_5 = ""
+	}
+    if msg.PmsStd_10_0 != nil {
+		dev.PmsStd_10_0 = fmt.Sprintf("%dug/m3", msg.GetPmsStd_10_0())
+	} else {
+		dev.PmsStd_10_0 = ""
+	}
+
+    if msg.PmsCount_00_3 != nil {
+		dev.PmsCount_00_3 = fmt.Sprintf("%d>0.3um", msg.GetPmsCount_00_3())
+	} else {
+		dev.PmsCount_00_3 = ""
+	}
+    if msg.PmsCount_00_5 != nil {
+		dev.PmsCount_00_5 = fmt.Sprintf("%d>0.3um", msg.GetPmsCount_00_5())
+	} else {
+		dev.PmsCount_00_5 = ""
+	}
+    if msg.PmsCount_01_0 != nil {
+		dev.PmsCount_01_0 = fmt.Sprintf("%d>0.3um", msg.GetPmsCount_01_0())
+	} else {
+		dev.PmsCount_01_0 = ""
+	}
+    if msg.PmsCount_02_5 != nil {
+		dev.PmsCount_02_5 = fmt.Sprintf("%d>0.3um", msg.GetPmsCount_02_5())
+	} else {
+		dev.PmsCount_02_5 = ""
+	}
+    if msg.PmsCount_05_0 != nil {
+		dev.PmsCount_05_0 = fmt.Sprintf("%d>0.3um", msg.GetPmsCount_05_0())
+	} else {
+		dev.PmsCount_05_0 = ""
+	}
+    if msg.PmsCount_10_0 != nil {
+		dev.PmsCount_10_0 = fmt.Sprintf("%d>0.3um", msg.GetPmsCount_10_0())
+	} else {
+		dev.PmsCount_10_0 = ""
+	}
+	
     dev.DeviceType = msg.GetDeviceType().String()
     if msg.Latitude != nil {
         dev.Latitude = fmt.Sprintf("%f", msg.GetLatitude())
