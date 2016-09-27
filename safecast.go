@@ -45,6 +45,9 @@ type SeenDevice struct {
     PmsCount_02_5      string    `json:"pms_count_02_5"`
     PmsCount_05_0      string    `json:"pms_count_05_0"`
     PmsCount_10_0      string    `json:"pms_count_10_0"`
+    Opc_01_0           string    `json:"opc_01_0"`
+    Opc_02_5           string    `json:"opc_02_5"`
+    Opc_10_0           string    `json:"opc_10_0"`
 }
 var seenDevices []SeenDevice
 
@@ -240,6 +243,22 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
 		dev.PmsCount_10_0 = fmt.Sprintf("%d>10um", msg.GetPmsCount_10_0())
 	} else {
 		dev.PmsCount_10_0 = ""
+	}
+
+    if msg.Opc_01_0 != nil {
+		dev.Opc_01_0 = fmt.Sprintf("%dug/m3", msg.GetOpc_01_0())
+	} else {
+		dev.Opc_01_0 = ""
+	}
+    if msg.Opc_02_5 != nil {
+		dev.Opc_02_5 = fmt.Sprintf("%dug/m3", msg.GetOpc_02_5())
+	} else {
+		dev.Opc_02_5 = ""
+	}
+    if msg.Opc_10_0 != nil {
+		dev.Opc_10_0 = fmt.Sprintf("%dug/m3", msg.GetOpc_10_0())
+	} else {
+		dev.Opc_10_0 = ""
 	}
 	
     dev.DeviceType = msg.GetDeviceType().String()
