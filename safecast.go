@@ -1,4 +1,4 @@
-// Handling of Safecast messages for local HDMI display 
+// Handling of Safecast messages for local HDMI display
 package main
 
 import (
@@ -90,8 +90,8 @@ func (a ByKey) Less(i, j int) bool {
 // Record this safecast message for display on local HDMI via embedded browser
 func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
     var dev SeenDevice
-    var Unit string
     var Value string
+    var fNewStyleCPM bool
 
     // Bump stats
     totalMessagesReceived = totalMessagesReceived + 1
@@ -117,16 +117,31 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
     dev.captured, _ = time.Parse(time.RFC3339, dev.capturedAt)
     dev.CapturedAtLocal = dev.captured.In(OurTimezone).Format("Mon 3:04pm")
 
-    if msg.Unit == nil {
-        Unit = "cpm"
+    if msg.Cpm0 != nil || msg.Cpm1 != nil {
+        fNewStyleCPM = true
+        if msg.Cpm0 == nil {
+            dev.Value0 = ""
+        } else {
+            dev.Value0 = fmt.Sprintf("%scpm", msg.GetCpm0())
+        }
+        if msg.Cpm1 == nil {
+            dev.Value1 = ""
+        } else {
+            dev.Value1 = fmt.Sprintf("%scpm", msg.GetCpm1())
+        }
     } else {
-        Unit = fmt.Sprintf("%s", msg.GetUnit())
-    }
-
-    if msg.Value == nil {
-        Value = ""
-    } else {
-        Value = fmt.Sprintf("%d%s", msg.GetValue(), Unit)
+	    var Unit string
+        fNewStyleCPM = false
+        if msg.Unit == nil {
+            Unit = "cpm"
+        } else {
+            Unit = fmt.Sprintf("%s", msg.GetUnit())
+        }
+        if msg.Value == nil {
+            Value = ""
+        } else {
+            Value = fmt.Sprintf("%d%s", msg.GetValue(), Unit)
+        }
     }
 
     if msg.BatterySOC != nil {
@@ -183,84 +198,84 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
     }
 
     if msg.PmsTsi_01_0 != nil {
-		dev.PmsTsi_01_0 = fmt.Sprintf("%dug/m3", msg.GetPmsTsi_01_0())
-	} else {
-		dev.PmsTsi_01_0 = ""
-	}
+        dev.PmsTsi_01_0 = fmt.Sprintf("%dug/m3", msg.GetPmsTsi_01_0())
+    } else {
+        dev.PmsTsi_01_0 = ""
+    }
     if msg.PmsTsi_02_5 != nil {
-		dev.PmsTsi_02_5 = fmt.Sprintf("%dug/m3", msg.GetPmsTsi_02_5())
-	} else {
-		dev.PmsTsi_02_5 = ""
-	}
+        dev.PmsTsi_02_5 = fmt.Sprintf("%dug/m3", msg.GetPmsTsi_02_5())
+    } else {
+        dev.PmsTsi_02_5 = ""
+    }
     if msg.PmsTsi_10_0 != nil {
-		dev.PmsTsi_10_0 = fmt.Sprintf("%dug/m3", msg.GetPmsTsi_10_0())
-	} else {
-		dev.PmsTsi_10_0 = ""
-	}
+        dev.PmsTsi_10_0 = fmt.Sprintf("%dug/m3", msg.GetPmsTsi_10_0())
+    } else {
+        dev.PmsTsi_10_0 = ""
+    }
 
     if msg.PmsStd_01_0 != nil {
-		dev.PmsStd_01_0 = fmt.Sprintf("%dug/m3", msg.GetPmsStd_01_0())
-	} else {
-		dev.PmsStd_01_0 = ""
-	}
+        dev.PmsStd_01_0 = fmt.Sprintf("%dug/m3", msg.GetPmsStd_01_0())
+    } else {
+        dev.PmsStd_01_0 = ""
+    }
     if msg.PmsStd_02_5 != nil {
-		dev.PmsStd_02_5 = fmt.Sprintf("%dug/m3", msg.GetPmsStd_02_5())
-	} else {
-		dev.PmsStd_02_5 = ""
-	}
+        dev.PmsStd_02_5 = fmt.Sprintf("%dug/m3", msg.GetPmsStd_02_5())
+    } else {
+        dev.PmsStd_02_5 = ""
+    }
     if msg.PmsStd_10_0 != nil {
-		dev.PmsStd_10_0 = fmt.Sprintf("%dug/m3", msg.GetPmsStd_10_0())
-	} else {
-		dev.PmsStd_10_0 = ""
-	}
+        dev.PmsStd_10_0 = fmt.Sprintf("%dug/m3", msg.GetPmsStd_10_0())
+    } else {
+        dev.PmsStd_10_0 = ""
+    }
 
     if msg.PmsCount_00_3 != nil {
-		dev.PmsCount_00_3 = fmt.Sprintf("%d>0.3um", msg.GetPmsCount_00_3())
-	} else {
-		dev.PmsCount_00_3 = ""
-	}
+        dev.PmsCount_00_3 = fmt.Sprintf("%d>0.3um", msg.GetPmsCount_00_3())
+    } else {
+        dev.PmsCount_00_3 = ""
+    }
     if msg.PmsCount_00_5 != nil {
-		dev.PmsCount_00_5 = fmt.Sprintf("%d>0.5um", msg.GetPmsCount_00_5())
-	} else {
-		dev.PmsCount_00_5 = ""
-	}
+        dev.PmsCount_00_5 = fmt.Sprintf("%d>0.5um", msg.GetPmsCount_00_5())
+    } else {
+        dev.PmsCount_00_5 = ""
+    }
     if msg.PmsCount_01_0 != nil {
-		dev.PmsCount_01_0 = fmt.Sprintf("%d>1um", msg.GetPmsCount_01_0())
-	} else {
-		dev.PmsCount_01_0 = ""
-	}
+        dev.PmsCount_01_0 = fmt.Sprintf("%d>1um", msg.GetPmsCount_01_0())
+    } else {
+        dev.PmsCount_01_0 = ""
+    }
     if msg.PmsCount_02_5 != nil {
-		dev.PmsCount_02_5 = fmt.Sprintf("%d>2.5um", msg.GetPmsCount_02_5())
-	} else {
-		dev.PmsCount_02_5 = ""
-	}
+        dev.PmsCount_02_5 = fmt.Sprintf("%d>2.5um", msg.GetPmsCount_02_5())
+    } else {
+        dev.PmsCount_02_5 = ""
+    }
     if msg.PmsCount_05_0 != nil {
-		dev.PmsCount_05_0 = fmt.Sprintf("%d>5um", msg.GetPmsCount_05_0())
-	} else {
-		dev.PmsCount_05_0 = ""
-	}
+        dev.PmsCount_05_0 = fmt.Sprintf("%d>5um", msg.GetPmsCount_05_0())
+    } else {
+        dev.PmsCount_05_0 = ""
+    }
     if msg.PmsCount_10_0 != nil {
-		dev.PmsCount_10_0 = fmt.Sprintf("%d>10um", msg.GetPmsCount_10_0())
-	} else {
-		dev.PmsCount_10_0 = ""
-	}
+        dev.PmsCount_10_0 = fmt.Sprintf("%d>10um", msg.GetPmsCount_10_0())
+    } else {
+        dev.PmsCount_10_0 = ""
+    }
 
     if msg.Opc_01_0 != nil {
-		dev.Opc_01_0 = fmt.Sprintf("%.2fug/m3", msg.GetOpc_01_0())
-	} else {
-		dev.Opc_01_0 = ""
-	}
+        dev.Opc_01_0 = fmt.Sprintf("%.2fug/m3", msg.GetOpc_01_0())
+    } else {
+        dev.Opc_01_0 = ""
+    }
     if msg.Opc_02_5 != nil {
-		dev.Opc_02_5 = fmt.Sprintf("%.2fug/m3", msg.GetOpc_02_5())
-	} else {
-		dev.Opc_02_5 = ""
-	}
+        dev.Opc_02_5 = fmt.Sprintf("%.2fug/m3", msg.GetOpc_02_5())
+    } else {
+        dev.Opc_02_5 = ""
+    }
     if msg.Opc_10_0 != nil {
-		dev.Opc_10_0 = fmt.Sprintf("%.2fug/m3", msg.GetOpc_10_0())
-	} else {
-		dev.Opc_10_0 = ""
-	}
-	
+        dev.Opc_10_0 = fmt.Sprintf("%.2fug/m3", msg.GetOpc_10_0())
+    } else {
+        dev.Opc_10_0 = ""
+    }
+
     dev.DeviceType = msg.GetDeviceType().String()
     if msg.Latitude != nil {
         dev.Latitude = fmt.Sprintf("%f", msg.GetLatitude())
@@ -298,19 +313,23 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
 
         // Handle non-numeric device ID
         if dev.originalDeviceNo == 0 && dev.DeviceID == seenDevices[i].DeviceID {
-            dev.Value0 = Value
-            dev.Value1 = ""
+            if (!fNewStyleCPM) {
+                dev.Value0 = Value
+                dev.Value1 = ""
+            }
             found = true
         }
 
         // For numerics, folder the even/odd devices into a single device (dual-geigers)
         if dev.originalDeviceNo != 0 && dev.normalizedDeviceNo == seenDevices[i].normalizedDeviceNo {
-            if (dev.originalDeviceNo & 0x01) == 0 {
-                dev.Value0 = Value
-                dev.Value1 = seenDevices[i].Value1
-            } else {
-                dev.Value0 = seenDevices[i].Value0
-                dev.Value1 = Value
+            if (!fNewStyleCPM) {
+                if (dev.originalDeviceNo & 0x01) == 0 {
+                    dev.Value0 = Value
+                    dev.Value1 = seenDevices[i].Value1
+                } else {
+                    dev.Value0 = seenDevices[i].Value0
+                    dev.Value1 = Value
+                }
             }
             found = true
         }
@@ -340,16 +359,18 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
     }
 
     if !found {
-        if dev.originalDeviceNo == 0 {
-            dev.Value0 = Value
-            dev.Value1 = ""
-        } else {
-            if (dev.originalDeviceNo & 0x01) == 0 {
+        if (!fNewStyleCPM) {
+            if dev.originalDeviceNo == 0 {
                 dev.Value0 = Value
                 dev.Value1 = ""
             } else {
-                dev.Value0 = ""
-                dev.Value1 = Value
+                if (dev.originalDeviceNo & 0x01) == 0 {
+                    dev.Value0 = Value
+                    dev.Value1 = ""
+                } else {
+                    dev.Value0 = ""
+                    dev.Value1 = Value
+                }
             }
         }
         seenDevices = append(seenDevices, dev)
