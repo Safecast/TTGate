@@ -246,17 +246,17 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
 	}
 
     if msg.Opc_01_0 != nil {
-		dev.Opc_01_0 = fmt.Sprintf("%dug/m3", msg.GetOpc_01_0())
+		dev.Opc_01_0 = fmt.Sprintf("%.2fug/m3", msg.GetOpc_01_0())
 	} else {
 		dev.Opc_01_0 = ""
 	}
     if msg.Opc_02_5 != nil {
-		dev.Opc_02_5 = fmt.Sprintf("%dug/m3", msg.GetOpc_02_5())
+		dev.Opc_02_5 = fmt.Sprintf("%.2fug/m3", msg.GetOpc_02_5())
 	} else {
 		dev.Opc_02_5 = ""
 	}
     if msg.Opc_10_0 != nil {
-		dev.Opc_10_0 = fmt.Sprintf("%dug/m3", msg.GetOpc_10_0())
+		dev.Opc_10_0 = fmt.Sprintf("%.2fug/m3", msg.GetOpc_10_0())
 	} else {
 		dev.Opc_10_0 = ""
 	}
