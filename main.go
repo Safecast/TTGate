@@ -8,6 +8,7 @@ import (
     "net/http"
     "os"
     "time"
+	"runtime"
 )
 
 // Statics
@@ -47,10 +48,21 @@ func main() {
     bootedAt := time.Now()
     for {
         time.Sleep(15 * 60 * time.Second)
+
+        // Print stats
         t := time.Now()
         hoursAgo :=  int64(t.Sub(bootedAt) / time.Hour)
         minutesAgo := int64(t.Sub(bootedAt) / time.Minute) - (hoursAgo * 60)
         fmt.Printf("\nSTATS: %d received in the last %dh %dm\n\n", cmdGetStats(), hoursAgo, minutesAgo)
+
+        // Print resource usage, just as an FYI
+        var mem runtime.MemStats
+        runtime.ReadMemStats(&mem)
+        fmt.Printf("mem.Alloc: %d\n", mem.Alloc)
+        fmt.Printf("mem.TotalAlloc: %d\n", mem.TotalAlloc)
+        fmt.Printf("mem.HeapAlloc: %d\n", mem.HeapAlloc)
+        fmt.Printf("mem.HeapSys: %d\n", mem.HeapSys)
+
     }
 
 }
@@ -74,11 +86,11 @@ func timer1m() {
 // Load localization information
 func loadLocalTimezone() {
 
-	// Default to UTC, with NO country standards, if we can't find our own info
+    // Default to UTC, with NO country standards, if we can't find our own info
     OurTimezone, _ = time.LoadLocation("UTC")
-	OurCountryCode = ""
+    OurCountryCode = ""
 
-	// Use the ip-api service, which handily provides the needed info
+    // Use the ip-api service, which handily provides the needed info
     response, err := http.Get("http://ip-api.com/json/")
     if err == nil {
         defer response.Body.Close()
@@ -101,9 +113,8 @@ func webServer() {
     http.ListenAndServe(":8080", nil)
 }
 
-// This periodically updates the JSON data file periodically reloaded by index.html 
+// This periodically updates the JSON data file periodically reloaded by index.html
 func webUpdateData() {
     buffer := GetSafecastDataAsJSON()
     ioutil.WriteFile("./web/data.json", buffer, 0644)
 }
-
