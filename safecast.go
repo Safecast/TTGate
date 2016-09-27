@@ -1,4 +1,4 @@
-// Handling of Safecast messages for local HDMI display
+// Handling of Safecast messages for local HDMI display 
 package main
 
 import (
