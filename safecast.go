@@ -33,21 +33,12 @@ type SeenDevice struct {
     Latitude           string    `json:"lat"`
     Longitude          string    `json:"lon"`
     Altitude           string    `json:"alt"`
-    PmsTsi_01_0        string    `json:"pms_tsi_01_0"`
-    PmsTsi_02_5        string    `json:"pms_tsi_02_5"`
-    PmsTsi_10_0        string    `json:"pms_tsi_10_0"`
-    PmsStd_01_0        string    `json:"pms_std_01_0"`
-    PmsStd_02_5        string    `json:"pms_std_02_5"`
-    PmsStd_10_0        string    `json:"pms_std_10_0"`
-    PmsCount_00_3      string    `json:"pms_count_00_3"`
-    PmsCount_00_5      string    `json:"pms_count_00_5"`
-    PmsCount_01_0      string    `json:"pms_count_01_0"`
-    PmsCount_02_5      string    `json:"pms_count_02_5"`
-    PmsCount_05_0      string    `json:"pms_count_05_0"`
-    PmsCount_10_0      string    `json:"pms_count_10_0"`
-    Opc_01_0           string    `json:"opc_01_0"`
-    Opc_02_5           string    `json:"opc_02_5"`
-    Opc_10_0           string    `json:"opc_10_0"`
+    PmsPm01_0          string    `json:"pms_pm01_0"`
+    PmsPm02_5          string    `json:"pms_pm02_5"`
+    PmsPm10_0          string    `json:"pms_pm10_0"`
+    OpcPm01_0          string    `json:"opc_pm01_0"`
+    OpcPm02_5          string    `json:"opc_pm02_5"`
+    OpcPm10_0          string    `json:"opc_pm10_0"`
 }
 var seenDevices []SeenDevice
 
@@ -130,7 +121,7 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
             dev.Value1 = fmt.Sprintf("%scpm", msg.GetCpm1())
         }
     } else {
-	    var Unit string
+        var Unit string
         fNewStyleCPM = false
         if msg.Unit == nil {
             Unit = "cpm"
@@ -197,83 +188,36 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
         dev.SNR = ""
     }
 
-    if msg.PmsTsi_01_0 != nil {
-        dev.PmsTsi_01_0 = fmt.Sprintf("%dug/m3", msg.GetPmsTsi_01_0())
+    if msg.PmsPm01_0 != nil {
+        dev.PmsPm01_0 = fmt.Sprintf("%dug/m3", msg.GetPmsPm01_0())
     } else {
-        dev.PmsTsi_01_0 = ""
+        dev.PmsPm01_0 = ""
     }
-    if msg.PmsTsi_02_5 != nil {
-        dev.PmsTsi_02_5 = fmt.Sprintf("%dug/m3", msg.GetPmsTsi_02_5())
+    if msg.PmsPm02_5 != nil {
+        dev.PmsPm02_5 = fmt.Sprintf("%dug/m3", msg.GetPmsPm02_5())
     } else {
-        dev.PmsTsi_02_5 = ""
+        dev.PmsPm02_5 = ""
     }
-    if msg.PmsTsi_10_0 != nil {
-        dev.PmsTsi_10_0 = fmt.Sprintf("%dug/m3", msg.GetPmsTsi_10_0())
+    if msg.PmsPm10_0 != nil {
+        dev.PmsPm10_0 = fmt.Sprintf("%dug/m3", msg.GetPmsPm10_0())
     } else {
-        dev.PmsTsi_10_0 = ""
-    }
-
-    if msg.PmsStd_01_0 != nil {
-        dev.PmsStd_01_0 = fmt.Sprintf("%dug/m3", msg.GetPmsStd_01_0())
-    } else {
-        dev.PmsStd_01_0 = ""
-    }
-    if msg.PmsStd_02_5 != nil {
-        dev.PmsStd_02_5 = fmt.Sprintf("%dug/m3", msg.GetPmsStd_02_5())
-    } else {
-        dev.PmsStd_02_5 = ""
-    }
-    if msg.PmsStd_10_0 != nil {
-        dev.PmsStd_10_0 = fmt.Sprintf("%dug/m3", msg.GetPmsStd_10_0())
-    } else {
-        dev.PmsStd_10_0 = ""
+        dev.PmsPm10_0 = ""
     }
 
-    if msg.PmsCount_00_3 != nil {
-        dev.PmsCount_00_3 = fmt.Sprintf("%d>0.3um", msg.GetPmsCount_00_3())
+    if msg.OpcPm01_0 != nil {
+        dev.OpcPm01_0 = fmt.Sprintf("%fug/m3", msg.GetOpcPm01_0())
     } else {
-        dev.PmsCount_00_3 = ""
+        dev.OpcPm01_0 = ""
     }
-    if msg.PmsCount_00_5 != nil {
-        dev.PmsCount_00_5 = fmt.Sprintf("%d>0.5um", msg.GetPmsCount_00_5())
+    if msg.OpcPm02_5 != nil {
+        dev.OpcPm02_5 = fmt.Sprintf("%fug/m3", msg.GetOpcPm02_5())
     } else {
-        dev.PmsCount_00_5 = ""
+        dev.OpcPm02_5 = ""
     }
-    if msg.PmsCount_01_0 != nil {
-        dev.PmsCount_01_0 = fmt.Sprintf("%d>1um", msg.GetPmsCount_01_0())
+    if msg.OpcPm10_0 != nil {
+        dev.OpcPm10_0 = fmt.Sprintf("%fug/m3", msg.GetOpcPm10_0())
     } else {
-        dev.PmsCount_01_0 = ""
-    }
-    if msg.PmsCount_02_5 != nil {
-        dev.PmsCount_02_5 = fmt.Sprintf("%d>2.5um", msg.GetPmsCount_02_5())
-    } else {
-        dev.PmsCount_02_5 = ""
-    }
-    if msg.PmsCount_05_0 != nil {
-        dev.PmsCount_05_0 = fmt.Sprintf("%d>5um", msg.GetPmsCount_05_0())
-    } else {
-        dev.PmsCount_05_0 = ""
-    }
-    if msg.PmsCount_10_0 != nil {
-        dev.PmsCount_10_0 = fmt.Sprintf("%d>10um", msg.GetPmsCount_10_0())
-    } else {
-        dev.PmsCount_10_0 = ""
-    }
-
-    if msg.Opc_01_0 != nil {
-        dev.Opc_01_0 = fmt.Sprintf("%.2fug/m3", msg.GetOpc_01_0())
-    } else {
-        dev.Opc_01_0 = ""
-    }
-    if msg.Opc_02_5 != nil {
-        dev.Opc_02_5 = fmt.Sprintf("%.2fug/m3", msg.GetOpc_02_5())
-    } else {
-        dev.Opc_02_5 = ""
-    }
-    if msg.Opc_10_0 != nil {
-        dev.Opc_10_0 = fmt.Sprintf("%.2fug/m3", msg.GetOpc_10_0())
-    } else {
-        dev.Opc_10_0 = ""
+        dev.OpcPm10_0 = ""
     }
 
     dev.DeviceType = msg.GetDeviceType().String()
