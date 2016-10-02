@@ -113,12 +113,12 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
         if msg.Cpm0 == nil {
             dev.Value0 = ""
         } else {
-            dev.Value0 = fmt.Sprintf("%scpm", msg.GetCpm0())
+            dev.Value0 = fmt.Sprintf("%dcpm", msg.GetCpm0())
         }
         if msg.Cpm1 == nil {
             dev.Value1 = ""
         } else {
-            dev.Value1 = fmt.Sprintf("%scpm", msg.GetCpm1())
+            dev.Value1 = fmt.Sprintf("%dcpm", msg.GetCpm1())
         }
     } else {
         var Unit string

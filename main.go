@@ -58,10 +58,12 @@ func main() {
         // Print resource usage, just as an FYI
         var mem runtime.MemStats
         runtime.ReadMemStats(&mem)
+		fmt.Printf("\n")
         fmt.Printf("mem.Alloc: %d\n", mem.Alloc)
         fmt.Printf("mem.TotalAlloc: %d\n", mem.TotalAlloc)
         fmt.Printf("mem.HeapAlloc: %d\n", mem.HeapAlloc)
         fmt.Printf("mem.HeapSys: %d\n", mem.HeapSys)
+		fmt.Printf("\n")
 
     }
 
