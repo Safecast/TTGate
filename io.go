@@ -97,7 +97,7 @@ func InboundMain() {
 
     // Two I/O buffers - one for the current read, and
     // the other containing the previous read's unprocessed data
-    const bufsize = 128
+    const bufsize = 1024
     var thisbuf = make([]byte, bufsize)
     var prevbuf []byte = []byte("")
 
