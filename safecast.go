@@ -27,6 +27,7 @@ type SeenDevice struct {
     BatterySOC         string    `json:"bat_soc"`
     EnvTemp            string    `json:"env_temp"`
     EnvHumid           string    `json:"env_humid"`
+    EnvPress           string    `json:"env_press"`
     SNR                string    `json:"snr"`
     snr                float32   `json:"-"`
     DeviceType         string    `json:"device_type"`
@@ -179,6 +180,12 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
         dev.EnvHumid = ""
     }
 
+    if msg.EnvPressure != nil {
+        dev.EnvPress = fmt.Sprintf("%.1f%%", msg.GetEnvPressure())
+    } else {
+        dev.EnvPress = ""
+    }
+
     if snr != invalidSNR {
         dev.snr = snr
         iSNR := int32(snr)
@@ -291,6 +298,9 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
             }
             if dev.EnvHumid == "" {
                 dev.EnvHumid = seenDevices[i].EnvHumid
+            }
+            if dev.EnvPress == "" {
+                dev.EnvPress = seenDevices[i].EnvPress
             }
             if dev.SNR == "" {
                 dev.snr = seenDevices[i].snr

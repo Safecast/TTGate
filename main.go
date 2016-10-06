@@ -49,20 +49,22 @@ func main() {
     for {
         time.Sleep(15 * 60 * time.Second)
 
+		fmt.Printf("\n")
+
         // Print stats
         t := time.Now()
         hoursAgo :=  int64(t.Sub(bootedAt) / time.Hour)
         minutesAgo := int64(t.Sub(bootedAt) / time.Minute) - (hoursAgo * 60)
-        fmt.Printf("\nSTATS: %d received in the last %dh %dm\n\n", cmdGetStats(), hoursAgo, minutesAgo)
+        fmt.Printf("STATS: %d received in the last %dh %dm\n", cmdGetStats(), hoursAgo, minutesAgo)
+		fmt.Printf("\n")
 
         // Print resource usage, just as an FYI
         var mem runtime.MemStats
         runtime.ReadMemStats(&mem)
-		fmt.Printf("\n")
         fmt.Printf("mem.Alloc: %d\n", mem.Alloc)
         fmt.Printf("mem.TotalAlloc: %d\n", mem.TotalAlloc)
         fmt.Printf("mem.HeapAlloc: %d\n", mem.HeapAlloc)
-        fmt.Printf("mem.HeapSys: %d\n", mem.HeapSys)
+        fmt.Printf("mem.HeapSys: %d\n\n", mem.HeapSys)
 		fmt.Printf("\n")
 
     }
