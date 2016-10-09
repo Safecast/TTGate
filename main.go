@@ -14,10 +14,13 @@ import (
 // Statics
 var OurTimezone *time.Location
 var OurCountryCode string = ""
+var memBaseSet bool = false
+var memBase runtime.MemStats
 
 // Main entry point when launched by run.sh
 func main() {
 
+	// Welcome
     fmt.Printf("Teletype Gateway\n")
 
     // Load localization information to be used for the HDMI status display
@@ -49,6 +52,12 @@ func main() {
     for {
         time.Sleep(15 * 60 * time.Second)
 
+		// Get original memory statistics, before we've done anything at all
+		if (!memBaseSet) {
+			memBaseSet = true;
+			runtime.ReadMemStats(&memBase)
+		}
+		
 		fmt.Printf("\n")
 
         // Print stats
@@ -61,10 +70,10 @@ func main() {
         // Print resource usage, just as an FYI
         var mem runtime.MemStats
         runtime.ReadMemStats(&mem)
-        fmt.Printf("mem.Alloc: %d\n", mem.Alloc)
-        fmt.Printf("mem.TotalAlloc: %d\n", mem.TotalAlloc)
-        fmt.Printf("mem.HeapAlloc: %d\n", mem.HeapAlloc)
-        fmt.Printf("mem.HeapSys: %d\n\n", mem.HeapSys)
+        fmt.Printf("mem.Alloc: %d -> %d\n", memBase.Alloc, mem.Alloc)
+        fmt.Printf("mem.HeapAlloc: %d -> %d\n", memBase.HeapAlloc, mem.HeapAlloc)
+        fmt.Printf("mem.HeapObjects: %d -> %d\n", memBase.HeapObjects, mem.HeapObjects)
+        fmt.Printf("mem.HeapSys: %d -> %d\n", memBase.HeapSys, mem.HeapSys)
 		fmt.Printf("\n")
 
     }
