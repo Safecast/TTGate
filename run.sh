@@ -17,9 +17,10 @@ screen -d -m -t browser sh $GOPATH/src/ttgate/run-browser.sh
 # Run this in the foreground so we can watch the log
 $GOPATH/bin/ttgate
 
-# If we ever return, restart the device.
-curl -X POST --header "Content-Type:application/json" "$RESIN_SUPERVISOR_ADDRESS/v1/reboot?apikey=$RESIN_SUPERVISOR_API_KEY"
-
 # If we ever return HERE after restarting the device, restart the application
+echo "Restarting app"
 curl -X POST --header "Content-Type:application/json" --data '{"appId": '$RESIN_APP_ID'}' "$RESIN_SUPERVISOR_ADDRESS/v1/restart?apikey=$RESIN_SUPERVISOR_API_KEY"
 
+# We won't ever get here, but FYI this is the code to restart the entire device.
+echo "Restarting device"
+curl -X POST --header "Content-Type:application/json" "$RESIN_SUPERVISOR_ADDRESS/v1/reboot?apikey=$RESIN_SUPERVISOR_API_KEY"
