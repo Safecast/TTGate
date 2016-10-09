@@ -43,8 +43,9 @@ func main() {
 	// that any Linux-level virtual memory usage (such as bugs in
 	// the golang runtime or Midori) will be reset, and we will
 	// occasionally start completely fresh and clean.
-    for { time.Sleep(1 * 60 * time.Second) }
+//    for { time.Sleep(1 * 60 * time.Second) }
 //    time.Sleep(7 * 24 * time.Hour)
+	time.Sleep(1 * 60 * time.Second)
     os.Exit(0)
 	
 }
