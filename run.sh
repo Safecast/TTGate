@@ -3,7 +3,7 @@
 # If this resin.io env var is asserted, halt so we can play around in SSH
 if [[ $HALT != "" ]]; then
     echo "*** HALT asserted - exiting ***"
-    exit 1
+    exit 0
 fi
 
 # Update the date/time NOW, so that it doesn't change dramatically
