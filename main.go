@@ -45,7 +45,7 @@ func main() {
 	// occasionally start completely fresh and clean.
 //    for { time.Sleep(1 * 60 * time.Second) }
 //    time.Sleep(7 * 24 * time.Hour)
-	time.Sleep(1 * 60 * time.Second)
+	time.Sleep(3 * 60 * time.Second)
     os.Exit(0)
 	
 }
