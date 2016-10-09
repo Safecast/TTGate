@@ -4,7 +4,7 @@ FROM resin/raspberrypi-golang
 ENV PKG ttgate
 
 # Enable systemd
-# ENV INITSYSTEM on
+ENV INITSYSTEM on
 
 # Install browser
 RUN apt-get update && apt-get upgrade && apt-get install -y ntpdate xorg midori matchbox unclutter screen
