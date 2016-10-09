@@ -38,14 +38,12 @@ func main() {
     // Initialize the state machine and command processing
     cmdInit()
 
-	// Wait for quite a while, and then exit, which will cause the
-	// Resin supervisor to restart us.  This is a failsafe to ensure
-	// that any Linux-level virtual memory usage (such as bugs in
+	// Wait for quite a while, and then exit, which will cause our
+	// shell script to restart the container.  This is a failsafe 
+	// to ensure that any Linux-level process usage (such as bugs in
 	// the golang runtime or Midori) will be reset, and we will
 	// occasionally start completely fresh and clean.
-//    for { time.Sleep(1 * 60 * time.Second) }
-//    time.Sleep(7 * 24 * time.Hour)
-	time.Sleep(3 * 60 * time.Second)
+    time.Sleep(7 * 24 * time.Hour)
     os.Exit(0)
 	
 }
