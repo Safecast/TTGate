@@ -14,8 +14,6 @@ import (
 // Statics
 var OurTimezone *time.Location
 var OurCountryCode string = ""
-var memBaseSet bool = false
-var memBase runtime.MemStats
 
 // Main entry point when launched by run.sh
 func main() {
@@ -26,18 +24,11 @@ func main() {
     // Load localization information to be used for the HDMI status display
     loadLocalTimezone()
 
-    // Resin debugging via Terminal requires halting the main instance via env var
-    s := os.Getenv("HALT")
-    if s != "" {
-        fmt.Printf("HALT environment variable detected\n")
-        fmt.Printf("Exiting.\n")
-        os.Exit(0)
-    }
-
     // Spawn our localhost web server, used to update the HDMI status display
     go webServer()
 
     // Spawn housekeeping and watchdog tasks
+    go timer15m()
     go timer1m()
     go timer5s()
 
@@ -47,8 +38,38 @@ func main() {
     // Initialize the state machine and command processing
     cmdInit()
 
-    // Infinitely loop, updating statistics
+	// Wait for quite a while, and then exit, which will cause the
+	// Resin supervisor to restart us.  This is a failsafe to ensure
+	// that any Linux-level virtual memory usage (such as bugs in
+	// the golang runtime or Midori) will be reset, and we will
+	// occasionally start completely fresh and clean.
+    for { time.Sleep(1 * 60 * time.Second) }
+//    time.Sleep(7 * 24 * time.Hour)
+    os.Exit(0)
+	
+}
+
+// Timer functions
+func timer5s() {
+    for {
+        time.Sleep(5 * time.Second)
+        io5sWatchdog()
+    }
+}
+
+func timer1m() {
+    for {
+        time.Sleep(1 * 60 * time.Second)
+        cmd1mWatchdog()
+        webUpdateData()
+    }
+}
+
+func timer15m() {
+	var memBaseSet bool = false
+	var memBase runtime.MemStats
     bootedAt := time.Now()
+
     for {
         time.Sleep(15 * 60 * time.Second)
 
@@ -76,23 +97,6 @@ func main() {
         fmt.Printf("mem.HeapSys: %d -> %d\n", memBase.HeapSys, mem.HeapSys)
 		fmt.Printf("\n")
 
-    }
-
-}
-
-// Timer functions
-func timer5s() {
-    for {
-        time.Sleep(5 * time.Second)
-        io5sWatchdog()
-    }
-}
-
-func timer1m() {
-    for {
-        time.Sleep(1 * 60 * time.Second)
-        cmd1mWatchdog()
-        webUpdateData()
     }
 }
 

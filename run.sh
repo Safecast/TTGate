@@ -1,10 +1,7 @@
 #! /bin/bash
 
 # If this resin.io env var is asserted, halt so we can play around in SSH
-if [[ $HALT != "" ]]; then
-    echo "*** HALT asserted - exiting ***"
-    exit 0
-fi
+@until [[ $HALT != "" ]]; do echo "HALT asserted to enable debugging..."; sleep 60s; done
 
 # Update the date/time NOW, so that it doesn't change dramatically
 # during server operations
