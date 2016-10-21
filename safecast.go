@@ -265,8 +265,12 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
         // Handle non-numeric device ID
         if dev.originalDeviceNo == 0 && dev.DeviceID == seenDevices[i].DeviceID {
             if (!fNewStyleCPM) {
-                dev.Value0 = Value
                 dev.Value1 = ""
+				if (Value != "") {
+	                dev.Value0 = Value
+				} else {
+	                dev.Value0 = seenDevices[i].Value0
+				}
             }
             found = true
         }
@@ -275,11 +279,19 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
         if dev.originalDeviceNo != 0 && dev.normalizedDeviceNo == seenDevices[i].normalizedDeviceNo {
             if (!fNewStyleCPM) {
                 if (dev.originalDeviceNo & 0x01) == 0 {
-                    dev.Value0 = Value
+					if (Value != "") {
+	                    dev.Value0 = Value
+					} else {
+	                    dev.Value0 = seenDevices[i].Value0
+					}
                     dev.Value1 = seenDevices[i].Value1
                 } else {
                     dev.Value0 = seenDevices[i].Value0
-                    dev.Value1 = Value
+					if (Value != "") {
+	                    dev.Value1 = Value
+					} else {
+	                    dev.Value1 = seenDevices[i].Value1;
+					}
                 }
             }
             found = true
