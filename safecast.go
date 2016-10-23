@@ -181,7 +181,7 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
     }
 
     if msg.EnvPressure != nil {
-        dev.EnvPress = fmt.Sprintf("%d", msg.GetEnvPressure())
+        dev.EnvPress = fmt.Sprintf("%.0f", msg.GetEnvPressure())
     } else {
         dev.EnvPress = ""
     }
