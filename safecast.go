@@ -25,6 +25,7 @@ type SeenDevice struct {
     Value1             string    `json:"value1"`
     BatteryVoltage     string    `json:"bat_voltage"`
     BatterySOC         string    `json:"bat_soc"`
+    BatteryCurrent     string    `json:"bat_current"`
     EnvTemp            string    `json:"env_temp"`
     EnvHumid           string    `json:"env_humid"`
     EnvPress           string    `json:"env_press"`
@@ -146,6 +147,12 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
         dev.BatteryVoltage = fmt.Sprintf("%.2fV", msg.GetBatteryVoltage())
     } else {
         dev.BatteryVoltage = ""
+    }
+
+    if msg.BatteryCurrent != nil {
+        dev.BatteryCurrent = fmt.Sprintf("%.3fV", msg.GetBatteryCurrent())
+    } else {
+        dev.BatteryCurrent = ""
     }
 
     // Note that we make a valiant attempt to localize the temp to C or F
@@ -304,6 +311,9 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
             }
             if dev.BatterySOC == "" {
                 dev.BatterySOC = seenDevices[i].BatterySOC
+            }
+            if dev.BatteryCurrent == "" {
+                dev.BatteryCurrent = seenDevices[i].BatteryCurrent
             }
             if dev.EnvTemp == "" {
                 dev.EnvTemp = seenDevices[i].EnvTemp
