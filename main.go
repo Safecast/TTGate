@@ -29,6 +29,7 @@ func main() {
 
     // Spawn housekeeping and watchdog tasks
     go timer15m()
+    go timer5m()
     go timer1m()
     go timer5s()
 
@@ -62,6 +63,15 @@ func timer1m() {
         cmd1mWatchdog()
         webUpdateData()
     }
+}
+
+func timer5m() {
+    for {
+/// OZZIE - make it 5
+//        time.Sleep(5 * 60 * time.Second)
+        time.Sleep(15 * time.Second)
+		cmdPingTeletypeService()
+	}
 }
 
 func timer15m() {

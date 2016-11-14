@@ -18,6 +18,7 @@ import (
 
 // Statics
 var ipinfo string = ""
+var serviceReachability = true;
 
 // Process a received Telecast message, forwarding if appropriate
 func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast, pb []byte, snr float32) {
@@ -126,8 +127,10 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
     httpclient := &http.Client{}
     resp, err := httpclient.Do(req)
     if err != nil {
+		setTeletypeServiceReachability(false)
         fmt.Printf("*** Error uploading to TTSERVE %s\n\n", err)
     } else {
+		setTeletypeServiceReachability(true)
 		contents, err := ioutil.ReadAll(resp.Body)
 		if err == nil {
 			payloadstr := string(contents)
@@ -144,7 +147,7 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 		resp.Body.Close()
     }
 
-    // For testing purposes only, Also send the message via UDP
+    // When testing, also send a duplicate of the message via UDP
     testUDP := false
     if testUDP {
 
@@ -170,4 +173,38 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 
     }
 
+}
+
+// Ping the teletype service via HTTP, just to determine its reachability
+func cmdPingTeletypeService() {
+
+    UploadURL := "http://api.teletype.io:8080/send"
+	data := []byte("Hello.")
+    req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(data))
+    req.Header.Set("User-Agent", "TTGATE")
+    req.Header.Set("Content-Type", "application/json")
+    httpclient := &http.Client{}
+    resp, err := httpclient.Do(req)
+    if err != nil {
+		setTeletypeServiceReachability(false)
+    } else {
+		setTeletypeServiceReachability(true)
+		resp.Body.Close()
+    }
+
+}
+
+// Set the teletype service as known-reachable or known-unreachable
+func setTeletypeServiceReachability(isReachable bool) {
+	if (!serviceReachability && isReachable) {
+	    fmt.Printf("*** TTSERVE is now reachable\n");
+	} else if (!isReachable) {
+	    fmt.Printf("*** TTSERVE is unreachable\n");
+	}
+	serviceReachability = isReachable
+}
+
+// Set the teletype service as known-reachable or known-unreachable
+func isTeletypeServiceReachable() bool {
+	return serviceReachability;
 }

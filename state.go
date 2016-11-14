@@ -218,6 +218,18 @@ func cmdEnqueueOutbound(cmd []byte) {
 func SentPendingOutbound() bool {
     hexchar := []byte("0123456789ABCDEF")
 
+	// If there is no actual pending outbound, check to see
+	// if we are offline.  If so, we should notify anyone who
+	// is trying to transmit.
+	if (len(outboundQueue) == 0 && !isTeletypeServiceReachable()) {
+	    msg := &teletype.Telecast{}
+        msg.Message = proto.String("down")
+        data, err := proto.Marshal(msg)
+        if err == nil {
+            cmdEnqueueOutbound(data)
+		}
+	}
+
     // We test this because we can never afford to block here,
     // and we knkow that we're the only consumer of this queue
     if len(outboundQueue) != 0 {
@@ -238,6 +250,7 @@ func SentPendingOutbound() bool {
         }
 
     }
+	
 	// Returning false indicates that state is unchanged
     return false
 }
