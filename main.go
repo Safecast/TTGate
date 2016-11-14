@@ -19,7 +19,7 @@ var OurCountryCode string = ""
 func main() {
 
 	// Welcome
-    fmt.Printf("\nTeletype Gateway\n\n")
+    fmt.Printf("\nTeletype Gateway\n")
 
     // Load localization information to be used for the HDMI status display
     loadLocalTimezone()

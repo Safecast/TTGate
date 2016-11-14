@@ -47,7 +47,6 @@ func ioInit() {
     }
     serialPort = s
     serialInitCompleted = true
-    fmt.Printf("Serial I/O Initialized\n")
 
     // Allow for noise on the newly-opened serial port to get buffered in one large chunk
     time.Sleep(2 * time.Second)

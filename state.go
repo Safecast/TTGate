@@ -220,10 +220,17 @@ func SentPendingOutbound() bool {
 
 	// If there is no actual pending outbound, check to see
 	// if we are offline.  If so, we should notify anyone who
-	// is trying to transmit.
+	// is trying to transmit.  We do this with a special form
+	// of transmit in which we, in essence, say that this is
+	// a message "coming from TTSERVE" that is targeted at anyone
+	// who happens to be listening.
 	if (len(outboundQueue) == 0 && !isTeletypeServiceReachable()) {
 	    msg := &teletype.Telecast{}
         msg.Message = proto.String("down")
+	    deviceType := teletype.Telecast_TTSERVE
+		msg.DeviceType = &deviceType
+		deviceIDNumber := uint32(0)
+		msg.DeviceIDNumber = &deviceIDNumber
         data, err := proto.Marshal(msg)
         if err == nil {
             cmdEnqueueOutbound(data)
