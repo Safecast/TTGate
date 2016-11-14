@@ -67,9 +67,7 @@ func timer1m() {
 
 func timer5m() {
     for {
-/// OZZIE - make it 5
-//        time.Sleep(5 * 60 * time.Second)
-        time.Sleep(15 * time.Second)
+        time.Sleep(5 * 60 * time.Second)
 		cmdPingTeletypeService()
 	}
 }
