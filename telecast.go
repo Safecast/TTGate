@@ -18,7 +18,8 @@ import (
 
 // Statics
 var ipinfo string = ""
-var serviceReachability = true;
+var serviceReachability = true
+var firstUnreachableAt time.Time
 
 // Process a received Telecast message, forwarding if appropriate
 func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast, pb []byte, snr float32) {
@@ -198,13 +199,26 @@ func cmdPingTeletypeService() {
 func setTeletypeServiceReachability(isReachable bool) {
 	if (!serviceReachability && isReachable) {
 	    fmt.Printf("*** TTSERVE is now reachable\n");
-	} else if (!isReachable) {
-	    fmt.Printf("*** TTSERVE is unreachable\n");
+	} else if (serviceReachability && !isReachable) {
+	    fmt.Printf("*** TTSERVE is now unreachable\n");
+	    firstUnreachableAt = time.Now()
+	} else if (!serviceReachability && !isReachable) {
+	    t := time.Now()
+		unreachableForMinutes := int64(t.Sub(firstUnreachableAt) / time.Minute)
+	    fmt.Printf("*** TTSERVE has been unreachable for %d minutes\n", unreachableForMinutes);
 	}
 	serviceReachability = isReachable
 }
 
-// Set the teletype service as known-reachable or known-unreachable
+// Set the teletype service as known-reachable or known-unreachable, with debouncing so that
+// it ONLY says that it's unreachable if it has been down for a very long time.
+// We use a significant amount of debounce time because this will cause devices to
+// resort to using Cellular until their next reboot cycle.
 func isTeletypeServiceReachable() bool {
-	return serviceReachability;
+	if serviceReachability {
+		return true
+	}
+    t := time.Now()
+	unreachableForMinutes := int64(t.Sub(firstUnreachableAt) / time.Minute)
+	return unreachableForMinutes > 120
 }
