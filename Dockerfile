@@ -1,4 +1,4 @@
-FROM resin/raspberrypi-golang
+FROM resin/raspberrypi-golang:1.7.3
 
 # The app
 ENV PKG ttgate
