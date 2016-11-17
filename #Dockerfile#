@@ -15,7 +15,7 @@ COPY . $GOPATH/src/$PKG
 # Build all the golang source
 WORKDIR $GOPATH/src/$PKG
 #RUN  go get && go install && go build all
-RUN  mv deps/* .. && rmdir deps && go -f get && go install && go build all
+RUN  mv deps/* .. && rmdir deps  && go install && go build all
 
 # Tell the container to run our shell script
 CMD ["sh", "-c", "$GOPATH/src/$PKG/run.sh"]
