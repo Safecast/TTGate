@@ -30,6 +30,7 @@ const invalidSNR float32 = 123.456
 // Statics
 var receivedMessage []byte
 var currentState uint16
+var deviceToConveyUnreachability uint32 = 0
 
 // Set the current state of the state machine
 func cmdSetState(newState uint16) {
@@ -65,9 +66,9 @@ func cmdProcess(cmd []byte) {
     fmt.Printf("recv(%s)\n", cmdstr)
     switch currentState {
 
-		////
-		// Initialization states
-		////
+        ////
+        // Initialization states
+        ////
 
     case CMD_STATE_LPWAN_RESETREQ:
         time.Sleep(4 * time.Second)
@@ -114,10 +115,10 @@ func cmdProcess(cmd []byte) {
         // The init sequence is over, so begin a receive
         RestartReceive()
 
-		////
-		// Steady-state receive handling states
-		////
-		
+        ////
+        // Steady-state receive handling states
+        ////
+
     case CMD_STATE_LPWAN_RCVRPL:
         if bytes.HasPrefix(cmd, []byte("ok")) {
             // this is expected response from initiating the rcv,
@@ -173,9 +174,9 @@ func cmdProcess(cmd []byte) {
             }
         }
 
-		////
-		// Post-cmdEnqueueOutbound transmit-handling states
-		////
+        ////
+        // Post-cmdEnqueueOutbound transmit-handling states
+        ////
 
     case CMD_STATE_LPWAN_TXRPL1:
         if bytes.HasPrefix(cmd, []byte("ok")) {
@@ -218,24 +219,27 @@ func cmdEnqueueOutbound(cmd []byte) {
 func SentPendingOutbound() bool {
     hexchar := []byte("0123456789ABCDEF")
 
-	// If there is no actual pending outbound, check to see
-	// if we are offline.  If so, we should notify anyone who
-	// is trying to transmit.  We do this with a special form
-	// of transmit in which we, in essence, say that this is
-	// a message "coming from TTSERVE" that is targeted at anyone
-	// who happens to be listening.
-	if (len(outboundQueue) == 0 && !isTeletypeServiceReachable()) {
-	    msg := &teletype.Telecast{}
-        msg.Message = proto.String("down")
-	    deviceType := teletype.Telecast_TTSERVE
-		msg.DeviceType = &deviceType
-		deviceIDNumber := uint32(0)
-		msg.DeviceIDNumber = &deviceIDNumber
-        data, err := proto.Marshal(msg)
-        if err == nil {
-            cmdEnqueueOutbound(data)
-		}
-	}
+    // If there is no actual pending outbound, check to see
+    // if we are offline.  If so, we should notify anyone who
+    // is trying to transmit.  We do this with a special form
+    // of transmit in which we, in essence, say that this is
+    // a message "coming from TTSERVE" that is targeted at anyone
+    // who happens to be listening.
+    if (deviceToConveyUnreachability != 0) {
+        if (len(outboundQueue) == 0 && !isTeletypeServiceReachable()) {
+            msg := &teletype.Telecast{}
+            msg.Message = proto.String("down")
+            deviceType := teletype.Telecast_TTSERVE
+            msg.DeviceType = &deviceType
+            deviceIDNumber := deviceToConveyUnreachability
+            msg.DeviceIDNumber = &deviceIDNumber
+            data, err := proto.Marshal(msg)
+            if err == nil {
+                cmdEnqueueOutbound(data)
+            }
+            deviceToConveyUnreachability = 0
+        }
+    }
 
     // We test this because we can never afford to block here,
     // and we knkow that we're the only consumer of this queue
@@ -252,13 +256,13 @@ func SentPendingOutbound() bool {
             ioSendCommand(outbuf)
             cmdBusyReset()
             cmdSetState(CMD_STATE_LPWAN_TXRPL1)
-			// Returning true indicates that we set state
+            // Returning true indicates that we set state
             return true
         }
 
     }
-	
-	// Returning false indicates that state is unchanged
+
+    // Returning false indicates that state is unchanged
     return false
 }
 
@@ -305,7 +309,12 @@ func cmdProcessReceived(hex []byte, snr float32) {
         return
     }
 
-	// Process it as a Telecast message
+    // Remember the Device ID number of the last received message, for failover purposes
+    if (msg.DeviceIDNumber != nil) {
+        deviceToConveyUnreachability = msg.GetDeviceIDNumber()
+    }
+
+    // Process it as a Telecast message
     cmdProcessReceivedTelecastMessage(msg, bin, snr)
 
 }
