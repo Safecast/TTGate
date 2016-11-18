@@ -31,9 +31,6 @@ func main() {
     go timer1m()
     go timer5s()
 
-    // Initialize the state machine and command processing
-    cmdInit()
-
 	// Wait for quite a while, and then exit, which will cause our
 	// shell script to restart the container.  This is a failsafe 
 	// to ensure that any Linux-level process usage (such as bugs in
@@ -54,7 +51,6 @@ func timer5s() {
 func timer1m() {
     for {
         time.Sleep(1 * 60 * time.Second)
-        cmd1mWatchdog()
     }
 }
 
@@ -68,7 +64,6 @@ func timer5m() {
 func timer15m() {
 	var memBaseSet bool = false
 	var memBase runtime.MemStats
-    bootedAt := time.Now()
 
     for {
         time.Sleep(15 * 60 * time.Second)
@@ -82,11 +77,6 @@ func timer15m() {
 		fmt.Printf("\n")
 
         // Print stats
-        t := time.Now()
-        hoursAgo :=  int64(t.Sub(bootedAt) / time.Hour)
-        minutesAgo := int64(t.Sub(bootedAt) / time.Minute) - (hoursAgo * 60)
-        fmt.Printf("STATS: %d received in the last %dh %dm\n", cmdGetStats(), hoursAgo, minutesAgo)
-		fmt.Printf("\n")
 
         // Print resource usage, just as an FYI
         var mem runtime.MemStats
