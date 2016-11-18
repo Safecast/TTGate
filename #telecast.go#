@@ -1,4 +1,4 @@
-// Telecast message handling
+A// Telecast message handling
 package main
 
 import (
@@ -18,8 +18,8 @@ import (
 
 // Statics
 var ipinfo string = ""
-var serviceReachable = true
-var serviceFirstUnreachableAt time.Time
+var serviceReachability = true
+var firstUnreachableAt time.Time
 
 // Process a received Telecast message, forwarding if appropriate
 func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast, pb []byte, snr float32) {
@@ -197,17 +197,17 @@ func cmdPingTeletypeService() {
 
 // Set the teletype service as known-reachable or known-unreachable
 func setTeletypeServiceReachability(isReachable bool) {
-	if (!serviceReachable && isReachable) {
+	if (!serviceReachability && isReachable) {
 	    fmt.Printf("*** TTSERVE is now reachable\n");
-	} else if (serviceReachable && !isReachable) {
+	} else if (serviceReachability && !isReachable) {
 	    fmt.Printf("*** TTSERVE is now unreachable\n");
-	    serviceFirstUnreachableAt = time.Now()
-	} else if (!serviceReachable && !isReachable) {
+	    firstUnreachableAt = time.Now()
+	} else if (!serviceReachability && !isReachable) {
 	    t := time.Now()
-		unreachableForMinutes := int64(t.Sub(serviceFirstUnreachableAt) / time.Minute)
+		unreachableForMinutes := int64(t.Sub(firstUnreachableAt) / time.Minute)
 	    fmt.Printf("*** TTSERVE has been unreachable for %d minutes\n", unreachableForMinutes);
 	}
-	serviceReachable = isReachable
+	serviceReachability = isReachable
 }
 
 // Set the teletype service as known-reachable or known-unreachable, with debouncing so that
@@ -216,7 +216,7 @@ func setTeletypeServiceReachability(isReachable bool) {
 // resort to using Cellular until their next reboot cycle.
 func isTeletypeServiceReachable() bool {
 	// Exit immediately if the service is known to be reachable
-	if serviceReachable {
+	if serviceReachability {
 		return true
 	}
 	// Return unreachable immediatelywhen testing
@@ -224,6 +224,6 @@ func isTeletypeServiceReachable() bool {
 		return false
 	}
 	// Suppress the notion of "unreachable" until we have been offline for quite some time
-	unreachableMinutes := int64(time.Now().Sub(serviceFirstUnreachableAt) / time.Minute)
+	unreachableMinutes := int64(time.Now().Sub(firstUnreachableAt) / time.Minute)
 	return unreachableMinutes < 60
 }

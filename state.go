@@ -30,7 +30,7 @@ const invalidSNR float32 = 123.456
 // Statics
 var receivedMessage []byte
 var currentState uint16
-var deviceToConveyUnreachability uint32 = 0
+var deviceToNotifyIfServiceDown uint32 = 0
 
 // Set the current state of the state machine
 func cmdSetState(newState uint16) {
@@ -219,26 +219,24 @@ func cmdEnqueueOutbound(cmd []byte) {
 func SentPendingOutbound() bool {
     hexchar := []byte("0123456789ABCDEF")
 
-    // If there is no actual pending outbound, check to see
-    // if we are offline.  If so, we should notify anyone who
-    // is trying to transmit.  We do this with a special form
-    // of transmit in which we, in essence, say that this is
-    // a message "coming from TTSERVE" that is targeted at anyone
-    // who happens to be listening.
-    if (deviceToConveyUnreachability != 0) {
-        if (len(outboundQueue) == 0 && !isTeletypeServiceReachable()) {
-            msg := &teletype.Telecast{}
-            msg.Message = proto.String("down")
-            deviceType := teletype.Telecast_TTSERVE
-            msg.DeviceType = &deviceType
-            deviceIDNumber := deviceToConveyUnreachability
-            msg.DeviceIDNumber = &deviceIDNumber
-            data, err := proto.Marshal(msg)
-            if err == nil {
-                cmdEnqueueOutbound(data)
-            }
-            deviceToConveyUnreachability = 0
+    // Check to see if the service is currently offline and
+    // if we recently received a message from a device that
+    // will be interested in that fact.  We do this by packaging
+    // the message as though it were sent by TTSERVE itself.
+    if (deviceToNotifyIfServiceDown != 0 && !isTeletypeServiceReachable()) {
+        msg := &teletype.Telecast{}
+        msg.Message = proto.String("down")
+        deviceType := teletype.Telecast_TTSERVE
+        msg.DeviceType = &deviceType
+        deviceIDNumber := deviceToNotifyIfServiceDown
+        msg.DeviceIDNumber = &deviceIDNumber
+        data, err := proto.Marshal(msg)
+        if err == nil {
+            // This will be dequeued below
+            cmdEnqueueOutbound(data)
         }
+        // Nullify so that we don't send the message more than once
+        deviceToNotifyIfServiceDown = 0
     }
 
     // We test this because we can never afford to block here,
@@ -311,7 +309,7 @@ func cmdProcessReceived(hex []byte, snr float32) {
 
     // Remember the Device ID number of the last received message, for failover purposes
     if (msg.DeviceIDNumber != nil) {
-        deviceToConveyUnreachability = msg.GetDeviceIDNumber()
+        deviceToNotifyIfServiceDown = msg.GetDeviceIDNumber()
     }
 
     // Process it as a Telecast message
