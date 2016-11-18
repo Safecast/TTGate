@@ -41,9 +41,6 @@ func cmdReinit() {
 	}
 	inReinit = true
 
-	// Reinitialize the Microchip in case it's wedged.
-	ioInitMicrochip()
-
 	// Initialize the state machine and kick off a device reset
 	cmdSetState(CMD_STATE_LPWAN_RESETREQ)
 	cmdProcess(nil)

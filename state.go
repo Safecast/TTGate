@@ -40,7 +40,6 @@ func cmdSetState(newState uint16) {
 
 // Set into a Receive state, and await reply
 func RestartReceive() {
-    ioSendCommandString("radio rx 0")
     cmdBusyReset()
     cmdSetState(CMD_STATE_LPWAN_RCVRPL)
 }
@@ -72,22 +71,18 @@ func cmdProcess(cmd []byte) {
 
     case CMD_STATE_LPWAN_RESETREQ:
         time.Sleep(4 * time.Second)
-        ioSendCommandString("sys get ver")
         cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
 
     case CMD_STATE_LPWAN_GETVERRPL:
         time.Sleep(4 * time.Second)
         if (!bytes.HasPrefix(cmd, []byte("RN2483"))) && (!bytes.HasPrefix(cmd, []byte("RN2903"))) {
-            ioSendCommandString("sys get ver")
             cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
         } else {
-            ioSendCommandString("sys reset")
             cmdSetState(CMD_STATE_LPWAN_RESETRPL)
         }
 
     case CMD_STATE_LPWAN_RESETRPL:
         time.Sleep(4 * time.Second)
-        ioSendCommandString("mac pause")
         cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
 
     case CMD_STATE_LPWAN_MACPAUSERPL:
@@ -104,7 +99,6 @@ func cmdProcess(cmd []byte) {
             if err != nil || i64 < 100000 {
                 fmt.Printf("Bad response from mac pause: %s\n", cmdstr)
             } else {
-                ioSendCommandString("radio set wdt 60000")
                 cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
             }
         }
@@ -148,7 +142,6 @@ func cmdProcess(cmd []byte) {
             }
             receivedMessage = cmd[hexstarts:]
             // Get the SNR of the last message received
-            ioSendCommandString("radio get snr")
             cmdSetState(CMD_STATE_LPWAN_SNRRPL)
         } else {
             // Totally unknown error, but since we cannot just
@@ -251,7 +244,6 @@ func SentPendingOutbound() bool {
                 outbuf = append(outbuf, hiChar)
                 outbuf = append(outbuf, loChar)
             }
-            ioSendCommand(outbuf)
             cmdBusyReset()
             cmdSetState(CMD_STATE_LPWAN_TXRPL1)
             // Returning true indicates that we set state

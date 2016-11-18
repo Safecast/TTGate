@@ -31,9 +31,6 @@ func main() {
     go timer1m()
     go timer5s()
 
-    // Initialize I/O devices
-    ioInit()
-
     // Initialize the state machine and command processing
     cmdInit()
 
@@ -51,7 +48,6 @@ func main() {
 func timer5s() {
     for {
         time.Sleep(5 * time.Second)
-        io5sWatchdog()
     }
 }
 
