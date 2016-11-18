@@ -219,8 +219,8 @@ func isTeletypeServiceReachable() bool {
 	if serviceReachable {
 		return true
 	}
-	// Return unreachable immediately when testing
-	testing := true
+	// Useful (saves an hour) when debugging ttrelay behavior upon receiving "down" message
+	testing := false
 	if testing {
 		return false
 	}
