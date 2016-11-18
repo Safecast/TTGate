@@ -99,12 +99,12 @@ func (x *TelecastUnit) UnmarshalJSON(data []byte) error {
 func (TelecastUnit) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{0, 1} }
 
 type Telecast struct {
-	DeviceType            *TelecastDeviceType `protobuf:"varint,1,req,name=DeviceType,enum=teletype.TelecastDeviceType" json:"DeviceType,omitempty"`
+	DeviceType            *TelecastDeviceType `protobuf:"varint,1,req,name=DeviceType,enum=TelecastDeviceType" json:"DeviceType,omitempty"`
 	DeviceIDString        *string             `protobuf:"bytes,2,opt,name=DeviceIDString" json:"DeviceIDString,omitempty"`
 	DeviceIDNumber        *uint32             `protobuf:"varint,3,opt,name=DeviceIDNumber" json:"DeviceIDNumber,omitempty"`
 	Message               *string             `protobuf:"bytes,4,opt,name=Message" json:"Message,omitempty"`
 	CapturedAt            *string             `protobuf:"bytes,5,opt,name=CapturedAt" json:"CapturedAt,omitempty"`
-	Unit                  *TelecastUnit       `protobuf:"varint,6,opt,name=Unit,enum=teletype.TelecastUnit" json:"Unit,omitempty"`
+	Unit                  *TelecastUnit       `protobuf:"varint,6,opt,name=Unit,enum=TelecastUnit" json:"Unit,omitempty"`
 	Value                 *uint32             `protobuf:"varint,7,opt,name=Value" json:"Value,omitempty"`
 	Latitude              *float32            `protobuf:"fixed32,8,opt,name=Latitude" json:"Latitude,omitempty"`
 	Longitude             *float32            `protobuf:"fixed32,9,opt,name=Longitude" json:"Longitude,omitempty"`
@@ -524,9 +524,9 @@ func (m *Telecast) GetBatteryCurrent() float32 {
 }
 
 func init() {
-	proto.RegisterType((*Telecast)(nil), "teletype.Telecast")
-	proto.RegisterEnum("teletype.TelecastDeviceType", TelecastDeviceType_name, TelecastDeviceType_value)
-	proto.RegisterEnum("teletype.TelecastUnit", TelecastUnit_name, TelecastUnit_value)
+	proto.RegisterType((*Telecast)(nil), "Telecast")
+	proto.RegisterEnum("TelecastDeviceType", TelecastDeviceType_name, TelecastDeviceType_value)
+	proto.RegisterEnum("TelecastUnit", TelecastUnit_name, TelecastUnit_value)
 }
 
 var fileDescriptor0 = []byte{
@@ -579,4 +579,4 @@ var fileDescriptor0 = []byte{
 }
 
 func main() {}
-func test(msg *teletype.Telecast) {}
+func test(msg *Telecast) {}
