@@ -219,8 +219,9 @@ func isTeletypeServiceReachable() bool {
 	if serviceReachable {
 		return true
 	}
-	// Return unreachable immediatelywhen testing
-	if false {
+	// Return unreachable immediately when testing
+	testing := true
+	if testing {
 		return false
 	}
 	// Suppress the notion of "unreachable" until we have been offline for quite some time
