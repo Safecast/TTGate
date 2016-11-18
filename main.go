@@ -6,7 +6,6 @@ import (
     "net/http"
     "os"
     "time"
-	"runtime"
     "bytes"
     "github.com/golang/protobuf/proto"
     "github.com/rayozzie/teletype-proto/golang"
@@ -15,12 +14,6 @@ import (
 
 // Main entry point when launched by run.sh
 func main() {
-
-	// Welcome
-    fmt.Printf("\nTeletype Gateway\n")
-
-    // Load localization information to be used for the HDMI status display
-    loadLocalTimezone()
 
     // Spawn our localhost web server, used to update the HDMI status display
     go webServer()
