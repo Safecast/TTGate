@@ -1,0 +1,66 @@
+<html>
+    <head>
+        <title>Main Kiosk Page</title>
+        <meta http-equiv="refresh" content="15">
+    </head>
+    <body onload="loadData()">
+        <script>
+         function loadData()
+         {
+             var xhr = new XMLHttpRequest();
+             xhr.onreadystatechange = function()
+             {
+                 if (xhr.readyState === XMLHttpRequest.DONE) {
+                     if (xhr.status === 200) {
+                         processData(JSON.parse(xhr.responseText));
+                     }
+                 }
+             };
+             xhr.open("GET", "http://localhost:8080/data.json", true);
+             xhr.send();
+         }
+         function processData(data) {
+             var table = document.getElementById("datatable");
+             var tr;
+             for (var i = 0; i < data.length; i++) {
+                 tr = table.insertRow(-1);
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].minutes_ago;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].captured_local;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].device_type;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].device_id;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].value0;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].value1;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].lat;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].lon;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].alt;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].bat_voltage;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].bat_soc;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].env_temp;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].env_humid;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].env_press;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].snr;
+             }
+         }
+        </script>
+        <p/>
+        <table id="datatable" cellpadding="8" border="1">
+            <tr>
+                <th>When</th>
+                <th>Captured</th>
+                <th>Type</th>
+                <th>ID</th>
+                <th>CPM0</th>
+                <th>CPM1</th>
+                <th>Lat</th>
+                <th>Lon</th>
+                <th>Alt</th>
+                <th>Volts</th>
+                <th>SOC</th>
+                <th>Temp</th>
+                <th>Humid</th>
+                <th>Press</th>
+                <th>Sig</th>
+            </tr>
+        </table>
+    </body>
+</html>
