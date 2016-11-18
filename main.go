@@ -3,8 +3,6 @@ package main
 
 import (
     "fmt"
-    "net/http"
-    "bytes"
     "github.com/golang/protobuf/proto"
     "github.com/rayozzie/teletype-proto/golang"
 )
@@ -30,18 +28,3 @@ func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast, pb []byte, snr fl
 
 
 }
-
-func cmdPingTeletypeService() {
-    UploadURL := "http://api.teletype.io:8080/send"
-	data := []byte("Hello.")
-    req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(data))
-    req.Header.Set("User-Agent", "TTGATE")
-    req.Header.Set("Content-Type", "application/json")
-    httpclient := &http.Client{}
-    resp, err := httpclient.Do(req)
-    if err == nil {
-		resp.Body.Close()
-    }
-
-}
-
