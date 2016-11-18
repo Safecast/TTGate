@@ -5,4 +5,3 @@ func (m *Telecast) Reset()                    { *m = Telecast{} }
 func (*Telecast) ProtoMessage()               {}
 func (m *Telecast) String() string            { return proto.CompactTextString(m) }
 func main() {}
-func test(msg *Telecast) {}
