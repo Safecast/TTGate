@@ -14,7 +14,8 @@ COPY . $GOPATH/src/$PKG
 
 # Build all the golang source
 WORKDIR $GOPATH/src/$PKG
-RUN go get -v google.golang.org/genproto/protobuf && go get -v && go install && go build all
+#RUN go get -v google.golang.org/genproto/protobuf && go get -v && go install && go build all
+RUN go get -v && go install && go build all
 
 # Tell the container to run our shell script
 CMD ["sh", "-c", "$GOPATH/src/$PKG/run.sh"]
