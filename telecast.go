@@ -215,10 +215,15 @@ func setTeletypeServiceReachability(isReachable bool) {
 // We use a significant amount of debounce time because this will cause devices to
 // resort to using Cellular until their next reboot cycle.
 func isTeletypeServiceReachable() bool {
+	// Exit immediately if the service is known to be reachable
 	if serviceReachability {
 		return true
 	}
-    t := time.Now()
-	unreachableForMinutes := int64(t.Sub(firstUnreachableAt) / time.Minute)
-	return unreachableForMinutes > 120
+	// Return unreachable immediatelywhen testing
+	if false {
+		return false
+	}
+	// Suppress the notion of "unreachable" until we have been offline for quite some time
+	unreachableMinutes := int64(time.Now().Sub(firstUnreachableAt) / time.Minute)
+	return unreachableMinutes < 60
 }
