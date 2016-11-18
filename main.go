@@ -2,9 +2,7 @@
 package main
 
 import (
-    "encoding/json"
     "fmt"
-    "io/ioutil"
     "net/http"
     "os"
     "time"
@@ -112,21 +110,6 @@ func loadLocalTimezone() {
     // Default to UTC, with NO country standards, if we can't find our own info
     OurTimezone, _ = time.LoadLocation("UTC")
     OurCountryCode = ""
-
-    // Use the ip-api service, which handily provides the needed info
-    response, err := http.Get("http://ip-api.com/json/")
-    if err == nil {
-        defer response.Body.Close()
-        contents, err := ioutil.ReadAll(response.Body)
-        if err == nil {
-            var info IPInfoData
-            err = json.Unmarshal(contents, &info)
-            if err == nil {
-                OurTimezone, _ = time.LoadLocation(info.Timezone)
-                OurCountryCode = info.CountryCode
-            }
-        }
-    }
 
 }
 
