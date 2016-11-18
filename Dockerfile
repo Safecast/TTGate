@@ -4,7 +4,7 @@ FROM resin/raspberrypi-golang:1.7.3
 ENV PKG ttgate
 
 # Enable systemd
-ENV INITSYSTEM on
+#ENV INITSYSTEM on
 
 # Copy all the source code to the place where golang will find it
 COPY . $GOPATH/src/$PKG
