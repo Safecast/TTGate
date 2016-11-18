@@ -6,9 +6,6 @@ ENV PKG ttgate
 # Enable systemd
 ENV INITSYSTEM on
 
-# Install browser
-#RUN apt-get update && apt-get upgrade && apt-get install -y ntpdate xorg midori matchbox unclutter screen
-
 # Copy all the source code to the place where golang will find it
 COPY . $GOPATH/src/$PKG
 
