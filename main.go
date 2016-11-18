@@ -61,7 +61,6 @@ func timer1m() {
     for {
         time.Sleep(1 * 60 * time.Second)
         cmd1mWatchdog()
-        webUpdateData()
     }
 }
 
@@ -135,10 +134,4 @@ func loadLocalTimezone() {
 func webServer() {
     http.Handle("/", http.FileServer(http.Dir("./web")))
     http.ListenAndServe(":8080", nil)
-}
-
-// This periodically updates the JSON data file periodically reloaded by index.html
-func webUpdateData() {
-    buffer := GetSafecastDataAsJSON()
-    ioutil.WriteFile("./web/data.json", buffer, 0644)
 }
