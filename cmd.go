@@ -41,9 +41,6 @@ func cmdReinit() {
 	}
 	inReinit = true
 
-	// Initialize the state machine and kick off a device reset
-	cmdSetState(CMD_STATE_LPWAN_RESETREQ)
-	cmdProcess(nil)
 
 	// Done
 	inReinit = false
