@@ -12,12 +12,6 @@ import (
     "github.com/rayozzie/teletype-proto/golang"
 )
 
-// Statics
-var OurTimezone *time.Location
-var OurCountryCode string = ""
-var ipinfo string = ""
-var serviceReachable = true
-var serviceFirstUnreachableAt time.Time
 
 // Main entry point when launched by run.sh
 func main() {
@@ -31,12 +25,6 @@ func main() {
     // Spawn our localhost web server, used to update the HDMI status display
     go webServer()
 
-    // Spawn housekeeping and watchdog tasks
-    go timer15m()
-    go timer5m()
-    go timer1m()
-    go timer5s()
-
 	// Wait for quite a while, and then exit, which will cause our
 	// shell script to restart the container.  This is a failsafe 
 	// to ensure that any Linux-level process usage (such as bugs in
@@ -45,64 +33,6 @@ func main() {
     time.Sleep(7 * 24 * time.Hour)
     os.Exit(0)
 	
-}
-
-// Timer functions
-func timer5s() {
-    for {
-        time.Sleep(5 * time.Second)
-    }
-}
-
-func timer1m() {
-    for {
-        time.Sleep(1 * 60 * time.Second)
-    }
-}
-
-func timer5m() {
-    for {
-        time.Sleep(5 * 60 * time.Second)
-		cmdPingTeletypeService()
-	}
-}
-
-func timer15m() {
-	var memBaseSet bool = false
-	var memBase runtime.MemStats
-
-    for {
-        time.Sleep(15 * 60 * time.Second)
-
-		// Get original memory statistics, before we've done anything at all
-		if (!memBaseSet) {
-			memBaseSet = true;
-			runtime.ReadMemStats(&memBase)
-		}
-		
-		fmt.Printf("\n")
-
-        // Print stats
-
-        // Print resource usage, just as an FYI
-        var mem runtime.MemStats
-        runtime.ReadMemStats(&mem)
-        fmt.Printf("mem.Alloc: %d -> %d\n", memBase.Alloc, mem.Alloc)
-        fmt.Printf("mem.HeapAlloc: %d -> %d\n", memBase.HeapAlloc, mem.HeapAlloc)
-        fmt.Printf("mem.HeapObjects: %d -> %d\n", memBase.HeapObjects, mem.HeapObjects)
-        fmt.Printf("mem.HeapSys: %d -> %d\n", memBase.HeapSys, mem.HeapSys)
-		fmt.Printf("\n")
-
-    }
-}
-
-// Load localization information
-func loadLocalTimezone() {
-
-    // Default to UTC, with NO country standards, if we can't find our own info
-    OurTimezone, _ = time.LoadLocation("UTC")
-    OurCountryCode = ""
-
 }
 
 // The localhost server used exclusively to update the local HDMI display
@@ -142,17 +72,9 @@ func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast, pb []byte, snr fl
 
     }
 
-    // Forward the message to the service [and delete the stuff from processreceivedsafecastmessage!]
-    cmdForwardMessageToTeletypeService(pb, snr)
 
 }
 
-// Forward this message to the teletype service via HTTP
-func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
-
-}
-
-// Ping the teletype service via HTTP, just to determine its reachability
 func cmdPingTeletypeService() {
 
     UploadURL := "http://api.teletype.io:8080/send"
@@ -162,45 +84,9 @@ func cmdPingTeletypeService() {
     req.Header.Set("Content-Type", "application/json")
     httpclient := &http.Client{}
     resp, err := httpclient.Do(req)
-    if err != nil {
-		setTeletypeServiceReachability(false)
-    } else {
-		setTeletypeServiceReachability(true)
+    if err == nil {
 		resp.Body.Close()
     }
 
 }
 
-// Set the teletype service as known-reachable or known-unreachable
-func setTeletypeServiceReachability(isReachable bool) {
-	if (!serviceReachable && isReachable) {
-	    fmt.Printf("*** TTSERVE is now reachable\n");
-	} else if (serviceReachable && !isReachable) {
-	    fmt.Printf("*** TTSERVE is now unreachable\n");
-	    serviceFirstUnreachableAt = time.Now()
-	} else if (!serviceReachable && !isReachable) {
-	    t := time.Now()
-		unreachableForMinutes := int64(t.Sub(serviceFirstUnreachableAt) / time.Minute)
-	    fmt.Printf("*** TTSERVE has been unreachable for %d minutes\n", unreachableForMinutes);
-	}
-	serviceReachable = isReachable
-}
-
-// Set the teletype service as known-reachable or known-unreachable, with debouncing so that
-// it ONLY says that it's unreachable if it has been down for a very long time.
-// We use a significant amount of debounce time because this will cause devices to
-// resort to using Cellular until their next reboot cycle.
-func isTeletypeServiceReachable() bool {
-	// Exit immediately if the service is known to be reachable
-	if serviceReachable {
-		return true
-	}
-	// Return unreachable immediately when testing
-	testing := true
-	if testing {
-		return false
-	}
-	// Suppress the notion of "unreachable" until we have been offline for quite some time
-	unreachableMinutes := int64(time.Now().Sub(serviceFirstUnreachableAt) / time.Minute)
-	return unreachableMinutes < 60
-}
