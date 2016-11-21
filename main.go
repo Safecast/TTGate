@@ -14,12 +14,16 @@ import (
 // Statics
 var OurTimezone *time.Location
 var OurCountryCode string = ""
+var DebugFailover = false
 
 // Main entry point when launched by run.sh
 func main() {
 
 	// Welcome
     fmt.Printf("\nTeletype Gateway\n")
+
+	// Debug flags
+    DebugFailover = (os.Getenv("DEBUG_FAILOVER") != "")
 
     // Load localization information to be used for the HDMI status display
     loadLocalTimezone()
