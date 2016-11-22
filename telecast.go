@@ -215,13 +215,13 @@ func setTeletypeServiceReachability(isReachable bool) {
 // We use a significant amount of debounce time because this will cause devices to
 // resort to using Cellular until their next reboot cycle.
 func isTeletypeServiceReachable() bool {
-	// Exit immediately if the service is known to be reachable
-	if serviceReachable {
-		return true
-	}
 	// Useful (saves an hour) when debugging ttrelay behavior upon receiving "down" message
 	if DebugFailover {
 		return false
+	}
+	// Exit immediately if the service is known to be reachable
+	if serviceReachable {
+		return true
 	}
 	// Suppress the notion of "unreachable" until we have been offline for quite some time
 	unreachableMinutes := int64(time.Now().Sub(serviceFirstUnreachableAt) / time.Minute)
