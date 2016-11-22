@@ -26,7 +26,7 @@ func main() {
 	// Debug flags
 	s := os.Getenv("DEBUG_FAILOVER")
 	i, err := strconv.ParseInt(s, 10, 64)
-	DebugFailover = (err != nil || i == 0)
+	DebugFailover = (err == nil && i != 0)
 
     // Load localization information to be used for the HDMI status display
     loadLocalTimezone()
