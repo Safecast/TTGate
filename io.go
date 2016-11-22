@@ -215,6 +215,14 @@ func io5sWatchdog() {
         replyWatchdogTickCount = replyWatchdogTickCount + 1
         if (replyWatchdogTickCount >= 5) {
             fmt.Printf("*** ioReplyWatchdog: no cmd reply!\n")
+            // Exit, which will cause our
+            // shell script to restart the container.  This is a failsafe
+            // to ensure that any Linux-level process usage (such as bugs in
+            // the golang runtime or Midori) will be reset, and we will
+            // occasionally start completely fresh and clean.
+			if (replyWatchdogTickCount >= 100) {
+	            os.Exit(0)
+			}
         }
     }
 }
