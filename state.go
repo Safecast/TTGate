@@ -2,10 +2,12 @@
 package main
 
 import (
+	"os"
     "bytes"
     "fmt"
     "strconv"
     "time"
+	"strings"
     "github.com/golang/protobuf/proto"
     "github.com/rayozzie/teletype-proto/golang"
 )
@@ -22,6 +24,7 @@ const (
     CMD_STATE_LPWAN_TXRPL1
     CMD_STATE_LPWAN_TXRPL2
     CMD_STATE_LPWAN_SNRRPL
+	CMD_STATE_LPWAN_SENDFQRPL
 )
 
 // Constants
@@ -31,6 +34,10 @@ const invalidSNR float32 = 123.456
 var receivedMessage []byte
 var currentState uint16
 var deviceToNotifyIfServiceDown uint32 = 0
+
+// Localization
+var Region string = ""
+var lorafpRegionCommandNumber int
 
 // Set the current state of the state machine
 func cmdSetState(newState uint16) {
@@ -76,6 +83,8 @@ func cmdProcess(cmd []byte) {
         cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
 
     case CMD_STATE_LPWAN_GETVERRPL:
+		Region = os.Getenv("REGION")
+		lorafpRegionCommandNumber = 0
         time.Sleep(4 * time.Second)
         if (!bytes.HasPrefix(cmd, []byte("RN2483"))) && (!bytes.HasPrefix(cmd, []byte("RN2903"))) {
             ioSendCommandString("sys get ver")
@@ -110,6 +119,16 @@ func cmdProcess(cmd []byte) {
         }
 
     case CMD_STATE_LPWAN_SETWDTRPL:
+        time.Sleep(100 * time.Millisecond)
+		isCommand, theCommand := lorafp_get_command(lorafpRegionCommandNumber)
+		if (isCommand) {
+			lorafpRegionCommandNumber++;
+			ioSendCommandString(theCommand)
+            cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
+			break;
+		}
+		fallthrough
+	case CMD_STATE_LPWAN_SENDFQRPL:
         // Allow the LPWAN to settle after init
         time.Sleep(4 * time.Second)
         // The init sequence is over, so begin a receive
@@ -314,5 +333,34 @@ func cmdProcessReceived(hex []byte, snr float32) {
 
     // Process it as a Telecast message
     cmdProcessReceivedTelecastMessage(msg, bin, snr)
+
+}
+
+// Commands for setting frequency
+func lorafp_get_command(cmdno int) (bool, string) {
+
+    switch strings.ToLower(Region) {
+
+    case "eu":
+        eu_commands := []string{
+            "radio set mod lora",
+            "radio set freq 868100000",
+        }
+        if cmdno < len(eu_commands) {
+            return true, eu_commands[cmdno]
+        }
+
+    case "us":
+        us_commands := []string{
+            "radio set mod lora",
+            "radio set freq 923300000",
+        }
+        if cmdno < len(us_commands) {
+            return true, us_commands[cmdno]
+        }
+
+    }
+
+    return false, ""
 
 }

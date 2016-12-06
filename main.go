@@ -28,7 +28,7 @@ func main() {
 	i, err := strconv.ParseInt(s, 10, 64)
 	DebugFailover = (err == nil && i != 0)
 
-    // Load localization information to be used for the HDMI status display
+    // Load localization information
     loadLocalTimezone()
 
     // Spawn our localhost web server, used to update the HDMI status display
