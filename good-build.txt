@@ -1,0 +1,629 @@
+
+~/dev/resin/wifi $ git push resin master
+Counting objects: 4, done.
+Delta compression using up to 4 threads.
+Compressing objects: 100% (4/4), done.
+Writing objects: 100% (4/4), 360 bytes | 0 bytes/s, done.
+Total 4 (delta 3), reused 0 (delta 0)
+
+Starting build for ray1/wifi, user ray1
+Building on 'local'
+Pulling old image for caching purposes
+[==================================================>]    134 B/134 B
+[==================================================>]    524 B/524 B
+[=================================================> ] 1.491 MB/1.499 MB
+[==================================================>]    511 B/511 B
+[=====================================>             ] 4.936 MB/6.644 MB
+[==================================================>] 15.93 kB/15.93 kB
+
+[==================================================>] 5.332 kB/5.332 kB
+
+Cached image pulled
+-----> Dockerfile template application detected
+Step 1 : FROM resin/raspberrypi3-node:6
+ ---> 550d823dd6ca
+ Step 2 : ENV TEST 1
+  ---> Running in ba532d345074
+   ---> d7f107d6b362
+   Removing intermediate container ba532d345074
+   Step 3 : RUN apt-get update  && apt-get install -y       dnsmasq         hostapd         iproute2        iw      libdbus-1-dev       libexpat-dev        rfkill  && rm -rf /var/lib/apt/lists/*
+    ---> Running in 5b68c4f5d2d4
+    Get:1 http://security.debian.org jessie/updates InRelease [63.1 kB]
+    Ign http://resin-packages.s3-website-us-east-1.amazonaws.com resin InRelease
+    Get:2 http://resin-packages.s3-website-us-east-1.amazonaws.com resin Release.gpg [801 B]
+    Get:3 http://resin-packages.s3-website-us-east-1.amazonaws.com resin Release [2258 B]
+    Ign http://httpredir.debian.org jessie InRelease
+    Get:4 http://security.debian.org jessie/updates/main armhf Packages [406 kB]
+    Get:5 http://archive.raspbian.org jessie InRelease [14.9 kB]
+    Get:6 http://httpredir.debian.org jessie-updates InRelease [145 kB]
+    Get:7 http://archive.raspberrypi.org jessie InRelease [13.2 kB]
+    Get:8 http://resin-packages.s3-website-us-east-1.amazonaws.com resin/main armhf Packages [2633 B]
+    Get:9 http://httpredir.debian.org jessie Release.gpg [2373 B]
+    Get:10 http://archive.raspbian.org jessie/main armhf Packages [12.5 MB]
+    Get:11 http://httpredir.debian.org jessie Release [148 kB]
+    Get:12 http://httpredir.debian.org jessie-updates/main armhf Packages [17.6 kB]
+    Get:13 http://httpredir.debian.org jessie/main armhf Packages [8864 kB]
+    Get:14 http://archive.raspberrypi.org jessie/main armhf Packages [127 kB]
+    Get:15 http://archive.raspbian.org jessie/contrib armhf Packages [42.6 kB]
+    Get:16 http://archive.raspbian.org jessie/non-free armhf Packages [83.5 kB]
+    Get:17 http://archive.raspbian.org jessie/rpi armhf Packages [1297 B]
+    Get:18 http://archive.raspbian.org jessie/firmware armhf Packages [1203 B]
+    Fetched 22.4 MB in 12s (1856 kB/s)
+    Reading package lists...
+    Reading package lists...
+    Building dependency tree...
+    Reading state information...
+    libexpat1-dev is already the newest version.
+    libexpat1-dev set to manually installed.
+    iproute2 is already the newest version.
+    The following extra packages will be installed:
+      dnsmasq-base init-system-helpers libdbus-1-3 libmnl0 libnetfilter-conntrack3
+        libnfnetlink0 libnl-3-200 libnl-genl-3-200 libnl-route-3-200
+        Suggested packages:
+          resolvconf
+          Recommended packages:
+            dns-root-data crda dbus
+            The following NEW packages will be installed:
+              dnsmasq dnsmasq-base hostapd init-system-helpers iw libdbus-1-3
+                libdbus-1-dev libmnl0 libnetfilter-conntrack3 libnfnetlink0 libnl-3-200
+                  libnl-genl-3-200 libnl-route-3-200 rfkill
+                  0 upgraded, 14 newly installed, 0 to remove and 15 not upgraded.
+                  Need to get 1512 kB of archives.
+                  After this operation, 3749 kB of additional disk space will be used.
+                  Get:1 http://httpredir.debian.org/debian/ jessie/main libdbus-1-3 armhf 1.8.20-0+deb8u1 [150 kB]
+                  Get:2 http://httpredir.debian.org/debian/ jessie/main libnfnetlink0 armhf 1.0.1-3 [11.8 kB]
+                  Get:3 http://httpredir.debian.org/debian/ jessie/main init-system-helpers all 1.22 [14.0 kB]
+                  Get:4 http://httpredir.debian.org/debian/ jessie/main libnl-genl-3-200 armhf 3.2.24-2 [18.3 kB]
+                  Get:5 http://httpredir.debian.org/debian/ jessie/main libnl-3-200 armhf 3.2.24-2 [51.1 kB]
+                  Get:6 http://httpredir.debian.org/debian/ jessie/main iw armhf 3.17-1 [56.2 kB]
+                  Get:7 http://httpredir.debian.org/debian/ jessie/main libnl-route-3-200 armhf 3.2.24-2 [101 kB]
+                  Get:8 http://httpredir.debian.org/debian/ jessie/main dnsmasq-base armhf 2.72-3+deb8u1 [378 kB]
+                  Get:9 http://httpredir.debian.org/debian/ jessie/main libnetfilter-conntrack3 armhf 1.0.4-1 [31.2 kB]
+                  Get:10 http://httpredir.debian.org/debian/ jessie/main libmnl0 armhf 1.0.3-5 [10.8 kB]
+                  Get:11 http://httpredir.debian.org/debian/ jessie/main dnsmasq all 2.72-3+deb8u1 [15.8 kB]
+                  Get:12 http://httpredir.debian.org/debian/ jessie/main libdbus-1-dev armhf 1.8.20-0+deb8u1 [190 kB]
+                  Get:13 http://httpredir.debian.org/debian/ jessie/main hostapd armhf 1:2.3-1+deb8u4 [475 kB]
+                  Get:14 http://httpredir.debian.org/debian/ jessie/main rfkill armhf 0.5-1 [7246 B]
+                  debconf: delaying package configuration, since apt-utils is not installed
+                  Fetched 1512 kB in 0s (3906 kB/s)
+                  Selecting previously unselected package libdbus-1-3:armhf.
+                  (Reading database ... 21628 files and directories currently installed.)
+                  Preparing to unpack .../libdbus-1-3_1.8.20-0+deb8u1_armhf.deb ...
+                  Unpacking libdbus-1-3:armhf (1.8.20-0+deb8u1) ...
+                  Selecting previously unselected package libnfnetlink0:armhf.
+                  Preparing to unpack .../libnfnetlink0_1.0.1-3_armhf.deb ...
+                  Unpacking libnfnetlink0:armhf (1.0.1-3) ...
+                  Selecting previously unselected package libnl-3-200:armhf.
+                  Preparing to unpack .../libnl-3-200_3.2.24-2_armhf.deb ...
+                  Unpacking libnl-3-200:armhf (3.2.24-2) ...
+                  Selecting previously unselected package libnl-genl-3-200:armhf.
+                  Preparing to unpack .../libnl-genl-3-200_3.2.24-2_armhf.deb ...
+                  Unpacking libnl-genl-3-200:armhf (3.2.24-2) ...
+                  Selecting previously unselected package libnl-route-3-200:armhf.
+                  Preparing to unpack .../libnl-route-3-200_3.2.24-2_armhf.deb ...
+                  Unpacking libnl-route-3-200:armhf (3.2.24-2) ...
+                  Selecting previously unselected package libmnl0:armhf.
+                  Preparing to unpack .../libmnl0_1.0.3-5_armhf.deb ...
+                  Unpacking libmnl0:armhf (1.0.3-5) ...
+                  Selecting previously unselected package libnetfilter-conntrack3:armhf.
+                  Preparing to unpack .../libnetfilter-conntrack3_1.0.4-1_armhf.deb ...
+                  Unpacking libnetfilter-conntrack3:armhf (1.0.4-1) ...
+                  Selecting previously unselected package init-system-helpers.
+                  Preparing to unpack .../init-system-helpers_1.22_all.deb ...
+                  Unpacking init-system-helpers (1.22) ...
+                  Selecting previously unselected package dnsmasq-base.
+                  Preparing to unpack .../dnsmasq-base_2.72-3+deb8u1_armhf.deb ...
+                  Unpacking dnsmasq-base (2.72-3+deb8u1) ...
+                  Selecting previously unselected package dnsmasq.
+                  Preparing to unpack .../dnsmasq_2.72-3+deb8u1_all.deb ...
+                  Unpacking dnsmasq (2.72-3+deb8u1) ...
+                  Selecting previously unselected package hostapd.
+                  Preparing to unpack .../hostapd_1%3a2.3-1+deb8u4_armhf.deb ...
+                  Unpacking hostapd (1:2.3-1+deb8u4) ...
+                  Selecting previously unselected package iw.
+                  Preparing to unpack .../archives/iw_3.17-1_armhf.deb ...
+                  Unpacking iw (3.17-1) ...
+                  Selecting previously unselected package libdbus-1-dev:armhf.
+                  Preparing to unpack .../libdbus-1-dev_1.8.20-0+deb8u1_armhf.deb ...
+                  Unpacking libdbus-1-dev:armhf (1.8.20-0+deb8u1) ...
+                  Selecting previously unselected package rfkill.
+                  Preparing to unpack .../rfkill_0.5-1_armhf.deb ...
+                  Unpacking rfkill (0.5-1) ...
+                  Processing triggers for systemd (215-17+deb8u5) ...
+                  Setting up libdbus-1-3:armhf (1.8.20-0+deb8u1) ...
+                  Setting up libnfnetlink0:armhf (1.0.1-3) ...
+                  Setting up libnl-3-200:armhf (3.2.24-2) ...
+                  Setting up libnl-genl-3-200:armhf (3.2.24-2) ...
+                  Setting up libnl-route-3-200:armhf (3.2.24-2) ...
+                  Setting up libmnl0:armhf (1.0.3-5) ...
+                  Setting up libnetfilter-conntrack3:armhf (1.0.4-1) ...
+                  Setting up init-system-helpers (1.22) ...
+                  Setting up dnsmasq-base (2.72-3+deb8u1) ...
+                  Setting up dnsmasq (2.72-3+deb8u1) ...
+                  invoke-rc.d: policy-rc.d denied execution of start.
+                  Setting up hostapd (1:2.3-1+deb8u4) ...
+                  invoke-rc.d: policy-rc.d denied execution of start.
+                  Setting up iw (3.17-1) ...
+                  Setting up libdbus-1-dev:armhf (1.8.20-0+deb8u1) ...
+                  Setting up rfkill (0.5-1) ...
+                  Processing triggers for libc-bin (2.19-18+deb8u4) ...
+                  Processing triggers for systemd (215-17+deb8u5) ...
+                   ---> 50db4cb4c1c6
+                   Removing intermediate container 5b68c4f5d2d4
+                   Step 4 : RUN mkdir -p /usr/src/app/
+                    ---> Running in 1eb7e88d4647
+                     ---> 0ed43d974b27
+                     Removing intermediate container 1eb7e88d4647
+                     Step 5 : WORKDIR /usr/src/app
+                      ---> Running in 5f6a23855136
+                       ---> 45b58ab85506
+                       Removing intermediate container 5f6a23855136
+                       Step 6 : COPY package.json /usr/src/app/
+                        ---> a7e872d25077
+                        Removing intermediate container d494b40a5b59
+                        Step 7 : RUN JOBS=MAX npm install --unsafe-perm --production    && npm cache clean
+                         ---> Running in 6778a3ae8db6
+                                Still working...
+                                       Still working...
+
+> dbus@0.2.20 install /usr/src/app/node_modules/dbus
+> node-gyp configure build
+
+make: Entering directory '/usr/src/app/node_modules/dbus/build'
+  CC(target) Release/obj.target/expat/deps/libexpat/lib/xmlparse.o
+    CC(target) Release/obj.target/expat/deps/libexpat/lib/xmltok.o
+      CC(target) Release/obj.target/expat/deps/libexpat/lib/xmlrole.o
+      ../deps/libexpat/lib/xmlparse.c: In function ‘gather_time_entropy’:
+      ../deps/libexpat/lib/xmlparse.c:709:7: warning: variable ‘gettimeofday_res’ set but not used [-Wunused-but-set-variable]
+         int gettimeofday_res;
+                ^
+                       Still working...
+                         AR(target) Release/obj.target/deps/libexpat/libexpat.a
+                           COPY Release/libexpat.a
+                             CXX(target) Release/obj.target/dbus/src/signal.o
+                               CXX(target) Release/obj.target/dbus/src/connection.o
+                                 CXX(target) Release/obj.target/dbus/src/encoder.o
+                                   CXX(target) Release/obj.target/dbus/src/decoder.o
+                                     CXX(target) Release/obj.target/dbus/src/dbus.o
+                                       CXX(target) Release/obj.target/dbus/src/introspect.o
+                                         CXX(target) Release/obj.target/dbus/src/object_handler.o
+                                           SOLINK_MODULE(target) Release/obj.target/dbus.node
+                                             COPY Release/dbus.node
+                                             make: Leaving directory '/usr/src/app/node_modules/dbus/build'
+                                             resin-wifi-connect@2.0.0 /usr/src/app
+                                             ├── bluebird@3.4.6
+                                             ├─┬ body-parser@1.15.2
+                                             │ ├── bytes@2.4.0
+                                             │ ├── content-type@1.0.2
+                                             │ ├─┬ debug@2.2.0
+                                             │ │ └── ms@0.7.1
+                                             │ ├── depd@1.1.0
+                                             │ ├─┬ http-errors@1.5.1
+                                             │ │ ├── inherits@2.0.3
+                                             │ │ ├── setprototypeof@1.0.2
+                                             │ │ └── statuses@1.3.1
+                                             │ ├── iconv-lite@0.4.13
+                                             │ ├─┬ on-finished@2.3.0
+                                             │ │ └── ee-first@1.1.1
+                                             │ ├── qs@6.2.0
+                                             │ ├─┬ raw-body@2.1.7
+                                             │ │ └── unpipe@1.0.0
+                                             │ └─┬ type-is@1.6.14
+                                             │   ├── media-typer@0.3.0
+                                             │   └─┬ mime-types@2.1.13
+                                             │     └── mime-db@1.25.0
+                                             ├── bower@1.8.0
+                                             ├── coffee-script@1.9.3
+                                             ├─┬ dbus@0.2.20
+                                             │ └── nan@2.4.0
+                                             ├─┬ express@4.14.0
+                                             │ ├─┬ accepts@1.3.3
+                                             │ │ └── negotiator@0.6.1
+                                             │ ├── array-flatten@1.1.1
+                                             │ ├── content-disposition@0.5.1
+                                             │ ├── cookie@0.3.1
+                                             │ ├── cookie-signature@1.0.6
+                                             │ ├── encodeurl@1.0.1
+                                             │ ├── escape-html@1.0.3
+                                             │ ├── etag@1.7.0
+                                             │ ├── finalhandler@0.5.0
+                                             │ ├── fresh@0.3.0
+                                             │ ├── merge-descriptors@1.0.1
+                                             │ ├── methods@1.1.2
+                                             │ ├── parseurl@1.3.1
+                                             │ ├── path-to-regexp@0.1.7
+                                             │ ├─┬ proxy-addr@1.1.2
+                                             │ │ ├── forwarded@0.1.0
+                                             │ │ └── ipaddr.js@1.1.1
+                                             │ ├── range-parser@1.2.0
+                                             │ ├─┬ send@0.14.1
+                                             │ │ ├── destroy@1.0.4
+                                             │ │ └── mime@1.3.4
+                                             │ ├── serve-static@1.11.1
+                                             │ ├── utils-merge@1.0.0
+                                             │ └── vary@1.1.0
+                                             └── lodash@4.17.2
+
+ ---> 2beffa4ca47a
+ Removing intermediate container 6778a3ae8db6
+ Step 8 : COPY bower.json .bowerrc /usr/src/app/
+  ---> 6ca284b8b9f7
+  Removing intermediate container 3a9d0ea06378
+  Step 9 : RUN ./node_modules/.bin/bower --allow-root install   && ./node_modules/.bin/bower --allow-root cache clean
+   ---> Running in 2fd985bbd392
+   bower bootstrap#~3.3.5      not-cached https://github.com/twbs/bootstrap.git#~3.3.5
+   bower bootstrap#~3.3.5         resolve https://github.com/twbs/bootstrap.git#~3.3.5
+   bower bootstrap#~3.3.5        download https://github.com/twbs/bootstrap/archive/v3.3.7.tar.gz
+   bower bootstrap#~3.3.5         extract archive.tar.gz
+   bower bootstrap#~3.3.5        resolved https://github.com/twbs/bootstrap.git#3.3.7
+   bower jquery#1.9.1 - 3      not-cached https://github.com/jquery/jquery-dist.git#1.9.1 - 3
+   bower jquery#1.9.1 - 3         resolve https://github.com/jquery/jquery-dist.git#1.9.1 - 3
+   bower jquery#1.9.1 - 3        download https://github.com/jquery/jquery-dist/archive/3.1.1.tar.gz
+   bower jquery#1.9.1 - 3         extract archive.tar.gz
+   bower jquery#1.9.1 - 3        resolved https://github.com/jquery/jquery-dist.git#3.1.1
+   bower bootstrap#~3.3.5         install bootstrap#3.3.7
+   bower jquery#1.9.1 - 3         install jquery#3.1.1
+
+bootstrap#3.3.7 src/public/bower_components/bootstrap
+└── jquery#3.1.1
+
+jquery#3.1.1 src/public/bower_components/jquery
+bower deleted       Cached package bootstrap: .bower-cache/478ab1d28ba78f550601bf536eea62f5/3.3.7
+bower deleted       Cached package jquery: .bower-cache/35300e45e44dbc6f186ed069533ef0af/3.1.1
+ ---> 76dc073cd5d1
+ Removing intermediate container 2fd985bbd392
+ Step 10 : COPY . /usr/src/app/
+  ---> ac75bc745e47
+  Removing intermediate container 5946570eedc9
+  Step 11 : RUN ./node_modules/.bin/coffee -c ./src
+   ---> Running in fe6c5b39a9c2
+   ^CKilled by signal 2.
+
+
+~/dev/resin/wifi $ e Dockerfile.template
+
+~/dev/resin/wifi $ git add .
+
+~/dev/resin/wifi $ git commit -mm
+[master 6764c5a] m
+ 1 file changed, 3 insertions(+)
+
+~/dev/resin/wifi $ git push resin master
+Counting objects: 7, done.
+Delta compression using up to 4 threads.
+Compressing objects: 100% (7/7), done.
+Writing objects: 100% (7/7), 621 bytes | 0 bytes/s, done.
+Total 7 (delta 5), reused 0 (delta 0)
+
+Starting build for ray1/wifi, user ray1
+Building on 'local'
+Pulling old image for caching purposes
+[==================================================>]    134 B/134 B
+[=================================================> ] 1.496 MB/1.499 MB
+[=======================>                           ] 3.136 MB/6.644 MB
+[=================================================> ] 6.618 MB/6.644 MB
+[==================================================>]    511 B/511 B
+[==================================================>] 15.93 kB/15.93 kB
+[=================================================> ] 990.8 kB/997.5 kB
+[==================================================>] 5.332 kB/5.332 kB
+
+Cached image pulled
+-----> Dockerfile template application detected
+Step 1 : FROM resin/raspberrypi3-node:6
+ ---> 550d823dd6ca
+ Step 2 : ENV TEST 1
+  ---> Running in a0607befae8a
+   ---> a86bb0d2929f
+   Removing intermediate container a0607befae8a
+   Step 3 : RUN apt-get update  && apt-get install -y       dnsmasq         hostapd         iproute2        iw      libdbus-1-dev       libexpat-dev        rfkill  && rm -rf /var/lib/apt/lists/*
+    ---> Running in 1fd23ddfecfb
+    Ign http://resin-packages.s3-website-us-east-1.amazonaws.com resin InRelease
+    Get:1 http://resin-packages.s3-website-us-east-1.amazonaws.com resin Release.gpg [801 B]
+    Get:2 http://resin-packages.s3-website-us-east-1.amazonaws.com resin Release [2258 B]
+    Get:3 http://security.debian.org jessie/updates InRelease [63.1 kB]
+    Get:4 http://archive.raspbian.org jessie InRelease [14.9 kB]
+    Get:5 http://httpredir.debian.org jessie-updates InRelease [145 kB]
+    Ign http://httpredir.debian.org jessie InRelease
+    Get:6 http://resin-packages.s3-website-us-east-1.amazonaws.com resin/main armhf Packages [2633 B]
+    Get:7 http://httpredir.debian.org jessie Release.gpg [2373 B]
+    Get:8 http://archive.raspberrypi.org jessie InRelease [13.2 kB]
+    Get:9 http://security.debian.org jessie/updates/main armhf Packages [406 kB]
+    Get:10 http://httpredir.debian.org jessie Release [148 kB]
+    Get:11 http://httpredir.debian.org jessie-updates/main armhf Packages [17.6 kB]
+    Get:12 http://archive.raspbian.org jessie/main armhf Packages [12.5 MB]
+    Get:13 http://archive.raspberrypi.org jessie/main armhf Packages [127 kB]
+    Get:14 http://httpredir.debian.org jessie/main armhf Packages [8864 kB]
+    Get:15 http://archive.raspbian.org jessie/contrib armhf Packages [42.6 kB]
+    Get:16 http://archive.raspbian.org jessie/non-free armhf Packages [83.5 kB]
+    Get:17 http://archive.raspbian.org jessie/rpi armhf Packages [1297 B]
+    Get:18 http://archive.raspbian.org jessie/firmware armhf Packages [1203 B]
+    Fetched 22.4 MB in 11s (1881 kB/s)
+    Reading package lists...
+    Reading package lists...
+    Building dependency tree...
+    Reading state information...
+    libexpat1-dev is already the newest version.
+    libexpat1-dev set to manually installed.
+    iproute2 is already the newest version.
+    The following extra packages will be installed:
+      dnsmasq-base init-system-helpers libdbus-1-3 libmnl0 libnetfilter-conntrack3
+        libnfnetlink0 libnl-3-200 libnl-genl-3-200 libnl-route-3-200
+        Suggested packages:
+          resolvconf
+          Recommended packages:
+            dns-root-data crda dbus
+            The following NEW packages will be installed:
+              dnsmasq dnsmasq-base hostapd init-system-helpers iw libdbus-1-3
+                libdbus-1-dev libmnl0 libnetfilter-conntrack3 libnfnetlink0 libnl-3-200
+                  libnl-genl-3-200 libnl-route-3-200 rfkill
+                  0 upgraded, 14 newly installed, 0 to remove and 15 not upgraded.
+                  Need to get 1512 kB of archives.
+                  After this operation, 3749 kB of additional disk space will be used.
+                  Get:1 http://httpredir.debian.org/debian/ jessie/main libdbus-1-3 armhf 1.8.20-0+deb8u1 [150 kB]
+                  Get:2 http://httpredir.debian.org/debian/ jessie/main libnl-3-200 armhf 3.2.24-2 [51.1 kB]
+                  Get:3 http://httpredir.debian.org/debian/ jessie/main libnl-genl-3-200 armhf 3.2.24-2 [18.3 kB]
+                  Get:4 http://httpredir.debian.org/debian/ jessie/main libnfnetlink0 armhf 1.0.1-3 [11.8 kB]
+                  Get:5 http://httpredir.debian.org/debian/ jessie/main libnl-route-3-200 armhf 3.2.24-2 [101 kB]
+                  Get:6 http://httpredir.debian.org/debian/ jessie/main libmnl0 armhf 1.0.3-5 [10.8 kB]
+                  Get:7 http://httpredir.debian.org/debian/ jessie/main libnetfilter-conntrack3 armhf 1.0.4-1 [31.2 kB]
+                  Get:8 http://httpredir.debian.org/debian/ jessie/main init-system-helpers all 1.22 [14.0 kB]
+                  Get:9 http://httpredir.debian.org/debian/ jessie/main dnsmasq-base armhf 2.72-3+deb8u1 [378 kB]
+                  Get:10 http://httpredir.debian.org/debian/ jessie/main dnsmasq all 2.72-3+deb8u1 [15.8 kB]
+                  Get:11 http://httpredir.debian.org/debian/ jessie/main hostapd armhf 1:2.3-1+deb8u4 [475 kB]
+                  Get:12 http://httpredir.debian.org/debian/ jessie/main iw armhf 3.17-1 [56.2 kB]
+                  Get:13 http://httpredir.debian.org/debian/ jessie/main libdbus-1-dev armhf 1.8.20-0+deb8u1 [190 kB]
+                  Get:14 http://httpredir.debian.org/debian/ jessie/main rfkill armhf 0.5-1 [7246 B]
+                  debconf: delaying package configuration, since apt-utils is not installed
+                  Fetched 1512 kB in 1s (1067 kB/s)
+                  Selecting previously unselected package libdbus-1-3:armhf.
+                  (Reading database ... 21628 files and directories currently installed.)
+                  Preparing to unpack .../libdbus-1-3_1.8.20-0+deb8u1_armhf.deb ...
+                  Unpacking libdbus-1-3:armhf (1.8.20-0+deb8u1) ...
+                  Selecting previously unselected package libnfnetlink0:armhf.
+                  Preparing to unpack .../libnfnetlink0_1.0.1-3_armhf.deb ...
+                  Unpacking libnfnetlink0:armhf (1.0.1-3) ...
+                  Selecting previously unselected package libnl-3-200:armhf.
+                  Preparing to unpack .../libnl-3-200_3.2.24-2_armhf.deb ...
+                  Unpacking libnl-3-200:armhf (3.2.24-2) ...
+                  Selecting previously unselected package libnl-genl-3-200:armhf.
+                  Preparing to unpack .../libnl-genl-3-200_3.2.24-2_armhf.deb ...
+                  Unpacking libnl-genl-3-200:armhf (3.2.24-2) ...
+                  Selecting previously unselected package libnl-route-3-200:armhf.
+                  Preparing to unpack .../libnl-route-3-200_3.2.24-2_armhf.deb ...
+                  Unpacking libnl-route-3-200:armhf (3.2.24-2) ...
+                  Selecting previously unselected package libmnl0:armhf.
+                  Preparing to unpack .../libmnl0_1.0.3-5_armhf.deb ...
+                  Unpacking libmnl0:armhf (1.0.3-5) ...
+                  Selecting previously unselected package libnetfilter-conntrack3:armhf.
+                  Preparing to unpack .../libnetfilter-conntrack3_1.0.4-1_armhf.deb ...
+                  Unpacking libnetfilter-conntrack3:armhf (1.0.4-1) ...
+                  Selecting previously unselected package init-system-helpers.
+                  Preparing to unpack .../init-system-helpers_1.22_all.deb ...
+                  Unpacking init-system-helpers (1.22) ...
+                  Selecting previously unselected package dnsmasq-base.
+                  Preparing to unpack .../dnsmasq-base_2.72-3+deb8u1_armhf.deb ...
+                  Unpacking dnsmasq-base (2.72-3+deb8u1) ...
+                  Selecting previously unselected package dnsmasq.
+                  Preparing to unpack .../dnsmasq_2.72-3+deb8u1_all.deb ...
+                  Unpacking dnsmasq (2.72-3+deb8u1) ...
+                  Selecting previously unselected package hostapd.
+                  Preparing to unpack .../hostapd_1%3a2.3-1+deb8u4_armhf.deb ...
+                  Unpacking hostapd (1:2.3-1+deb8u4) ...
+                  Selecting previously unselected package iw.
+                  Preparing to unpack .../archives/iw_3.17-1_armhf.deb ...
+                  Unpacking iw (3.17-1) ...
+                  Selecting previously unselected package libdbus-1-dev:armhf.
+                  Preparing to unpack .../libdbus-1-dev_1.8.20-0+deb8u1_armhf.deb ...
+                  Unpacking libdbus-1-dev:armhf (1.8.20-0+deb8u1) ...
+                  Selecting previously unselected package rfkill.
+                  Preparing to unpack .../rfkill_0.5-1_armhf.deb ...
+                  Unpacking rfkill (0.5-1) ...
+                  Processing triggers for systemd (215-17+deb8u5) ...
+                  Setting up libdbus-1-3:armhf (1.8.20-0+deb8u1) ...
+                  Setting up libnfnetlink0:armhf (1.0.1-3) ...
+                  Setting up libnl-3-200:armhf (3.2.24-2) ...
+                  Setting up libnl-genl-3-200:armhf (3.2.24-2) ...
+                  Setting up libnl-route-3-200:armhf (3.2.24-2) ...
+                  Setting up libmnl0:armhf (1.0.3-5) ...
+                  Setting up libnetfilter-conntrack3:armhf (1.0.4-1) ...
+                  Setting up init-system-helpers (1.22) ...
+                  Setting up dnsmasq-base (2.72-3+deb8u1) ...
+                  Setting up dnsmasq (2.72-3+deb8u1) ...
+                  invoke-rc.d: policy-rc.d denied execution of start.
+                  Setting up hostapd (1:2.3-1+deb8u4) ...
+                  invoke-rc.d: policy-rc.d denied execution of start.
+                  Setting up iw (3.17-1) ...
+                  Setting up libdbus-1-dev:armhf (1.8.20-0+deb8u1) ...
+                  Setting up rfkill (0.5-1) ...
+                  Processing triggers for libc-bin (2.19-18+deb8u4) ...
+                  Processing triggers for systemd (215-17+deb8u5) ...
+                   ---> be19b8992fbe
+                   Removing intermediate container 1fd23ddfecfb
+                   Step 4 : RUN mkdir -p /usr/src/app/
+                    ---> Running in 9693743225f9
+                     ---> dd0f9a8c9b3e
+                     Removing intermediate container 9693743225f9
+                     Step 5 : WORKDIR /usr/src/app
+                      ---> Running in acde8af0a239
+                       ---> aca88b88546d
+                       Removing intermediate container acde8af0a239
+                       Step 6 : COPY package.json /usr/src/app/
+                        ---> 3e86b9d59fda
+                        Removing intermediate container b17e24b9b6ee
+                        Step 7 : RUN node -v
+                         ---> Running in 18496b9aabfb
+                         v6.9.1
+                          ---> 63765dbbc15d
+                          Removing intermediate container 18496b9aabfb
+                          Step 8 : RUN npm -v
+                           ---> Running in 6ddce2c77b0b
+                           3.10.8
+                            ---> e581809c6b85
+                            Removing intermediate container 6ddce2c77b0b
+                            Step 9 : RUN JOBS=MAX npm install --unsafe-perm --production    && npm cache clean
+                             ---> Running in 8f5ce61aa5c9
+                                    Still working...
+                                           Still working...
+
+> dbus@0.2.20 install /usr/src/app/node_modules/dbus
+> node-gyp configure build
+
+make: Entering directory '/usr/src/app/node_modules/dbus/build'
+  CC(target) Release/obj.target/expat/deps/libexpat/lib/xmlparse.o
+    CC(target) Release/obj.target/expat/deps/libexpat/lib/xmltok.o
+      CC(target) Release/obj.target/expat/deps/libexpat/lib/xmlrole.o
+      ../deps/libexpat/lib/xmlparse.c: In function ‘gather_time_entropy’:
+      ../deps/libexpat/lib/xmlparse.c:709:7: warning: variable ‘gettimeofday_res’ set but not used [-Wunused-but-set-variable]
+         int gettimeofday_res;
+                ^
+                       Still working...
+                         AR(target) Release/obj.target/deps/libexpat/libexpat.a
+                           COPY Release/libexpat.a
+                             CXX(target) Release/obj.target/dbus/src/signal.o
+                               CXX(target) Release/obj.target/dbus/src/encoder.o
+                                 CXX(target) Release/obj.target/dbus/src/decoder.o
+                                   CXX(target) Release/obj.target/dbus/src/dbus.o
+                                     CXX(target) Release/obj.target/dbus/src/introspect.o
+                                       CXX(target) Release/obj.target/dbus/src/connection.o
+                                         CXX(target) Release/obj.target/dbus/src/object_handler.o
+                                           SOLINK_MODULE(target) Release/obj.target/dbus.node
+                                             COPY Release/dbus.node
+                                             make: Leaving directory '/usr/src/app/node_modules/dbus/build'
+                                             resin-wifi-connect@2.0.0 /usr/src/app
+                                             ├── bluebird@3.4.6
+                                             ├─┬ body-parser@1.15.2
+                                             │ ├── bytes@2.4.0
+                                             │ ├── content-type@1.0.2
+                                             │ ├─┬ debug@2.2.0
+                                             │ │ └── ms@0.7.1
+                                             │ ├── depd@1.1.0
+                                             │ ├─┬ http-errors@1.5.1
+                                             │ │ ├── inherits@2.0.3
+                                             │ │ ├── setprototypeof@1.0.2
+                                             │ │ └── statuses@1.3.1
+                                             │ ├── iconv-lite@0.4.13
+                                             │ ├─┬ on-finished@2.3.0
+                                             │ │ └── ee-first@1.1.1
+                                             │ ├── qs@6.2.0
+                                             │ ├─┬ raw-body@2.1.7
+                                             │ │ └── unpipe@1.0.0
+                                             │ └─┬ type-is@1.6.14
+                                             │   ├── media-typer@0.3.0
+                                             │   └─┬ mime-types@2.1.13
+                                             │     └── mime-db@1.25.0
+                                             ├── bower@1.8.0
+                                             ├── coffee-script@1.9.3
+                                             ├─┬ dbus@0.2.20
+                                             │ └── nan@2.4.0
+                                             ├─┬ express@4.14.0
+                                             │ ├─┬ accepts@1.3.3
+                                             │ │ └── negotiator@0.6.1
+                                             │ ├── array-flatten@1.1.1
+                                             │ ├── content-disposition@0.5.1
+                                             │ ├── cookie@0.3.1
+                                             │ ├── cookie-signature@1.0.6
+                                             │ ├── encodeurl@1.0.1
+                                             │ ├── escape-html@1.0.3
+                                             │ ├── etag@1.7.0
+                                             │ ├── finalhandler@0.5.0
+                                             │ ├── fresh@0.3.0
+                                             │ ├── merge-descriptors@1.0.1
+                                             │ ├── methods@1.1.2
+                                             │ ├── parseurl@1.3.1
+                                             │ ├── path-to-regexp@0.1.7
+                                             │ ├─┬ proxy-addr@1.1.2
+                                             │ │ ├── forwarded@0.1.0
+                                             │ │ └── ipaddr.js@1.1.1
+                                             │ ├── range-parser@1.2.0
+                                             │ ├─┬ send@0.14.1
+                                             │ │ ├── destroy@1.0.4
+                                             │ │ └── mime@1.3.4
+                                             │ ├── serve-static@1.11.1
+                                             │ ├── utils-merge@1.0.0
+                                             │ └── vary@1.1.0
+                                             └── lodash@4.17.2
+
+ ---> 23e05b85340c
+ Removing intermediate container 8f5ce61aa5c9
+ Step 10 : COPY bower.json .bowerrc /usr/src/app/
+  ---> 1597c0d1e524
+  Removing intermediate container 1190e3326e93
+  Step 11 : RUN ./node_modules/.bin/bower --allow-root install  && ./node_modules/.bin/bower --allow-root cache clean
+   ---> Running in 7863dd1f26e1
+   bower bootstrap#~3.3.5      not-cached https://github.com/twbs/bootstrap.git#~3.3.5
+   bower bootstrap#~3.3.5         resolve https://github.com/twbs/bootstrap.git#~3.3.5
+   bower bootstrap#~3.3.5        download https://github.com/twbs/bootstrap/archive/v3.3.7.tar.gz
+   bower bootstrap#~3.3.5         extract archive.tar.gz
+   bower bootstrap#~3.3.5        resolved https://github.com/twbs/bootstrap.git#3.3.7
+   bower jquery#1.9.1 - 3      not-cached https://github.com/jquery/jquery-dist.git#1.9.1 - 3
+   bower jquery#1.9.1 - 3         resolve https://github.com/jquery/jquery-dist.git#1.9.1 - 3
+   bower jquery#1.9.1 - 3        download https://github.com/jquery/jquery-dist/archive/3.1.1.tar.gz
+   bower jquery#1.9.1 - 3         extract archive.tar.gz
+   bower jquery#1.9.1 - 3        resolved https://github.com/jquery/jquery-dist.git#3.1.1
+   bower bootstrap#~3.3.5         install bootstrap#3.3.7
+   bower jquery#1.9.1 - 3         install jquery#3.1.1
+
+bootstrap#3.3.7 src/public/bower_components/bootstrap
+└── jquery#3.1.1
+
+jquery#3.1.1 src/public/bower_components/jquery
+bower deleted       Cached package bootstrap: .bower-cache/478ab1d28ba78f550601bf536eea62f5/3.3.7
+bower deleted       Cached package jquery: .bower-cache/35300e45e44dbc6f186ed069533ef0af/3.1.1
+ ---> 983d68b783aa
+ Removing intermediate container 7863dd1f26e1
+ Step 12 : COPY . /usr/src/app/
+  ---> a8eeb3808f76
+  Removing intermediate container 14d807104ac7
+  Step 13 : RUN ./node_modules/.bin/coffee -c ./src
+   ---> Running in 747bf090b28f
+    ---> a4e0bbc5c13b
+    Removing intermediate container 747bf090b28f
+    Step 14 : CMD bash start
+     ---> Running in 3c00be9afcbf
+      ---> e0c63e16eb0b
+      Removing intermediate container 3c00be9afcbf
+      Successfully built e0c63e16eb0b
+
+-----> Image created successfully!
+-----> Verifying image integrity...
+-----> Image passed integrity checks!
+-----> Uploading image to registry...
+[==================================================>] 3.864 MB - 0%5 MB - 0%
+
+[==================================================>] 4.096 kB - 0%B - 0%
+[==================================================>] 33.73 MB - 0%1 MB - 0%
+[==================================================>] 4.608 kB - 0%B - 0%
+[==================================================>] 3.732 MB - 0%6 MB - 0%
+[==================================================>] 54.27 kB - 0%3 kB - 0%
+[==================================================>] 32.77 kB - 0%3 kB - 0%
+       Image uploaded successfully!
+              Check your dashboard for device download progress: https://dashboard.resin.io/apps/157271/devices
+              Build took 8 minutes and 4 seconds
+                            \
+                                             \
+                                                              \\
+                                                                               \\
+                                                                                                >\/7
+                                                                                                                _.-(6'  \
+                                                                                                                               (=___._/` \
+                                                                                                                                                )  \ |
+                                                                                                                                                                   /   / |
+                                                                                                                                                                                  /    > /
+                                                                                                                                                                                                 j    < _\
+                                                                                                                                                                                                             _.-' :      ``.
+                                                                                                                                                                                                                         \ r=._\        `.
+                                                                                                                                                                                                                                    <`\\_  \         .`-.
+                                                                                                                                                                                                                                                 \ r-7  `-. ._  ' .  `\
+                                                                                                                                                                                                                                                              \`,      `-.`7  7)   )
+                                                                                                                                                                                                                                                                           \/         \|  \'  / `-._
+                                                                                                                                                                                                                                                                                                  ||    .'
+                                                                                                                                                                                                                                                                                                                           \\  (
+                                                                                                                                                                                                                                                                                                                                                    >\  >
+                                                                                                                                                                                                                                                                                                                                                                            ,.-' >.'
+                                                                                                                                                                                                                                                                                                                                                                                                   <.'_.''
+                                                                                                                                                                                                                                                                                                                                                                                                                         <'
+
+To ray1@git.resin.io:ray1/wifi.git
+   84ff43e..6764c5a  master -> master
+
+~/dev/resin/wifi $

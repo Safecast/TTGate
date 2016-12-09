@@ -8,6 +8,7 @@ ENV WIFI resin-wifi-connect-master
 # ENV INITSYSTEM on
 
 # Install node (for wifi-connect), wifi-connect, and browser
+RUN curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
 RUN apt-get update && apt-get upgrade \
     && apt-get install -y nodejs npm \
 	&& apt-get install -y dnsmasq hostapd iproute2 iw libdbus-1-dev libexpat-dev rfkill \
