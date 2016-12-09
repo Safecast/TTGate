@@ -18,6 +18,10 @@ RUN apt-get update && apt-get upgrade \
 RUN mkdir -p /usr/src/app/
 WORKDIR /usr/src/app
 COPY $WIFI/package.json /usr/src/app/
+
+RUN node -v
+RUN npm -v
+
 RUN JOBS=MAX npm install --unsafe-perm --production && npm cache clean
 COPY $WIFI/bower.json $WIFI/.bowerrc /usr/src/app/
 RUN ./node_modules/.bin/bower --allow-root install && ./node_modules/.bin/bower --allow-root cache clean
