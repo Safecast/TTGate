@@ -1,4 +1,46 @@
-#! /bin/bash
+#!/bin/bash
+
+##
+## This first section is wifi-connect processing
+##
+
+# Look for the hard-wired network
+GOTNET=0
+for ((i=0; i<10; i++))
+do
+    if curl --output /dev/null --silent --head --fail http://www.google.com; then
+        GOTNET=1
+        break
+    fi;
+    sleep 1
+done
+
+# If no net, try app.js four times. It will try old credentials for 15 seconds for each iteration.
+if [ "$GOTNET" -eq 0 ]; then
+    export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket
+    sleep 1
+    for ((i=0; i<3; i++))
+    do
+        node src/app.js --clear=false
+        if curl --output /dev/null --silent --head --fail http://www.google.com; then
+            GOTNET=1
+            break
+        fi;
+    done
+
+fi
+
+# If we still can't find the network, clear credentials and try again
+if [ "$GOTNET" -eq 0 ]; then
+    until $(curl --output /dev/null --silent --head --fail http://www.google.com); do
+        node src/app.js --clear=true
+    done
+fi
+
+##
+## We've now got the network!
+## We can now resume normal processing unrelated to Wifi-Connect
+##
 
 # If this resin.io env var is asserted, halt so we can play around in SSH
 while [[ $HALT != "" ]]
