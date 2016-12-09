@@ -7,10 +7,16 @@ ENV WIFI resin-wifi-connect-master
 # Enable systemd
 # ENV INITSYSTEM on
 
-# Install node (for wifi-connect), wifi-connect, and browser
-RUN curl -sL https://deb.nodesource.com/setup_7.x | sudo -E bash -
+# Install node (for wifi-connect)
+RUN curl -SLO "http://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-armv6l.tar.gz" \
+    && echo "0b30184fe98bd22b859db7f4cbaa56ecc04f7f526313c8da42315d89fabe23b2  node-v6.9.1-linux-armv6l.tar.gz" | sha256sum -c - \
+        && tar -xzf "node-v$NODE_VERSION-linux-armv6l.tar.gz" -C /usr/local --strip-components=1 \
+            && rm "node-v$NODE_VERSION-linux-armv6l.tar.gz" \
+                && npm config set unsafe-perm true -g --unsafe-perm \
+                    && rm -rf /tmp/*
+                    
+# Install wifi-connect, and browser
 RUN apt-get update && apt-get upgrade \
-    && apt-get install -y nodejs npm \
 	&& apt-get install -y dnsmasq hostapd iproute2 iw libdbus-1-dev libexpat-dev rfkill \
     && apt-get install -y ntpdate xorg midori matchbox unclutter screen \
     && rm -rf /var/lib/apt/lists/*
