@@ -25,17 +25,17 @@ RUN apt-get update && apt-get upgrade \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up wifi-connect
-RUN mkdir -p $WIFIDIR
+RUN mkdir -p $WIFIDIR/
 WORKDIR $WIFIDIR
-COPY $WIFI/package.json $WIFIDIR
+COPY $WIFI/package.json $WIFIDIR/
 
 #RUN node -v
 #RUN npm -v
 
 RUN JOBS=MAX npm install --unsafe-perm --production && npm cache clean
-COPY $WIFI/bower.json $WIFI/.bowerrc $WIFIDIR
+COPY $WIFI/bower.json $WIFI/.bowerrc $WIFIDIR/
 RUN ./node_modules/.bin/bower --allow-root install && ./node_modules/.bin/bower --allow-root cache clean
-COPY ./$WIFI $WIFIDIR
+COPY ./$WIFI $WIFIDIR/
 RUN ./node_modules/.bin/coffee -c ./src
 
 # Copy and build all golang source code
