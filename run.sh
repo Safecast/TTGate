@@ -15,7 +15,7 @@ do
     sleep 1
 done
 
-# If no net, try app.js four times. It will try old credentials for 15 seconds for each iteration.
+# If no net, try app.js several times. It will try old credentials for 15 seconds for each iteration.
 if [ "$GOTNET" -eq 0 ]; then
     export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket
     sleep 1
@@ -49,8 +49,7 @@ do
       sleep 60s
 done
 
-# Update the date/time NOW, so that it doesn't change dramatically
-# during server operations
+# Update the date/time NOW, so that it doesn't change dramatically during operations
 ntpdate time.nist.gov
 
 # Run the kiosk browser in the background
