@@ -5,7 +5,7 @@ ENV PKG ttgate
 ENV WIFI resin-wifi-connect-master
 ENV WIFIDIR /usr/src/app
 
-# Install node (for wifi-connect)
+# Install node (exclusively for wifi-connect)
 ENV NODE_VERSION 6.9.1
 RUN curl -SLO "http://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-armv6l.tar.gz" \
     && echo "0b30184fe98bd22b859db7f4cbaa56ecc04f7f526313c8da42315d89fabe23b2  node-v6.9.1-linux-armv6l.tar.gz" | sha256sum -c - \
@@ -30,7 +30,7 @@ RUN ./node_modules/.bin/bower --allow-root install && ./node_modules/.bin/bower 
 COPY ./$WIFI $WIFIDIR/
 RUN ./node_modules/.bin/coffee -c ./src
 
-# Set up app
+# Set up our app
 COPY . $GOPATH/src/$PKG
 WORKDIR $GOPATH/src/$PKG
 RUN go get -v && go build && go install
