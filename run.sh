@@ -52,7 +52,10 @@ done
 # Update the date/time NOW, so that it doesn't change dramatically during operations
 ntpdate time.nist.gov
 
-# Run the kiosk browser in the background
+# Switch to the app folder, which at a minimum is required for the web server (main.go) to find index.htm
+cd $GOPATH/src/ttgate
+
+# Run the kiosk browser in the background, with the current folder being 
 screen -d -m -t browser sh $GOPATH/src/ttgate/run-browser.sh
 
 # Run this in the foreground so we can watch the log
