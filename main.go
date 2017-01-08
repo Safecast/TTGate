@@ -12,7 +12,7 @@ import (
 	"strconv"
 )
 
-// Statics
+// Statics 
 var OurTimezone *time.Location
 var OurCountryCode string = ""
 var DebugFailover = false
