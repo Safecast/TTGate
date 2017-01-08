@@ -236,12 +236,12 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
 
     dev.DeviceType = msg.GetDeviceType().String()
     if msg.Latitude != nil {
-        dev.Latitude = fmt.Sprintf("%f", msg.GetLatitude())
+        dev.Latitude = fmt.Sprintf("%.2f", msg.GetLatitude())
     } else {
         dev.Latitude = ""
     }
     if msg.Longitude != nil {
-        dev.Longitude = fmt.Sprintf("%f", msg.GetLongitude())
+        dev.Longitude = fmt.Sprintf("%.2f", msg.GetLongitude())
     } else {
         dev.Longitude = ""
     }
