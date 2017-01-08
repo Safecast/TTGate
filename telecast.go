@@ -28,7 +28,7 @@ func cmdProcessReceivedTelecastMessage(msg *teletype.Telecast, pb []byte, snr fl
     switch msg.GetDeviceType() {
 
         // Is this a simplecast message?
-    case teletype.Telecast_SIMPLECAST:
+    case teletype.Telecast_SOLARCAST:
         cmdLocallyDisplaySafecastMessage(msg, snr)
 
         // Are we simply forwarding a message originating from a nano?
