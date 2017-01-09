@@ -1,4 +1,4 @@
-// Teletype Gateway
+// Teletype Gateway 
 package main
 
 import (
