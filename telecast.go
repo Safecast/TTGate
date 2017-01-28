@@ -9,6 +9,7 @@ import (
     "github.com/golang/protobuf/proto"
     "github.com/rayozzie/teletype-proto/golang"
     "io/ioutil"
+    "net"
     "net/http"
     "os"
     "strconv"
@@ -145,6 +146,32 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 			}
 		}
 		resp.Body.Close()
+    }
+
+    // For testing purposes only, Also send the message via UDP
+    testUDP := true
+    if testUDP {
+
+        ServerAddr, err := net.ResolveUDPAddr("udp", "tt.safecast.org:8081")
+        if err != nil {
+            fmt.Printf("*** Error resolving UDP address: %v\n", err)
+        } else {
+
+            Conn, err := net.DialUDP("udp", nil, ServerAddr)
+            if err != nil {
+                fmt.Printf("*** Error dialing UDP: %v\n", err)
+            } else {
+
+                _, err := Conn.Write(pb)
+                if err != nil {
+                    fmt.Printf("*** Error writing UDP: %v\n", err)
+                }
+
+                Conn.Close()
+
+            }
+        }
+
     }
 
 }
