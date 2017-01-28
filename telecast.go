@@ -9,12 +9,14 @@ import (
     "github.com/golang/protobuf/proto"
     "github.com/rayozzie/teletype-proto/golang"
     "io/ioutil"
-    "net"
     "net/http"
     "os"
     "strconv"
     "time"
 )
+
+// Service
+var TTUploadURL string = "http://tt.safecast.org:8080/send"
 
 // Statics
 var ipinfo string = ""
@@ -120,9 +122,8 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
     msg.Metadata[0].GatewayEUI = ipinfo
 
     // Send it to the teletype service via HTTP
-    UploadURL := "http://api.teletype.io:8080/send"
     msgJSON, _ := json.Marshal(msg)
-    req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(msgJSON))
+    req, err := http.NewRequest("POST", TTUploadURL, bytes.NewBuffer(msgJSON))
     req.Header.Set("User-Agent", "TTGATE")
     req.Header.Set("Content-Type", "application/json")
     httpclient := &http.Client{}
@@ -148,40 +149,13 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 		resp.Body.Close()
     }
 
-    // When testing, also send a duplicate of the message via UDP
-    testUDP := false
-    if testUDP {
-
-        ServerAddr, err := net.ResolveUDPAddr("udp", "api.teletype.io:8081")
-        if err != nil {
-            fmt.Printf("*** Error resolving UDP address: %v\n", err)
-        } else {
-
-            Conn, err := net.DialUDP("udp", nil, ServerAddr)
-            if err != nil {
-                fmt.Printf("*** Error dialing UDP: %v\n", err)
-            } else {
-
-                _, err := Conn.Write(pb)
-                if err != nil {
-                    fmt.Printf("*** Error writing UDP: %v\n", err)
-                }
-
-                Conn.Close()
-
-            }
-        }
-
-    }
-
 }
 
 // Ping the teletype service via HTTP, just to determine its reachability
 func cmdPingTeletypeService() {
 
-    UploadURL := "http://api.teletype.io:8080/send"
 	data := []byte("Hello.")
-    req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(data))
+    req, err := http.NewRequest("POST", TTUploadURL, bytes.NewBuffer(data))
     req.Header.Set("User-Agent", "TTGATE")
     req.Header.Set("Content-Type", "application/json")
     httpclient := &http.Client{}
