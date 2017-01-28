@@ -21,7 +21,7 @@ var DebugFailover = false
 func main() {
 
 	// Welcome
-    fmt.Printf("\nTeletype Gateway\n")
+    fmt.Printf("\nLora Gateway\n")
 
 	// Debug flags
 	s := os.Getenv("DEBUG_FAILOVER")
