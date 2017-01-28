@@ -85,8 +85,7 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
     }
 
     // Pack the data into the same data structure as TTN, because we're simulating TTN inbound
-    msg := &DataUpAppReq{}
-    msg.Metadata = make([]AppMetadata, 1)
+    msg := &TTGateReq{}
     msg.Payload = pb
 
     // Some devices don't have LAT/LON, and in this case the gateway will supply it (if configured)
@@ -94,32 +93,31 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
     if Latitude != "" {
         f64, err := strconv.ParseFloat(Latitude, 64)
         if err == nil {
-            msg.Metadata[0].Latitude = float32(f64)
+            msg.Latitude = float32(f64)
         }
     }
     Longitude := os.Getenv("LON")
     if Longitude != "" {
         f64, err := strconv.ParseFloat(Longitude, 64)
         if err == nil {
-            msg.Metadata[0].Longitude = float32(f64)
+            msg.Longitude = float32(f64)
         }
     }
     Altitude := os.Getenv("ALT")
     if Altitude != "" {
         i64, err := strconv.ParseInt(Altitude, 10, 64)
         if err == nil {
-            msg.Metadata[0].Altitude = int32(i64)
+            msg.Altitude = int32(i64)
         }
     }
 
     // The service might find it handy to see the SNR of the last message received from the gateway
     if snr != invalidSNR {
-        msg.Metadata[0].Lsnr = float32(snr)
+        msg.Snr = float32(snr)
     }
 
-    // Augment the outbound metadata with ip info, overloading the
-    // GatewayEUI data structure for this purpose
-    msg.Metadata[0].GatewayEUI = ipinfo
+    // Augment the outbound metadata with ip info
+    msg.Location = ipinfo
 
     // Send it to the teletype service via HTTP
     msgJSON, _ := json.Marshal(msg)
