@@ -149,7 +149,7 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
     }
 
     // For testing purposes only, Also send the message via UDP
-    testUDP := true
+    testUDP := false
     if testUDP {
 
         ServerAddr, err := net.ResolveUDPAddr("udp", "tt.safecast.org:8081")
