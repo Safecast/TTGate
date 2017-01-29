@@ -17,7 +17,7 @@ import (
 )
 
 // Service
-var TTUploadURL string = "http://tt.safecast.org:8080/send"
+var TTUploadURL string = "http://tt.safecast.org:80/send"
 
 // Statics
 var ipinfo string = ""
