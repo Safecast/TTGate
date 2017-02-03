@@ -259,9 +259,11 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
     if err == nil {
         dev.originalDeviceNo = uint64(deviceno)
         dev.normalizedDeviceNo = dev.originalDeviceNo
-        if (dev.originalDeviceNo & 0x01) != 0 {
-            dev.normalizedDeviceNo = uint64(dev.normalizedDeviceNo - 1)
-            dev.DeviceID = fmt.Sprintf("%d", dev.normalizedDeviceNo)
+        if (false) { // old style device id support removed 2017-02
+            if (dev.originalDeviceNo & 0x01) != 0 {
+                dev.normalizedDeviceNo = uint64(dev.normalizedDeviceNo - 1)
+                dev.DeviceID = fmt.Sprintf("%d", dev.normalizedDeviceNo)
+            }
         }
     }
 
@@ -273,11 +275,11 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
         if dev.originalDeviceNo == 0 && dev.DeviceID == seenDevices[i].DeviceID {
             if (!fNewStyleCPM) {
                 dev.Value1 = ""
-				if (Value != "") {
-	                dev.Value0 = Value
-				} else {
-	                dev.Value0 = seenDevices[i].Value0
-				}
+                if (Value != "") {
+                    dev.Value0 = Value
+                } else {
+                    dev.Value0 = seenDevices[i].Value0
+                }
             }
             found = true
         }
@@ -285,20 +287,29 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
         // For numerics, folder the even/odd devices into a single device (dual-geigers)
         if dev.originalDeviceNo != 0 && dev.normalizedDeviceNo == seenDevices[i].normalizedDeviceNo {
             if (!fNewStyleCPM) {
-                if (dev.originalDeviceNo & 0x01) == 0 {
-					if (Value != "") {
-	                    dev.Value0 = Value
-					} else {
-	                    dev.Value0 = seenDevices[i].Value0
-					}
-                    dev.Value1 = seenDevices[i].Value1
+                if (false) { // old style device id support removed 2017-02
+                    if (dev.originalDeviceNo & 0x01) == 0 {
+                        if (Value != "") {
+                            dev.Value0 = Value
+                        } else {
+                            dev.Value0 = seenDevices[i].Value0
+                        }
+                        dev.Value1 = seenDevices[i].Value1
+                    } else {
+                        dev.Value0 = seenDevices[i].Value0
+                        if (Value != "") {
+                            dev.Value1 = Value
+                        } else {
+                            dev.Value1 = seenDevices[i].Value1;
+                        }
+                    }
                 } else {
-                    dev.Value0 = seenDevices[i].Value0
-					if (Value != "") {
-	                    dev.Value1 = Value
-					} else {
-	                    dev.Value1 = seenDevices[i].Value1;
-					}
+                    if (Value != "") {
+                        dev.Value0 = Value
+                    } else {
+                        dev.Value0 = seenDevices[i].Value0
+                    }
+                    dev.Value1 = seenDevices[i].Value1
                 }
             }
             found = true
@@ -340,12 +351,17 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
                 dev.Value0 = Value
                 dev.Value1 = ""
             } else {
-                if (dev.originalDeviceNo & 0x01) == 0 {
+                if (false) { // old style device number support removed 2017-02
+                    if (dev.originalDeviceNo & 0x01) == 0 {
+                        dev.Value0 = Value
+                        dev.Value1 = ""
+                    } else {
+                        dev.Value0 = ""
+                        dev.Value1 = Value
+                    }
+                } else {
                     dev.Value0 = Value
                     dev.Value1 = ""
-                } else {
-                    dev.Value0 = ""
-                    dev.Value1 = Value
                 }
             }
         }
