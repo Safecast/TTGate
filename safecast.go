@@ -13,16 +13,15 @@ import (
 // Data structure maintained for devices from which we received data
 type SeenDevice struct {
     DeviceID           string    `json:"device_id"`
-    originalDeviceNo   uint64    `json:"-"`
-    normalizedDeviceNo uint64    `json:"-"`
+    DeviceNo		   uint64    `json:"-"`
     capturedAt         string    `json:"-"`
     captured           time.Time `json:"-"`
     CapturedAtLocal    string    `json:"captured_local"`
     MinutesAgoStr      string    `json:"minutes_ago"`
     minutesAgo         int64     `json:"-"`
     minutesApproxAgo   int64     `json:"-"`
-    Value0             string    `json:"value0"`
-    Value1             string    `json:"value1"`
+    Cpm0               string	 `json:"cpm0"`
+    Cpm1               string	 `json:"cpm1"`
     BatteryVoltage     string    `json:"bat_voltage"`
     BatterySOC         string    `json:"bat_soc"`
     BatteryCurrent     string    `json:"bat_current"`
@@ -71,9 +70,9 @@ func (a ByKey) Less(i, j int) bool {
 
     // Tertiary:
     // In an attempt to keep things reasonably deterministic, use device number
-    if a[i].normalizedDeviceNo < a[j].normalizedDeviceNo {
+    if a[i].DeviceNo < a[j].DeviceNo {
         return true
-    } else if a[i].normalizedDeviceNo > a[j].normalizedDeviceNo {
+    } else if a[i].DeviceNo > a[j].DeviceNo {
         return false
     }
 
@@ -83,23 +82,19 @@ func (a ByKey) Less(i, j int) bool {
 // Record this safecast message for display on local HDMI via embedded browser
 func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
     var dev SeenDevice
-    var Value string
-    var fNewStyleCPM bool
 
     // Bump stats
     totalMessagesReceived = totalMessagesReceived + 1
 
     // Exit if we can't display the value
-    if msg.DeviceIDString == nil && msg.DeviceIDNumber == nil {
+    if  msg.DeviceID == nil {
         return
     }
 
     // Extract essential info to be recorded
-    if msg.DeviceIDString != nil {
-        dev.DeviceID = msg.GetDeviceIDString()
-    }
-    if msg.DeviceIDNumber != nil {
-        dev.DeviceID = strconv.FormatUint(uint64(msg.GetDeviceIDNumber()), 10)
+    if msg.DeviceID != nil {
+		dev.DeviceNo = uint64(msg.GetDeviceID())
+        dev.DeviceID = strconv.FormatUint(dev.DeviceNo, 10)
     }
 
     if msg.CapturedAt != nil {
@@ -110,32 +105,17 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
     dev.captured, _ = time.Parse(time.RFC3339, dev.capturedAt)
     dev.CapturedAtLocal = dev.captured.In(OurTimezone).Format("Mon 3:04pm")
 
-    if msg.Cpm0 != nil || msg.Cpm1 != nil {
-        fNewStyleCPM = true
-        if msg.Cpm0 == nil {
-            dev.Value0 = ""
-        } else {
-            dev.Value0 = fmt.Sprintf("%dcpm", msg.GetCpm0())
-        }
-        if msg.Cpm1 == nil {
-            dev.Value1 = ""
-        } else {
-            dev.Value1 = fmt.Sprintf("%dcpm", msg.GetCpm1())
-        }
-    } else {
-        var Unit string
-        fNewStyleCPM = false
-        if msg.Unit == nil {
-            Unit = "cpm"
-        } else {
-            Unit = fmt.Sprintf("%s", msg.GetUnit())
-        }
-        if msg.Value == nil {
-            Value = ""
-        } else {
-            Value = fmt.Sprintf("%d%s", msg.GetValue(), Unit)
-        }
-    }
+    if msg.Cpm0 != nil {
+        dev.Cpm0 = fmt.Sprintf("%dcpm", msg.GetCpm0())
+	} else {
+		dev.Cpm0 = ""
+	}
+
+    if msg.Cpm1 != nil {
+        dev.Cpm1 = fmt.Sprintf("%dcpm", msg.GetCpm1())
+	} else {
+		dev.Cpm1 = ""
+	}
 
     if msg.BatterySOC != nil {
         dev.BatterySOC = fmt.Sprintf("%.2f%%", msg.GetBatterySOC())
@@ -251,72 +231,19 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
         dev.Altitude = ""
     }
 
-    // Add or update the seen entry, as the case may be.
-    // Note that we handle the case of 2 geiger units in a single device by always folding both together
-    dev.originalDeviceNo = 0
-    dev.normalizedDeviceNo = dev.originalDeviceNo
-    deviceno, err := strconv.ParseInt(dev.DeviceID, 10, 64)
-    if err == nil {
-        dev.originalDeviceNo = uint64(deviceno)
-        dev.normalizedDeviceNo = dev.originalDeviceNo
-        if (false) { // old style device id support removed 2017-02
-            if (dev.originalDeviceNo & 0x01) != 0 {
-                dev.normalizedDeviceNo = uint64(dev.normalizedDeviceNo - 1)
-                dev.DeviceID = fmt.Sprintf("%d", dev.normalizedDeviceNo)
-            }
-        }
-    }
-
     // Scan and update the list of seen devices
     var found bool = false
     for i := 0; i < len(seenDevices); i++ {
 
-        // Handle non-numeric device ID
-        if dev.originalDeviceNo == 0 && dev.DeviceID == seenDevices[i].DeviceID {
-            if (!fNewStyleCPM) {
-                dev.Value1 = ""
-                if (Value != "") {
-                    dev.Value0 = Value
-                } else {
-                    dev.Value0 = seenDevices[i].Value0
-                }
-            }
-            found = true
-        }
+        // Make sure we retain values that aren't present
+        if dev.DeviceID == seenDevices[i].DeviceID {
 
-        // For numerics, folder the even/odd devices into a single device (dual-geigers)
-        if dev.originalDeviceNo != 0 && dev.normalizedDeviceNo == seenDevices[i].normalizedDeviceNo {
-            if (!fNewStyleCPM) {
-                if (false) { // old style device id support removed 2017-02
-                    if (dev.originalDeviceNo & 0x01) == 0 {
-                        if (Value != "") {
-                            dev.Value0 = Value
-                        } else {
-                            dev.Value0 = seenDevices[i].Value0
-                        }
-                        dev.Value1 = seenDevices[i].Value1
-                    } else {
-                        dev.Value0 = seenDevices[i].Value0
-                        if (Value != "") {
-                            dev.Value1 = Value
-                        } else {
-                            dev.Value1 = seenDevices[i].Value1;
-                        }
-                    }
-                } else {
-                    if (Value != "") {
-                        dev.Value0 = Value
-                    } else {
-                        dev.Value0 = seenDevices[i].Value0
-                    }
-                    dev.Value1 = seenDevices[i].Value1
-                }
+            if dev.Cpm0 == "" {
+                dev.Cpm0 = seenDevices[i].Cpm0
             }
-            found = true
-        }
-
-        // Retain values for those items that are only transmitted occasionaly
-        if found {
+            if dev.Cpm1 == "" {
+                dev.Cpm1 = seenDevices[i].Cpm1
+            }
             if dev.BatteryVoltage == "" {
                 dev.BatteryVoltage = seenDevices[i].BatteryVoltage
             }
@@ -339,44 +266,27 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
                 dev.snr = seenDevices[i].snr
                 dev.SNR = seenDevices[i].SNR
             }
+
+			// Update the entry
             seenDevices[i] = dev
+			found = true;
             break
         }
 
     }
 
     if !found {
-        if (!fNewStyleCPM) {
-            if dev.originalDeviceNo == 0 {
-                dev.Value0 = Value
-                dev.Value1 = ""
-            } else {
-                if (false) { // old style device number support removed 2017-02
-                    if (dev.originalDeviceNo & 0x01) == 0 {
-                        dev.Value0 = Value
-                        dev.Value1 = ""
-                    } else {
-                        dev.Value0 = ""
-                        dev.Value1 = Value
-                    }
-                } else {
-                    dev.Value0 = Value
-                    dev.Value1 = ""
-                }
-            }
-        }
         seenDevices = append(seenDevices, dev)
-
     }
 
     // Display the received message on the Resin device console
     fmt.Printf("\n%s %s: ", dev.CapturedAtLocal, dev.DeviceID)
-    if dev.Value0 != "" && dev.Value1 == "" {
-        fmt.Printf("%s\n\n", dev.Value0)
-    } else if dev.Value0 == "" && dev.Value1 != "" {
-        fmt.Printf("%s\n\n", dev.Value1)
+    if dev.Cpm0 != "" && dev.Cpm1 == "" {
+        fmt.Printf("%s\n\n", dev.Cpm0)
+    } else if dev.Cpm0 == "" && dev.Cpm1 != "" {
+        fmt.Printf("%s\n\n", dev.Cpm1)
     } else {
-        fmt.Printf("%s %s\n\n", dev.Value0, dev.Value1)
+        fmt.Printf("%s %s\n\n", dev.Cpm0, dev.Cpm1)
     }
 
 }

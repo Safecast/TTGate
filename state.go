@@ -247,8 +247,8 @@ func SentPendingOutbound() bool {
         msg.Message = proto.String("down")
         deviceType := teletype.Telecast_TTSERVE
         msg.DeviceType = &deviceType
-        deviceIDNumber := deviceToNotifyIfServiceDown
-        msg.DeviceIDNumber = &deviceIDNumber
+        deviceID := deviceToNotifyIfServiceDown
+        msg.DeviceID = &deviceID
         data, err := proto.Marshal(msg)
         if err == nil {
             // This will be dequeued below
@@ -327,8 +327,8 @@ func cmdProcessReceived(hex []byte, snr float32) {
     }
 
     // Remember the Device ID number of the last received message, for failover purposes
-    if (msg.DeviceIDNumber != nil) {
-        deviceToNotifyIfServiceDown = msg.GetDeviceIDNumber()
+    if (msg.DeviceID != nil) {
+        deviceToNotifyIfServiceDown = msg.GetDeviceID()
     }
 
     // Process it as a Telecast message
