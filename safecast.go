@@ -297,10 +297,10 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
 		str1 = dev.Lnd_7318U
 	}
 	if dev.Lnd_7318C != "" {
-		str1 = dev.Lnd_7318C
+		str2 = dev.Lnd_7318C
 	}
 	if dev.Lnd_7128Ec != "" {
-		str1 = dev.Lnd_7128Ec
+		str3 = dev.Lnd_7128Ec
 	}
     fmt.Printf("\n%s %s: %s %s %s\n\n", dev.CapturedAtLocal, dev.DeviceID, str1, str2, str3)
 
