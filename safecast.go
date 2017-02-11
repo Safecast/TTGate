@@ -20,8 +20,9 @@ type SeenDevice struct {
     MinutesAgoStr      string    `json:"minutes_ago"`
     minutesAgo         int64     `json:"-"`
     minutesApproxAgo   int64     `json:"-"`
-    Cpm0               string	 `json:"cpm0"`
-    Cpm1               string	 `json:"cpm1"`
+    Lnd_7318U          string	 `json:"lnd7318u"`
+    Lnd_7318C          string	 `json:"lnd7318c"`
+    Lnd_7128Ec         string	 `json:"lnd7128ec"`
     BatteryVoltage     string    `json:"bat_voltage"`
     BatterySOC         string    `json:"bat_soc"`
     BatteryCurrent     string    `json:"bat_current"`
@@ -105,16 +106,22 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
     dev.captured, _ = time.Parse(time.RFC3339, dev.capturedAt)
     dev.CapturedAtLocal = dev.captured.In(OurTimezone).Format("Mon 3:04pm")
 
-    if msg.Cpm0 != nil {
-        dev.Cpm0 = fmt.Sprintf("%dcpm", msg.GetCpm0())
+    if msg.Lnd_7318U != nil {
+        dev.Lnd_7318U = fmt.Sprintf("%dcpm", msg.GetLnd_7318U())
 	} else {
-		dev.Cpm0 = ""
+		dev.Lnd_7318U = ""
 	}
 
-    if msg.Cpm1 != nil {
-        dev.Cpm1 = fmt.Sprintf("%dcpm", msg.GetCpm1())
+    if msg.Lnd_7318C != nil {
+        dev.Lnd_7318C = fmt.Sprintf("%dcpm", msg.GetLnd_7318C())
 	} else {
-		dev.Cpm1 = ""
+		dev.Lnd_7318C = ""
+	}
+
+    if msg.Lnd_7128Ec != nil {
+        dev.Lnd_7128Ec = fmt.Sprintf("%dcpm", msg.GetLnd_7128Ec())
+	} else {
+		dev.Lnd_7128Ec = ""
 	}
 
     if msg.BatterySOC != nil {
@@ -238,11 +245,14 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
         // Make sure we retain values that aren't present
         if dev.DeviceID == seenDevices[i].DeviceID {
 
-            if dev.Cpm0 == "" {
-                dev.Cpm0 = seenDevices[i].Cpm0
+            if dev.Lnd_7318U == "" {
+                dev.Lnd_7318U = seenDevices[i].Lnd_7318U
             }
-            if dev.Cpm1 == "" {
-                dev.Cpm1 = seenDevices[i].Cpm1
+            if dev.Lnd_7318C == "" {
+                dev.Lnd_7318C = seenDevices[i].Lnd_7318C
+            }
+            if dev.Lnd_7128Ec == "" {
+                dev.Lnd_7128Ec = seenDevices[i].Lnd_7128Ec
             }
             if dev.BatteryVoltage == "" {
                 dev.BatteryVoltage = seenDevices[i].BatteryVoltage
@@ -280,14 +290,19 @@ func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
     }
 
     // Display the received message on the Resin device console
-    fmt.Printf("\n%s %s: ", dev.CapturedAtLocal, dev.DeviceID)
-    if dev.Cpm0 != "" && dev.Cpm1 == "" {
-        fmt.Printf("%s\n\n", dev.Cpm0)
-    } else if dev.Cpm0 == "" && dev.Cpm1 != "" {
-        fmt.Printf("%s\n\n", dev.Cpm1)
-    } else {
-        fmt.Printf("%s %s\n\n", dev.Cpm0, dev.Cpm1)
-    }
+	str1 := "-"
+	str2 := "-"
+	str3 := "-"
+	if dev.Lnd_7318U != "" {
+		str1 = dev.Lnd_7318U
+	}
+	if dev.Lnd_7318C != "" {
+		str1 = dev.Lnd_7318C
+	}
+	if dev.Lnd_7128Ec != "" {
+		str1 = dev.Lnd_7128Ec
+	}
+    fmt.Printf("\n%s %s: %s %s %s\n\n", dev.CapturedAtLocal, dev.DeviceID, str1, str2, str3)
 
 }
 
