@@ -243,9 +243,9 @@ func SentPendingOutbound() bool {
     // will be interested in that fact.  We do this by packaging
     // the message as though it were sent by TTSERVE itself.
     if (deviceToNotifyIfServiceDown != 0 && !isTeletypeServiceReachable()) {
-        msg := &teletype.Telecast{}
+        msg := &ttproto.Telecast{}
         msg.Message = proto.String("down")
-        deviceType := teletype.Telecast_TTSERVE
+        deviceType := ttproto.Telecast_TTSERVE
         msg.DeviceType = &deviceType
         deviceID := deviceToNotifyIfServiceDown
         msg.DeviceID = &deviceID
@@ -319,7 +319,7 @@ func cmdProcessReceived(hex []byte, snr float32) {
     }
 
     // Unpack the received message which is a protocol buffer
-    msg := &teletype.Telecast{}
+    msg := &ttproto.Telecast{}
     err := proto.Unmarshal(bin, msg)
     if err != nil {
         fmt.Printf("cmdProcessReceivedProtobuf unmarshaling error: ", err)

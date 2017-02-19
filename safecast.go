@@ -81,7 +81,7 @@ func (a ByKey) Less(i, j int) bool {
 }
 
 // Record this safecast message for display on local HDMI via embedded browser
-func cmdLocallyDisplaySafecastMessage(msg *teletype.Telecast, snr float32) {
+func cmdLocallyDisplaySafecastMessage(msg *ttproto.Telecast, snr float32) {
     var dev SeenDevice
 
     // Bump stats
