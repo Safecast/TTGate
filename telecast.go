@@ -50,14 +50,14 @@ func cmdProcessReceivedTelecastMessage(msg *ttproto.Telecast, pb []byte, snr flo
             // Importantly, sleep for a couple seconds to give the (slow) receiver a chance to get into receive mode
             time.Sleep(2 * time.Second)
             cmdEnqueueOutbound(data)
-            fmt.Printf("Sent pingback to device %d\n", msg.GetDeviceID())
+            fmt.Printf("Sent pingback to device %d\n", msg.GetDeviceId())
             return
         }
 
         // If it's a non-Safecast device, display what we received
     default:
-        if msg.DeviceID != nil {
-            fmt.Printf("Received Msg from Device %d: '%s'\n", msg.GetDeviceID(), msg.GetMessage())
+        if msg.DeviceId != nil {
+            fmt.Printf("Received Msg from Device %d: '%s'\n", msg.GetDeviceId(), msg.GetMessage())
         }
 
     }

@@ -12,7 +12,7 @@ import (
 
 // Data structure maintained for devices from which we received data
 type SeenDevice struct {
-    DeviceID           string    `json:"device_id"`
+    DeviceId           string    `json:"device_id"`
     DeviceNo		   uint64    `json:"-"`
     capturedAt         string    `json:"-"`
     captured           time.Time `json:"-"`
@@ -23,9 +23,9 @@ type SeenDevice struct {
     Lnd_7318U          string	 `json:"lnd7318u"`
     Lnd_7318C          string	 `json:"lnd7318c"`
     Lnd_7128Ec         string	 `json:"lnd7128ec"`
-    BatteryVoltage     string    `json:"bat_voltage"`
-    BatterySOC         string    `json:"bat_soc"`
-    BatteryCurrent     string    `json:"bat_current"`
+    BatVoltage     string    `json:"bat_voltage"`
+    BatSoc         string    `json:"bat_soc"`
+    BatCurrent     string    `json:"bat_current"`
     EnvTemp            string    `json:"env_temp"`
     EnvHumid           string    `json:"env_humid"`
     EnvPress           string    `json:"env_press"`
@@ -88,14 +88,14 @@ func cmdLocallyDisplaySafecastMessage(msg *ttproto.Telecast, snr float32) {
     totalMessagesReceived = totalMessagesReceived + 1
 
     // Exit if we can't display the value
-    if  msg.DeviceID == nil {
+    if  msg.DeviceId == nil {
         return
     }
 
     // Extract essential info to be recorded
-    if msg.DeviceID != nil {
-		dev.DeviceNo = uint64(msg.GetDeviceID())
-        dev.DeviceID = strconv.FormatUint(dev.DeviceNo, 10)
+    if msg.DeviceId != nil {
+		dev.DeviceNo = uint64(msg.GetDeviceId())
+        dev.DeviceId = strconv.FormatUint(dev.DeviceNo, 10)
     }
 
     if msg.CapturedAt != nil {
@@ -124,26 +124,26 @@ func cmdLocallyDisplaySafecastMessage(msg *ttproto.Telecast, snr float32) {
 		dev.Lnd_7128Ec = ""
 	}
 
-    if msg.BatterySOC != nil {
-        dev.BatterySOC = fmt.Sprintf("%.2f%%", msg.GetBatterySOC())
+    if msg.BatSoc != nil {
+        dev.BatSoc = fmt.Sprintf("%.2f%%", msg.GetBatSoc())
     } else {
-        dev.BatterySOC = ""
+        dev.BatSoc = ""
     }
 
-    if msg.BatteryVoltage != nil {
-        dev.BatteryVoltage = fmt.Sprintf("%.2fV", msg.GetBatteryVoltage())
+    if msg.BatVoltage != nil {
+        dev.BatVoltage = fmt.Sprintf("%.2fV", msg.GetBatVoltage())
     } else {
-        dev.BatteryVoltage = ""
+        dev.BatVoltage = ""
     }
 
-    if msg.BatteryCurrent != nil {
-        dev.BatteryCurrent = fmt.Sprintf("%.3fV", msg.GetBatteryCurrent())
+    if msg.BatCurrent != nil {
+        dev.BatCurrent = fmt.Sprintf("%.3fV", msg.GetBatCurrent())
     } else {
-        dev.BatteryCurrent = ""
+        dev.BatCurrent = ""
     }
 
     // Note that we make a valiant attempt to localize the temp to C or F
-    if msg.EnvTemperature != nil {
+    if msg.EnvTemp != nil {
         switch OurCountryCode {
         case "BS": // Bahamas
             fallthrough
@@ -160,16 +160,16 @@ func cmdLocallyDisplaySafecastMessage(msg *ttproto.Telecast, snr float32) {
         case "US": // United States
             fallthrough
         case "VI": // US Virgin Islands
-            dev.EnvTemp = fmt.Sprintf("%.1fF", ((msg.GetEnvTemperature()*9.0)/5.0)+32)
+            dev.EnvTemp = fmt.Sprintf("%.1fF", ((msg.GetEnvTemp()*9.0)/5.0)+32)
         default:
-            dev.EnvTemp = fmt.Sprintf("%.1fC", msg.GetEnvTemperature())
+            dev.EnvTemp = fmt.Sprintf("%.1fC", msg.GetEnvTemp())
         }
     } else {
         dev.EnvTemp = ""
     }
 
-    if msg.EnvHumidity != nil {
-        dev.EnvHumid = fmt.Sprintf("%.1f%%", msg.GetEnvHumidity())
+    if msg.EnvHumid != nil {
+        dev.EnvHumid = fmt.Sprintf("%.1f%%", msg.GetEnvHumid())
     } else {
         dev.EnvHumid = ""
     }
@@ -243,7 +243,7 @@ func cmdLocallyDisplaySafecastMessage(msg *ttproto.Telecast, snr float32) {
     for i := 0; i < len(seenDevices); i++ {
 
         // Make sure we retain values that aren't present
-        if dev.DeviceID == seenDevices[i].DeviceID {
+        if dev.DeviceId == seenDevices[i].DeviceId {
 
             if dev.Lnd_7318U == "" {
                 dev.Lnd_7318U = seenDevices[i].Lnd_7318U
@@ -254,14 +254,14 @@ func cmdLocallyDisplaySafecastMessage(msg *ttproto.Telecast, snr float32) {
             if dev.Lnd_7128Ec == "" {
                 dev.Lnd_7128Ec = seenDevices[i].Lnd_7128Ec
             }
-            if dev.BatteryVoltage == "" {
-                dev.BatteryVoltage = seenDevices[i].BatteryVoltage
+            if dev.BatVoltage == "" {
+                dev.BatVoltage = seenDevices[i].BatVoltage
             }
-            if dev.BatterySOC == "" {
-                dev.BatterySOC = seenDevices[i].BatterySOC
+            if dev.BatSoc == "" {
+                dev.BatSoc = seenDevices[i].BatSoc
             }
-            if dev.BatteryCurrent == "" {
-                dev.BatteryCurrent = seenDevices[i].BatteryCurrent
+            if dev.BatCurrent == "" {
+                dev.BatCurrent = seenDevices[i].BatCurrent
             }
             if dev.EnvTemp == "" {
                 dev.EnvTemp = seenDevices[i].EnvTemp
@@ -302,7 +302,7 @@ func cmdLocallyDisplaySafecastMessage(msg *ttproto.Telecast, snr float32) {
 	if dev.Lnd_7128Ec != "" {
 		str3 = dev.Lnd_7128Ec
 	}
-    fmt.Printf("\n%s %s: %s %s %s\n\n", dev.CapturedAtLocal, dev.DeviceID, str1, str2, str3)
+    fmt.Printf("\n%s %s: %s %s %s\n\n", dev.CapturedAtLocal, dev.DeviceId, str1, str2, str3)
 
 }
 
