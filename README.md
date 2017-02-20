@@ -1,1 +1,1 @@
-This is the 1-channel LoRa gateway that routes between Teletype devices and the Teletype service, TTSERVE.
+This is the LoRa gateway that routes between TTNode devices and the TTServe cloud service.
