@@ -1,4 +1,8 @@
-// State management for processing of commands
+// Copyright 2017 Inca Roads LLC.  All rights reserved.
+// Use of this source code is governed by licenses granted by the
+// copyright holder including that found in the LICENSE file.
+
+// State management for processing of Lora commands
 package main
 
 import (
