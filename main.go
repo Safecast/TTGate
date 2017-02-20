@@ -2,7 +2,7 @@
 // Use of this source code is governed by licenses granted by the
 // copyright holder including that found in the LICENSE file.
 
-// Gateway between TTNode-based Lora devices and the TTServe service
+// Gateway between TTNode-based LoRa devices and the TTServe service
 package main
 
 import (
