@@ -29,6 +29,7 @@ const (
     CMD_STATE_LPWAN_TXRPL2
     CMD_STATE_LPWAN_SNRRPL
 	CMD_STATE_LPWAN_SENDFQRPL
+	CMD_STATE_LPWAN_GETEUIRPL
 )
 
 // Constants
@@ -38,10 +39,16 @@ const invalidSNR float32 = 123.456
 var receivedMessage []byte
 var currentState uint16
 var deviceToNotifyIfServiceDown uint32 = 0
+var hweui string = ""
 
 // Localization
 var Region string = ""
 var lorafpRegionCommandNumber int
+
+// Get the unique gateway device ID
+func cmdGetGatewayID() string {
+	return hweui
+}
 
 // Set the current state of the state machine
 func cmdSetState(newState uint16) {
@@ -100,6 +107,12 @@ func cmdProcess(cmd []byte) {
 
     case CMD_STATE_LPWAN_RESETRPL:
         time.Sleep(4 * time.Second)
+        ioSendCommandString("sys get hweui")
+        cmdSetState(CMD_STATE_LPWAN_GETEUIRPL)
+
+    case CMD_STATE_LPWAN_GETEUIRPL:
+        time.Sleep(4 * time.Second)
+		hweui = cmdstr
         ioSendCommandString("mac pause")
         cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
 

@@ -272,7 +272,7 @@ func cmdSendStatsToTeletypeService() {
     msgJSON, _ := json.Marshal(msg)
 	// OZZIE
     fmt.Printf("Sending: %s\n", string(msgJSON))
-	targeturl := fmt.Sprintf("%s%s", TTStatsURL, "123456")
+	targeturl := fmt.Sprintf("%s%s", TTStatsURL, cmdGetGatewayID())
     req, err := http.NewRequest("POST", targeturl, bytes.NewBuffer(msgJSON))
     req.Header.Set("User-Agent", "TTGATE")
     req.Header.Set("Content-Type", "application/json")
