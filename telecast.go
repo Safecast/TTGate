@@ -10,21 +10,23 @@ import (
 	"encoding/hex"
     "encoding/json"
     "fmt"
-    "github.com/golang/protobuf/proto"
-    "github.com/rayozzie/teletype-proto/golang"
     "io/ioutil"
     "net"
     "net/http"
     "os"
     "strconv"
     "time"
+    "github.com/golang/protobuf/proto"
+    "github.com/safecast/ttproto/golang"
 )
 
 // Service
-var TTUploadURL string = "http://tt.safecast.org:80/send"
+var TTUploadURL string = "http://tt.safecast.org/send"
+var TTStatsURL string = "http://tt.safecast.org/device"
 
 // Statics
-var ipinfo string = ""
+var ipInfoString string = ""
+var ipInfoData IPInfoData
 var serviceReachable = true
 var serviceFirstUnreachableAt time.Time
 
@@ -71,21 +73,39 @@ func cmdProcessReceivedTelecastMessage(msg *ttproto.Telecast, pb []byte, snr flo
 
 }
 
+// Refresh ipinfo as a string
+func GetIPInfo() (bool, string, IPInfoData) {
+
+	// If already avail, return it
+	if ipInfoString != "" {
+		return true, ipInfoString, ipInfoData
+	}
+	
+    // The first time through here, let's fetch info about our IP.
+    // We embrace the ip-api.com data definitions as our native format.
+    response, err := http.Get("http://ip-api.com/json/")
+    if err == nil {
+        defer response.Body.Close()
+        contents, err := ioutil.ReadAll(response.Body)
+        if err == nil {
+            ipInfoString = string(contents)
+            err = json.Unmarshal(contents, &ipInfoData)
+			if err != nil {
+				ipInfoData = IPInfoData{}
+            }
+			return true, ipInfoString, ipInfoData
+        }
+    }
+
+	// Failure
+	return false, "", IPInfoData{}
+
+}
+
 // Forward this message to the teletype service via HTTP
 func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 
-    // The first time through here, let's fetch info about our IP.
-    // We embrace the ip-api.com data definitions as our native format.
-    if ipinfo == "" {
-        response, err := http.Get("http://ip-api.com/json/")
-        if err == nil {
-            defer response.Body.Close()
-            contents, err := ioutil.ReadAll(response.Body)
-            if err == nil {
-                ipinfo = string(contents)
-            }
-        }
-    }
+	_, ipinfo, _ := GetIPInfo()
 
     // Pack the data into the same data structure as TTN, because we're simulating TTN inbound
     msg := &TTGateReq{}
@@ -127,7 +147,9 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
     req, err := http.NewRequest("POST", TTUploadURL, bytes.NewBuffer(msgJSON))
     req.Header.Set("User-Agent", "TTGATE")
     req.Header.Set("Content-Type", "application/json")
-    httpclient := &http.Client{}
+    httpclient := &http.Client{
+        Timeout: time.Second * 15,
+    }
     resp, err := httpclient.Do(req)
     if err != nil {
 		setTeletypeServiceReachability(false)
@@ -185,7 +207,9 @@ func cmdPingTeletypeService() {
     req, err := http.NewRequest("POST", TTUploadURL, bytes.NewBuffer(data))
     req.Header.Set("User-Agent", "TTGATE")
     req.Header.Set("Content-Type", "application/json")
-    httpclient := &http.Client{}
+    httpclient := &http.Client{
+        Timeout: time.Second * 15,
+    }
     resp, err := httpclient.Do(req)
     if err != nil {
 		setTeletypeServiceReachability(false)
@@ -227,4 +251,34 @@ func isTeletypeServiceReachable() bool {
 	// Suppress the notion of "unreachable" until we have been offline for quite some time
 	unreachableMinutes := int64(time.Now().Sub(serviceFirstUnreachableAt) / time.Minute)
 	return unreachableMinutes < 60
+}
+
+// Send stats to the service
+func cmdSendStatsToTeletypeService() {
+
+	// Construct an outbound message
+    msg := &TTGateReq{}
+
+	// Gateway name
+    msg.GatewayName = os.Getenv("RESIN_DEVICE_NAME_AT_INIT")
+
+	// IPInfo
+	_, _, msg.IPInfo = GetIPInfo()
+
+	// Stats
+	msg.MessagesReceived = cmdGetStats()
+
+	// Send it
+	data := []byte("Hello.")
+    req, err := http.NewRequest("POST", TTStatsURL, bytes.NewBuffer(data))
+    req.Header.Set("User-Agent", "TTGATE")
+    req.Header.Set("Content-Type", "application/json")
+    httpclient := &http.Client{
+        Timeout: time.Second * 15,
+    }
+    resp, err := httpclient.Do(req)
+    if err == nil {
+        defer resp.Body.Close()
+    }
+
 }

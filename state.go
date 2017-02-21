@@ -13,7 +13,7 @@ import (
     "time"
 	"strings"
     "github.com/golang/protobuf/proto"
-    "github.com/rayozzie/teletype-proto/golang"
+    "github.com/safecast/ttproto/golang"
 )
 
 // Command processing states

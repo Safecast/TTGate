@@ -6,7 +6,6 @@
 package main
 
 import (
-    "encoding/json"
     "fmt"
     "io/ioutil"
     "net/http"
@@ -39,6 +38,7 @@ func main() {
     go webServer()
 
     // Spawn housekeeping and watchdog tasks
+    go timer60m()
     go timer15m()
     go timer5m()
     go timer1m()
@@ -118,28 +118,28 @@ func timer15m() {
     }
 }
 
+func timer60m() {
+	// OZZIE
+    for {
+        time.Sleep(2 * 60 * time.Second)
+		cmdSendStatsToTeletypeService()
+	}
+}
+
 // Load localization information
 func loadLocalTimezone() {
 
-    // Default to UTC, with NO country standards, if we can't find our own info
-    OurTimezone, _ = time.LoadLocation("UTC")
-    OurCountryCode = ""
-
     // Use the ip-api service, which handily provides the needed info
-    response, err := http.Get("http://ip-api.com/json/")
-    if err == nil {
-        defer response.Body.Close()
-        contents, err := ioutil.ReadAll(response.Body)
-        if err == nil {
-            var info IPInfoData
-            err = json.Unmarshal(contents, &info)
-            if err == nil {
-                OurTimezone, _ = time.LoadLocation(info.Timezone)
-                OurCountryCode = info.CountryCode
-            }
-        }
-    }
-
+	isAvail, _, info := GetIPInfo()
+	if !isAvail {
+	    // Default to UTC, with NO country standards, if we can't find our own info
+	    OurTimezone, _ = time.LoadLocation("UTC")
+	    OurCountryCode = ""
+	} else {
+	    OurTimezone, _ = time.LoadLocation(info.Timezone)
+	    OurCountryCode = info.CountryCode
+	}
+	
 }
 
 // The localhost server used exclusively to update the local HDMI display

@@ -18,7 +18,7 @@ type OutboundCommand struct {
 var outboundQueue chan OutboundCommand
 var cmdInitialized bool = false
 var inReinit bool = false
-var totalMessagesReceived int = 0
+var totalMessagesReceived uint32 = 0
 var busyCount = 0
 var watchdog1mCount = 0
 
@@ -101,6 +101,6 @@ func cmdBusyReset() {
 }
 
 // Get stats
-func cmdGetStats() (received int) {
+func cmdGetStats() (received uint32) {
 	return totalMessagesReceived
 }

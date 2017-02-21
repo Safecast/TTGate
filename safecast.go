@@ -11,7 +11,7 @@ import (
     "time"
     "strconv"
     "encoding/json"
-    "github.com/rayozzie/teletype-proto/golang"
+    "github.com/safecast/ttproto/golang"
 )
 
 // Data structure maintained for devices from which we received data
@@ -27,9 +27,9 @@ type SeenDevice struct {
     Lnd_7318U          string	 `json:"lnd7318u"`
     Lnd_7318C          string	 `json:"lnd7318c"`
     Lnd_7128Ec         string	 `json:"lnd7128ec"`
-    BatVoltage     string    `json:"bat_voltage"`
-    BatSoc         string    `json:"bat_soc"`
-    BatCurrent     string    `json:"bat_current"`
+    BatVoltage		   string    `json:"bat_voltage"`
+    BatSoc			   string    `json:"bat_soc"`
+    BatCurrent         string    `json:"bat_current"`
     EnvTemp            string    `json:"env_temp"`
     EnvHumid           string    `json:"env_humid"`
     EnvPress           string    `json:"env_press"`
