@@ -107,12 +107,6 @@ func cmdProcess(cmd []byte) {
 
     case CMD_STATE_LPWAN_RESETRPL:
         time.Sleep(4 * time.Second)
-        ioSendCommandString("sys get hweui")
-        cmdSetState(CMD_STATE_LPWAN_GETEUIRPL)
-
-    case CMD_STATE_LPWAN_GETEUIRPL:
-        time.Sleep(4 * time.Second)
-		hweui = cmdstr
         ioSendCommandString("mac pause")
         cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
 
@@ -130,10 +124,16 @@ func cmdProcess(cmd []byte) {
             if err != nil || i64 < 100000 {
                 fmt.Printf("Bad response from mac pause: %s\n", cmdstr)
             } else {
-                ioSendCommandString("radio set wdt 60000")
-                cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
+		        ioSendCommandString("sys get hweui")
+		        cmdSetState(CMD_STATE_LPWAN_GETEUIRPL)
             }
         }
+
+
+    case CMD_STATE_LPWAN_GETEUIRPL:
+		hweui = cmdstr
+        ioSendCommandString("radio set wdt 60000")
+        cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
 
     case CMD_STATE_LPWAN_SETWDTRPL:
         time.Sleep(100 * time.Millisecond)
