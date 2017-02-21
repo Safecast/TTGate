@@ -22,7 +22,7 @@ import (
 
 // Service
 var TTUploadURL string = "http://tt.safecast.org/send"
-var TTStatsURL string = "http://tt.safecast.org/device/"
+var TTStatsURL string = "http://tt.safecast.org/device"
 
 // Statics
 var ipInfoString string = ""
@@ -260,6 +260,7 @@ func cmdSendStatsToTeletypeService() {
     msg := &TTGateReq{}
 
 	// Gateway name
+	msg.GatewayId = cmdGetGatewayID()
     msg.GatewayName = os.Getenv("RESIN_DEVICE_NAME_AT_INIT")
 
 	// IPInfo
@@ -272,8 +273,7 @@ func cmdSendStatsToTeletypeService() {
     msgJSON, _ := json.Marshal(msg)
 	// OZZIE
     fmt.Printf("Sending: %s\n", string(msgJSON))
-	targeturl := fmt.Sprintf("%s%s", TTStatsURL, cmdGetGatewayID())
-    req, err := http.NewRequest("POST", targeturl, bytes.NewBuffer(msgJSON))
+    req, err := http.NewRequest("POST", TTStatsURL, bytes.NewBuffer(msgJSON))
     req.Header.Set("User-Agent", "TTGATE")
     req.Header.Set("Content-Type", "application/json")
     httpclient := &http.Client{
