@@ -18,7 +18,8 @@ type TTGateReq struct {
 	// Gateway info
 	GatewayId			string		`json:"gateway_id,omitempty"`
 	GatewayName			string		`json:"gateway_name,omitempty"`
-	IPInfo				IPInfoData	`json:"gateway_location,omitempty"`
 	MessagesReceived	uint32		`json:"gateway_received,omitempty"`
+	DevicesSeen			string		`json:"gateway_devices,omitempty"`
+	IPInfo				IPInfoData	`json:"gateway_location,omitempty"`
 
 }

@@ -311,6 +311,24 @@ func cmdLocallyDisplaySafecastMessage(msg *ttproto.Telecast, snr float32) {
 }
 
 // Get the device data sorted and classified in a way useful in local web browser
+func GetSafecastDevicesString() string {
+
+    // Duplicate the device list
+    sortedDevices := seenDevices
+
+    // Zip through the list, updating how many minutes it was captured ago
+	s := ""
+    for i := 0; i < len(sortedDevices); i++ {
+		if s != "" {
+			s += ","
+		}
+		s += fmt.Sprintf("%d", sortedDevices[i].DeviceNo)
+	}
+
+	return s
+}
+
+// Get the device data sorted and classified in a way useful in local web browser
 func GetSafecastDataAsJSON() []byte {
 
     // Duplicate the device list

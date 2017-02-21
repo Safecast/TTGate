@@ -268,6 +268,7 @@ func cmdSendStatsToTeletypeService() {
 
 	// Stats
 	msg.MessagesReceived = cmdGetStats()
+	msg.DevicesSeen = GetSafecastDevicesString()
 
 	// Send it
     msgJSON, _ := json.Marshal(msg)
