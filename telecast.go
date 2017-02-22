@@ -111,6 +111,9 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
     msg := &TTGateReq{}
     msg.Payload = pb
 
+	// Pass along the gateway EUI
+	msg.GatewayId = cmdGetGatewayID()
+
     // Some devices don't have LAT/LON, and in this case the gateway will supply it (if configured)
     Latitude := os.Getenv("LAT")
     if Latitude != "" {
