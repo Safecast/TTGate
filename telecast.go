@@ -259,13 +259,19 @@ func isTeletypeServiceReachable() bool {
 // Send stats to the service
 func cmdSendStatsToTeletypeService() {
 
+	// If we're executing prior to the fetching of the
+	// gateway ID from the Lora chip, exit
+	if cmdGetGatewayID() == "" {
+		return
+	}
+
 	// Construct an outbound message
     msg := &TTGateReq{}
 
 	// Gateway name
 	msg.GatewayId = cmdGetGatewayID()
     msg.GatewayName = os.Getenv("RESIN_DEVICE_NAME_AT_INIT")
-
+	
 	// IPInfo
 	_, _, msg.IPInfo = GetIPInfo()
 
