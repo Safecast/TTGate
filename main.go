@@ -19,6 +19,7 @@ import (
 var OurTimezone *time.Location
 var OurCountryCode string = ""
 var DebugFailover = false
+var DebugStatusUpdate = false
 
 // Main entry point when launched by run.sh
 func main() {
@@ -30,6 +31,10 @@ func main() {
 	s := os.Getenv("DEBUG_FAILOVER")
 	i, err := strconv.ParseInt(s, 10, 64)
 	DebugFailover = (err == nil && i != 0)
+
+	s = os.Getenv("DEBUG_STATUS")
+	i, err = strconv.ParseInt(s, 10, 64)
+	DebugStatusUpdate = (err == nil && i != 0)
 
     // Load localization information
     loadLocalTimezone()
@@ -70,9 +75,19 @@ func timer5s() {
 
 func timer1m() {
     for {
-        time.Sleep(1 * 60 * time.Second)
+		// Time out commands
         cmd1mWatchdog()
+
+		// Update what's on the browser connected to HDMI
         webUpdateData()
+
+		// Send fast updates when requested to do so
+		if DebugStatusUpdate {
+			cmdSendStatsToTeletypeService()
+		}
+
+		// Sleep
+        time.Sleep(1 * 60 * time.Second)
     }
 }
 
