@@ -109,6 +109,7 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 
     // Pack the data into the same data structure as TTN, because we're simulating TTN inbound
     msg := &TTGateReq{}
+	msg.ReceivedAt = nowInUTC()
     msg.Payload = pb
 
 	// Pass along the gateway EUI
@@ -267,6 +268,7 @@ func cmdSendStatsToTeletypeService() {
 
 	// Construct an outbound message
     msg := &TTGateReq{}
+	msg.ReceivedAt = nowInUTC()
 
 	// Gateway name
 	msg.GatewayId = cmdGetGatewayID()
@@ -292,4 +294,9 @@ func cmdSendStatsToTeletypeService() {
         defer resp.Body.Close()
     }
 
+}
+
+// Get the current time in UTC as a string
+func nowInUTC() string {
+    return time.Now().UTC().Format("2006-01-02T15:04:05Z")
 }
