@@ -339,7 +339,7 @@ func cmdProcessReceived(hex []byte, snr float32) {
     msg := &ttproto.Telecast{}
     err := proto.Unmarshal(bin, msg)
     if err != nil {
-        fmt.Printf("cmdProcessReceivedProtobuf unmarshaling error: ", err)
+		fmt.Printf("*** message not recognized - likely a LoRaWAN transmission ***\n");
         return
     }
 
