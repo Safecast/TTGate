@@ -1,0 +1,5 @@
+In order to extract a log file from Resin to send to others, get UUID from the resin dashboard, and type
+resin logs UUID
+
+Documentation on this part of resin-cli is available here, including how to install the tool
+https://docs.resin.io/tools/cli/#logs-60-uuid-62-
