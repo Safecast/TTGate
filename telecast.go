@@ -7,7 +7,7 @@ package main
 
 import (
     "bytes"
-	"encoding/hex"
+    "encoding/hex"
     "encoding/json"
     "fmt"
     "io/ioutil"
@@ -31,6 +31,7 @@ var ipInfoString string = ""
 var ipInfoData IPInfoData
 var serviceReachable = true
 var serviceFirstUnreachableAt time.Time
+var FetchedIPInfo bool = false
 var FetchedLatLon bool = false
 var Latitude = ""
 var Longitude = ""
@@ -44,13 +45,13 @@ func UpdateTargetIP() {
     addrs, err := net.LookupHost(TTUploadAddress)
     if err != nil {
         fmt.Printf("Can't resolve %s: %v\n", TTUploadAddress, err);
-		TTUploadIP = TTUploadAddress
-		return
+        TTUploadIP = TTUploadAddress
+        return
     }
     if len(addrs) < 1 {
         fmt.Printf("Can't resolve %s: %v\n", TTUploadAddress, err);
-		TTUploadIP = TTUploadAddress
-		return
+        TTUploadIP = TTUploadAddress
+        return
     }
     TTUploadIP = addrs[0]
 
@@ -59,29 +60,29 @@ func UpdateTargetIP() {
 // Process a received Telecast message, forwarding if appropriate
 func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr float32) {
 
-	fmt.Printf("OZZIE: prtm\n");
+    fmt.Printf("OZZIE: prtm\n");
     // Do various things baed upon the message type
     switch msg.GetDeviceType() {
 
         // Is this a simplecast message?
     case ttproto.Telecast_SOLARCAST:
-	    go cmdForwardMessageToTeletypeService(pb, snr)
+        go cmdForwardMessageToTeletypeService(pb, snr)
         go cmdLocallyDisplaySafecastMessage(msg, snr)
 
         // Are we simply forwarding a message originating from a nano?
     case ttproto.Telecast_BGEIGIE_NANO:
-	    go cmdForwardMessageToTeletypeService(pb, snr)
+        go cmdForwardMessageToTeletypeService(pb, snr)
         go cmdLocallyDisplaySafecastMessage(msg, snr)
 
         // If this is a ping request (indicated by null Message), then send that device back the same thing we received,
         // but WITH a message (so that we don't cause a ping storm among multiple ttgates with visibility to each other)
     case ttproto.Telecast_TTGATE:
-		// If we're offline, short circuit this because we don't want to mislead.
-		// We'd rather that they use cellular.
-		if !isTeletypeServiceReachable() {
-			return
-		}
-		// Process it
+        // If we're offline, short circuit this because we don't want to mislead.
+        // We'd rather that they use cellular.
+        if !isTeletypeServiceReachable() {
+            return
+        }
+        // Process it
         if msg.Message == nil {
             msg.Message = proto.String("ping")
             data, err := proto.Marshal(&msg)
@@ -95,8 +96,8 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
             return
         }
 
-	    // Forward the message to the service
-	    go cmdForwardMessageToTeletypeService(pb, snr)
+        // Forward the message to the service
+        go cmdForwardMessageToTeletypeService(pb, snr)
 
         // If it's a non-Safecast device, just display what we received
     default:
@@ -111,54 +112,61 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
 // Refresh ipinfo as a string
 func GetIPInfo() (bool, string, IPInfoData) {
 
-	// If already avail, return it
-	if ipInfoString != "" {
-		return true, ipInfoString, ipInfoData
-	}
-	
-    // The first time through here, let's fetch info about our IP.
-    // We embrace the ip-api.com data definitions as our native format.
-    response, err := http.Get("http://ip-api.com/json/")
-    if err == nil {
-        defer response.Body.Close()
-        contents, err := ioutil.ReadAll(response.Body)
-        if err == nil {
-            ipInfoString = string(contents)
-            err = json.Unmarshal(contents, &ipInfoData)
-			if err != nil {
-				ipInfoData = IPInfoData{}
-            }
-			return true, ipInfoString, ipInfoData
-        }
+    // If already avail, return it
+    if ipInfoString != "" {
+        return true, ipInfoString, ipInfoData
     }
 
-	// Failure
-	return false, "", IPInfoData{}
+    // The first time through here, let's fetch info about our IP.
+    // We embrace the ip-api.com data definitions as our native format.
+    if !FetchedIPInfo {
+        FetchedIPInfo = true
+
+        response, err := http.Get("http://ip-api.com/json/")
+        if err == nil {
+            defer response.Body.Close()
+            contents, err := ioutil.ReadAll(response.Body)
+            if err == nil {
+                ipInfoString = string(contents)
+                err = json.Unmarshal(contents, &ipInfoData)
+                if err != nil {
+                    ipInfoData = IPInfoData{}
+                }
+                return true, ipInfoString, ipInfoData
+            }
+        }
+
+		fmt.Printf("IPInfo failure: %s\n", err)
+
+    }
+
+    // Failure
+    return false, "", IPInfoData{}
 
 }
 
 // Forward this message to the teletype service via HTTP
 func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 
-	fmt.Printf("OZZIE: fmts\n");
-	_, ipinfo, _ := GetIPInfo()
+    fmt.Printf("OZZIE: fmts\n");
+    _, ipinfo, _ := GetIPInfo()
 
     // Pack the data into the same data structure as TTN, because we're simulating TTN inbound
     msg := &TTGateReq{}
-	msg.ReceivedAt = nowInUTC()
+    msg.ReceivedAt = nowInUTC()
     msg.Payload = pb
 
-	// Pass along the gateway EUI
-	msg.GatewayId = cmdGetGatewayID()
+    // Pass along the gateway EUI
+    msg.GatewayId = cmdGetGatewayID()
 
     // Some devices don't have LAT/LON, and in this case the gateway will supply it (if configured)
-	if !FetchedLatLon {
-		FetchedLatLon = true		
-	    Latitude = os.Getenv("LAT")
-	    Longitude = os.Getenv("LON")
-	    Altitude = os.Getenv("ALT")
-	}
-	
+    if !FetchedLatLon {
+        FetchedLatLon = true
+        Latitude = os.Getenv("LAT")
+        Longitude = os.Getenv("LON")
+        Altitude = os.Getenv("ALT")
+    }
+
     if Latitude != "" {
         f64, err := strconv.ParseFloat(Latitude, 64)
         if err == nil {
@@ -187,42 +195,42 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
     msg.Location = ipinfo
 
     // Send it to the teletype service via HTTP
-	fmt.Printf("OZZIE: hm\n");
+    fmt.Printf("OZZIE: hm\n");
     msgJSON, _ := json.Marshal(msg)
-	fmt.Printf("OZZIE: nr\n");
-	UploadURL := fmt.Sprintf(TTUploadURLPattern, TTUploadIP)
+    fmt.Printf("OZZIE: nr\n");
+    UploadURL := fmt.Sprintf(TTUploadURLPattern, TTUploadIP)
     req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(msgJSON))
     req.Header.Set("User-Agent", "TTGATE")
     req.Header.Set("Content-Type", "application/json")
-	fmt.Printf("OZZIE: hcl\n");
+    fmt.Printf("OZZIE: hcl\n");
     httpclient := &http.Client{
         Timeout: time.Second * 15,
     }
-	fmt.Printf("OZZIE: do\n");
-	transaction_start := time.Now()
+    fmt.Printf("OZZIE: do\n");
+    transaction_start := time.Now()
     resp, err := httpclient.Do(req)
     if err != nil {
-		setTeletypeServiceReachability(false)
+        setTeletypeServiceReachability(false)
         fmt.Printf("*** Error uploading to %s %s\n\n", UploadURL, err)
     } else {
-		fmt.Printf("OZZIE: done\n");
-		transaction_seconds := int64(time.Now().Sub(transaction_start) / time.Second)
-		fmt.Printf("Upload to %s took %ds\n", UploadURL, transaction_seconds)
-		setTeletypeServiceReachability(true)
-		contents, err := ioutil.ReadAll(resp.Body)
-		if err == nil {
-			payloadstr := string(contents)
-			if payloadstr != "" {
-				payload, err := hex.DecodeString(payloadstr)
-				if err == nil {
-					cmdEnqueueOutbound(payload)
-					fmt.Printf("Sent reply: %s\n", payloadstr)
-				} else {
-					fmt.Printf("Error %v: %s\n", err, payloadstr)
-				}
-			}
-		}
-		resp.Body.Close()
+        fmt.Printf("OZZIE: done\n");
+        transaction_seconds := int64(time.Now().Sub(transaction_start) / time.Second)
+        fmt.Printf("Upload to %s took %ds\n", UploadURL, transaction_seconds)
+        setTeletypeServiceReachability(true)
+        contents, err := ioutil.ReadAll(resp.Body)
+        if err == nil {
+            payloadstr := string(contents)
+            if payloadstr != "" {
+                payload, err := hex.DecodeString(payloadstr)
+                if err == nil {
+                    cmdEnqueueOutbound(payload)
+                    fmt.Printf("Sent reply: %s\n", payloadstr)
+                } else {
+                    fmt.Printf("Error %v: %s\n", err, payloadstr)
+                }
+            }
+        }
+        resp.Body.Close()
     }
 
     // For testing purposes only, Also send the message via UDP
@@ -255,17 +263,17 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 
 // Set the teletype service as known-reachable or known-unreachable
 func setTeletypeServiceReachability(isReachable bool) {
-	if (!serviceReachable && isReachable) {
-	    fmt.Printf("*** TTSERVE is now reachable\n");
-	} else if (serviceReachable && !isReachable) {
-	    fmt.Printf("*** TTSERVE is now unreachable\n");
-	    serviceFirstUnreachableAt = time.Now()
-	} else if (!serviceReachable && !isReachable) {
-	    t := time.Now()
-		unreachableForMinutes := int64(t.Sub(serviceFirstUnreachableAt) / time.Minute)
-	    fmt.Printf("*** TTSERVE has been unreachable for %d minutes\n", unreachableForMinutes);
-	}
-	serviceReachable = isReachable
+    if (!serviceReachable && isReachable) {
+        fmt.Printf("*** TTSERVE is now reachable\n");
+    } else if (serviceReachable && !isReachable) {
+        fmt.Printf("*** TTSERVE is now unreachable\n");
+        serviceFirstUnreachableAt = time.Now()
+    } else if (!serviceReachable && !isReachable) {
+        t := time.Now()
+        unreachableForMinutes := int64(t.Sub(serviceFirstUnreachableAt) / time.Minute)
+        fmt.Printf("*** TTSERVE has been unreachable for %d minutes\n", unreachableForMinutes);
+    }
+    serviceReachable = isReachable
 }
 
 // Set the teletype service as known-reachable or known-unreachable, with debouncing so that
@@ -273,44 +281,44 @@ func setTeletypeServiceReachability(isReachable bool) {
 // We use a significant amount of debounce time because this will cause devices to
 // resort to using Cellular until their next reboot cycle.
 func isTeletypeServiceReachable() bool {
-	// Useful (saves an hour) when debugging ttrelay behavior upon receiving "down" message
-	if DebugFailover {
-		return false
-	}
-	// Exit immediately if the service is known to be reachable
-	if serviceReachable {
-		return true
-	}
-	// Suppress the notion of "unreachable" until we have been offline for quite some time
-	unreachableMinutes := int64(time.Now().Sub(serviceFirstUnreachableAt) / time.Minute)
-	return unreachableMinutes < 60
+    // Useful (saves an hour) when debugging ttrelay behavior upon receiving "down" message
+    if DebugFailover {
+        return false
+    }
+    // Exit immediately if the service is known to be reachable
+    if serviceReachable {
+        return true
+    }
+    // Suppress the notion of "unreachable" until we have been offline for quite some time
+    unreachableMinutes := int64(time.Now().Sub(serviceFirstUnreachableAt) / time.Minute)
+    return unreachableMinutes < 60
 }
 
 // Send stats to the service
 func cmdSendStatsToTeletypeService() {
 
-	// If we're executing prior to the fetching of the
-	// gateway ID from the Lora chip, exit
-	if cmdGetGatewayID() == "" {
-		return
-	}
+    // If we're executing prior to the fetching of the
+    // gateway ID from the Lora chip, exit
+    if cmdGetGatewayID() == "" {
+        return
+    }
 
-	// Construct an outbound message
+    // Construct an outbound message
     msg := &TTGateReq{}
-	msg.ReceivedAt = nowInUTC()
+    msg.ReceivedAt = nowInUTC()
 
-	// Gateway name
-	msg.GatewayId = cmdGetGatewayID()
+    // Gateway name
+    msg.GatewayId = cmdGetGatewayID()
     msg.GatewayName = os.Getenv("RESIN_DEVICE_NAME_AT_INIT")
-	
-	// IPInfo
-	_, _, msg.IPInfo = GetIPInfo()
 
-	// Stats
-	msg.MessagesReceived = cmdGetStats()
-	msg.DevicesSeen = GetSafecastDevicesString()
+    // IPInfo
+    _, _, msg.IPInfo = GetIPInfo()
 
-	// Send it
+    // Stats
+    msg.MessagesReceived = cmdGetStats()
+    msg.DevicesSeen = GetSafecastDevicesString()
+
+    // Send it
     msgJSON, _ := json.Marshal(msg)
     req, err := http.NewRequest("POST", TTStatsURL, bytes.NewBuffer(msgJSON))
     req.Header.Set("User-Agent", "TTGATE")
@@ -320,10 +328,10 @@ func cmdSendStatsToTeletypeService() {
     }
     resp, err := httpclient.Do(req)
     if err != nil {
-		setTeletypeServiceReachability(false)
+        setTeletypeServiceReachability(false)
     } else {
-		setTeletypeServiceReachability(true)
-		resp.Body.Close()
+        setTeletypeServiceReachability(true)
+        resp.Body.Close()
     }
 
 }
