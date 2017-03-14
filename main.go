@@ -39,10 +39,14 @@ func main() {
     // Load localization information
     loadLocalTimezone()
 
+	// Translate the DNS address to an IP address, because this can be slow
+	UpdateTargetIP()
+
     // Spawn our localhost web server, used to update the HDMI status display
     go webServer()
 
     // Spawn housekeeping and watchdog tasks
+	go timer1h()
     go timer15m()
     go timer5m()
     go timer1m()
@@ -130,6 +134,13 @@ func timer15m() {
 		fmt.Printf("\n")
 
     }
+}
+
+func timer1h() {
+    for {
+		UpdateTargetIP()
+        time.Sleep(60 * 60 * time.Second)
+	}
 }
 
 // Load localization information

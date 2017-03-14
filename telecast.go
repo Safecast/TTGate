@@ -21,7 +21,9 @@ import (
 )
 
 // Service
-var TTUploadURL string = "http://tt.safecast.org/send"
+var TTUploadAddress string = "tt.safecast.org"
+var TTUploadURLPattern string = "http://%s/send"
+var TTUploadIP string
 var TTStatsURL string = "http://tt.safecast.org/gateway"
 
 // Statics
@@ -33,6 +35,26 @@ var FetchedLatLon bool = false
 var Latitude = ""
 var Longitude = ""
 var Altitude = ""
+
+// Load localization information
+func UpdateTargetIP() {
+
+    // Look up the two IP addresses that we KNOW have only a single A record,
+    // and determine if WE are the server for those protocols
+    addrs, err := net.LookupHost(TTUploadAddress)
+    if err != nil {
+        fmt.Printf("Can't resolve %s: %v\n", TTUploadAddress, err);
+		TTUploadIP = TTUploadAddress
+		return
+    }
+    if len(addrs) < 1 {
+        fmt.Printf("Can't resolve %s: %v\n", TTUploadAddress, err);
+		TTUploadIP = TTUploadAddress
+		return
+    }
+    TTUploadIP = addrs[0]
+
+}
 
 // Process a received Telecast message, forwarding if appropriate
 func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr float32) {
@@ -168,7 +190,8 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 	fmt.Printf("OZZIE: hm\n");
     msgJSON, _ := json.Marshal(msg)
 	fmt.Printf("OZZIE: nr\n");
-    req, err := http.NewRequest("POST", TTUploadURL, bytes.NewBuffer(msgJSON))
+	UploadURL := fmt.Sprintf(TTUploadURLPattern, TTUploadIP)
+    req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(msgJSON))
     req.Header.Set("User-Agent", "TTGATE")
     req.Header.Set("Content-Type", "application/json")
 	fmt.Printf("OZZIE: hcl\n");
@@ -180,11 +203,11 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
     resp, err := httpclient.Do(req)
     if err != nil {
 		setTeletypeServiceReachability(false)
-        fmt.Printf("*** Error uploading to %s %s\n\n", TTUploadURL, err)
+        fmt.Printf("*** Error uploading to %s %s\n\n", UploadURL, err)
     } else {
 		fmt.Printf("OZZIE: done\n");
 		transaction_seconds := int64(time.Now().Sub(transaction_start) / time.Second)
-		fmt.Printf("Upload to %s took %ds\n", TTUploadURL, transaction_seconds)
+		fmt.Printf("Upload to %s took %ds\n", UploadURL, transaction_seconds)
 		setTeletypeServiceReachability(true)
 		contents, err := ioutil.ReadAll(resp.Body)
 		if err == nil {
