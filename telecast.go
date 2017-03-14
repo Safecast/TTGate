@@ -29,6 +29,10 @@ var ipInfoString string = ""
 var ipInfoData IPInfoData
 var serviceReachable = true
 var serviceFirstUnreachableAt time.Time
+var FetchedLatLon bool = false
+var Latitude = ""
+var Longitude = ""
+var Altitude = ""
 
 // Process a received Telecast message, forwarding if appropriate
 func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr float32) {
@@ -38,10 +42,12 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
 
         // Is this a simplecast message?
     case ttproto.Telecast_SOLARCAST:
+	    go cmdForwardMessageToTeletypeService(pb, snr)
         go cmdLocallyDisplaySafecastMessage(msg, snr)
 
         // Are we simply forwarding a message originating from a nano?
     case ttproto.Telecast_BGEIGIE_NANO:
+	    go cmdForwardMessageToTeletypeService(pb, snr)
         go cmdLocallyDisplaySafecastMessage(msg, snr)
 
         // If this is a ping request (indicated by null Message), then send that device back the same thing we received,
@@ -66,16 +72,16 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
             return
         }
 
-        // If it's a non-Safecast device, display what we received
+	    // Forward the message to the service
+	    go cmdForwardMessageToTeletypeService(pb, snr)
+
+        // If it's a non-Safecast device, just display what we received
     default:
         if msg.DeviceId != nil {
             fmt.Printf("Received Msg from Device %d: '%s'\n", msg.GetDeviceId(), msg.GetMessage())
         }
 
     }
-
-    // Forward the message to the service [and delete the stuff from processreceivedsafecastmessage!]
-    go cmdForwardMessageToTeletypeService(pb, snr)
 
 }
 
@@ -122,21 +128,25 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 	msg.GatewayId = cmdGetGatewayID()
 
     // Some devices don't have LAT/LON, and in this case the gateway will supply it (if configured)
-    Latitude := os.Getenv("LAT")
+	if !FetchedLatLon {
+		FetchedLatLon = true		
+	    Latitude = os.Getenv("LAT")
+	    Longitude = os.Getenv("LON")
+	    Altitude = os.Getenv("ALT")
+	}
+	
     if Latitude != "" {
         f64, err := strconv.ParseFloat(Latitude, 64)
         if err == nil {
             msg.Latitude = float32(f64)
         }
     }
-    Longitude := os.Getenv("LON")
     if Longitude != "" {
         f64, err := strconv.ParseFloat(Longitude, 64)
         if err == nil {
             msg.Longitude = float32(f64)
         }
     }
-    Altitude := os.Getenv("ALT")
     if Altitude != "" {
         i64, err := strconv.ParseInt(Altitude, 10, 64)
         if err == nil {
