@@ -60,18 +60,17 @@ func UpdateTargetIP() {
 // Process a received Telecast message, forwarding if appropriate
 func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr float32) {
 
-    fmt.Printf("OZZIE: prtm\n");
     // Do various things baed upon the message type
     switch msg.GetDeviceType() {
 
         // Is this a simplecast message?
     case ttproto.Telecast_SOLARCAST:
-        go cmdForwardMessageToTeletypeService(pb, snr)
+        cmdForwardMessageToTeletypeService(pb, snr)
         go cmdLocallyDisplaySafecastMessage(msg, snr)
 
         // Are we simply forwarding a message originating from a nano?
     case ttproto.Telecast_BGEIGIE_NANO:
-        go cmdForwardMessageToTeletypeService(pb, snr)
+        cmdForwardMessageToTeletypeService(pb, snr)
         go cmdLocallyDisplaySafecastMessage(msg, snr)
 
         // If this is a ping request (indicated by null Message), then send that device back the same thing we received,
@@ -97,7 +96,7 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
         }
 
         // Forward the message to the service
-        go cmdForwardMessageToTeletypeService(pb, snr)
+        cmdForwardMessageToTeletypeService(pb, snr)
 
         // If it's a non-Safecast device, just display what we received
     default:
@@ -148,7 +147,6 @@ func GetIPInfo() (bool, string, IPInfoData) {
 // Forward this message to the teletype service via HTTP
 func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 
-    fmt.Printf("OZZIE: fmts\n");
     _, ipinfo, _ := GetIPInfo()
 
     // Pack the data into the same data structure as TTN, because we're simulating TTN inbound
@@ -195,25 +193,20 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
     msg.Location = ipinfo
 
     // Send it to the teletype service via HTTP
-    fmt.Printf("OZZIE: hm\n");
     msgJSON, _ := json.Marshal(msg)
-    fmt.Printf("OZZIE: nr\n");
     UploadURL := fmt.Sprintf(TTUploadURLPattern, TTUploadIP)
     req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(msgJSON))
     req.Header.Set("User-Agent", "TTGATE")
     req.Header.Set("Content-Type", "application/json")
-    fmt.Printf("OZZIE: hcl\n");
     httpclient := &http.Client{
         Timeout: time.Second * 15,
     }
-    fmt.Printf("OZZIE: do\n");
     transaction_start := time.Now()
     resp, err := httpclient.Do(req)
     if err != nil {
         setTeletypeServiceReachability(false)
         fmt.Printf("*** Error uploading to %s %s\n\n", UploadURL, err)
     } else {
-        fmt.Printf("OZZIE: done\n");
         transaction_seconds := int64(time.Now().Sub(transaction_start) / time.Second)
         fmt.Printf("Upload to %s took %ds\n", UploadURL, transaction_seconds)
         setTeletypeServiceReachability(true)

@@ -349,7 +349,7 @@ func cmdProcessReceived(hex []byte, snr float32) {
     }
 
     // Process it as a Telecast message
-    go cmdProcessReceivedTelecastMessage(*msg, bin, snr)
+    cmdProcessReceivedTelecastMessage(*msg, bin, snr)
 
 }
 
