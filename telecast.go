@@ -47,6 +47,12 @@ func cmdProcessReceivedTelecastMessage(msg *ttproto.Telecast, pb []byte, snr flo
         // If this is a ping request (indicated by null Message), then send that device back the same thing we received,
         // but WITH a message (so that we don't cause a ping storm among multiple ttgates with visibility to each other)
     case ttproto.Telecast_TTGATE:
+		// If we're offline, short circuit this because we don't want to mislead.
+		// We'd rather that they use cellular.
+		if !isTeletypeServiceReachable() {
+			return
+		}
+		// Process it
         if msg.Message == nil {
             msg.Message = proto.String("ping")
             data, err := proto.Marshal(msg)
@@ -204,26 +210,6 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 
 }
 
-// Ping the teletype service via HTTP, just to determine its reachability
-func cmdPingTeletypeService() {
-
-	data := []byte("Hello.")
-    req, err := http.NewRequest("POST", TTUploadURL, bytes.NewBuffer(data))
-    req.Header.Set("User-Agent", "TTGATE")
-    req.Header.Set("Content-Type", "application/json")
-    httpclient := &http.Client{
-        Timeout: time.Second * 15,
-    }
-    resp, err := httpclient.Do(req)
-    if err != nil {
-		setTeletypeServiceReachability(false)
-    } else {
-		setTeletypeServiceReachability(true)
-		resp.Body.Close()
-    }
-
-}
-
 // Set the teletype service as known-reachable or known-unreachable
 func setTeletypeServiceReachability(isReachable bool) {
 	if (!serviceReachable && isReachable) {
@@ -290,8 +276,11 @@ func cmdSendStatsToTeletypeService() {
         Timeout: time.Second * 15,
     }
     resp, err := httpclient.Do(req)
-    if err == nil {
-        defer resp.Body.Close()
+    if err != nil {
+		setTeletypeServiceReachability(false)
+    } else {
+		setTeletypeServiceReachability(true)
+		resp.Body.Close()
     }
 
 }

@@ -43,7 +43,6 @@ func main() {
     go webServer()
 
     // Spawn housekeeping and watchdog tasks
-    go timer30m()
     go timer15m()
     go timer5m()
     go timer1m()
@@ -94,7 +93,7 @@ func timer1m() {
 func timer5m() {
     for {
         time.Sleep(5 * 60 * time.Second)
-		cmdPingTeletypeService()
+		cmdSendStatsToTeletypeService()
 	}
 }
 
@@ -131,13 +130,6 @@ func timer15m() {
 		fmt.Printf("\n")
 
     }
-}
-
-func timer30m() {
-    for {
-		cmdSendStatsToTeletypeService()
-        time.Sleep(30 * 60 * time.Second)
-	}
 }
 
 // Load localization information
