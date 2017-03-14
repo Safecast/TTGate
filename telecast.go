@@ -160,11 +160,14 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
     httpclient := &http.Client{
         Timeout: time.Second * 15,
     }
+	transaction_start := time.Now()
     resp, err := httpclient.Do(req)
     if err != nil {
 		setTeletypeServiceReachability(false)
-        fmt.Printf("*** Error uploading to TTSERVE %s\n\n", err)
+        fmt.Printf("*** Error uploading to %s %s\n\n", TTUploadURL, err)
     } else {
+		transaction_seconds := int64(time.Now().Sub(transaction_start) / time.Second)
+		fmt.Printf("Upload to %s took %ds\n", TTUploadURL, transaction_seconds)
 		setTeletypeServiceReachability(true)
 		contents, err := ioutil.ReadAll(resp.Body)
 		if err == nil {
