@@ -31,18 +31,18 @@ var serviceReachable = true
 var serviceFirstUnreachableAt time.Time
 
 // Process a received Telecast message, forwarding if appropriate
-func cmdProcessReceivedTelecastMessage(msg *ttproto.Telecast, pb []byte, snr float32) {
+func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr float32) {
 
     // Do various things baed upon the message type
     switch msg.GetDeviceType() {
 
         // Is this a simplecast message?
     case ttproto.Telecast_SOLARCAST:
-        cmdLocallyDisplaySafecastMessage(msg, snr)
+        go cmdLocallyDisplaySafecastMessage(msg, snr)
 
         // Are we simply forwarding a message originating from a nano?
     case ttproto.Telecast_BGEIGIE_NANO:
-        cmdLocallyDisplaySafecastMessage(msg, snr)
+        go cmdLocallyDisplaySafecastMessage(msg, snr)
 
         // If this is a ping request (indicated by null Message), then send that device back the same thing we received,
         // but WITH a message (so that we don't cause a ping storm among multiple ttgates with visibility to each other)
@@ -55,7 +55,7 @@ func cmdProcessReceivedTelecastMessage(msg *ttproto.Telecast, pb []byte, snr flo
 		// Process it
         if msg.Message == nil {
             msg.Message = proto.String("ping")
-            data, err := proto.Marshal(msg)
+            data, err := proto.Marshal(&msg)
             if err != nil {
                 fmt.Printf("marshaling error: ", err)
             }
@@ -75,7 +75,7 @@ func cmdProcessReceivedTelecastMessage(msg *ttproto.Telecast, pb []byte, snr flo
     }
 
     // Forward the message to the service [and delete the stuff from processreceivedsafecastmessage!]
-    cmdForwardMessageToTeletypeService(pb, snr)
+    go cmdForwardMessageToTeletypeService(pb, snr)
 
 }
 
