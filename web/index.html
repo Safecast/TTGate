@@ -26,19 +26,19 @@
                  tr = table.insertRow(-1);
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].minutes_ago;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].captured_local;
-                 cell = tr.insertCell(-1); cell.innerHTML = data[i].device_type;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].device_id;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].lat;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].lon;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].lnd7318u;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].lnd7318c;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].lnd7128ec;
-                 cell = tr.insertCell(-1); cell.innerHTML = data[i].lat;
-                 cell = tr.insertCell(-1); cell.innerHTML = data[i].lon;
-                 cell = tr.insertCell(-1); cell.innerHTML = data[i].alt;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].opc_pm02_5;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].pms_pm02_5;
+                 cell = tr.insertCell(-1); cell.innerHTML = data[i].lnd7128ec;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].bat_voltage;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].bat_soc;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].env_temp;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].env_humid;
-                 cell = tr.insertCell(-1); cell.innerHTML = data[i].env_press;
                  cell = tr.insertCell(-1); cell.innerHTML = data[i].snr;
              }
          }
@@ -47,20 +47,19 @@
         <table id="datatable" cellpadding="8" border="1">
             <tr>
                 <th>When</th>
-                <th>Captured</th>
-                <th>Type</th>
+                <th>Cap</th>
                 <th>ID</th>
+                <th>Lat</th>
+                <th>Lon</th>
                 <th>7318u</th>
                 <th>7318c</th>
                 <th>7128ec</th>
-                <th>Lat</th>
-                <th>Lon</th>
-                <th>Alt</th>
+                <th>OPC25</th
+                <th>PMS25</th
                 <th>Volts</th>
                 <th>SOC</th>
                 <th>Temp</th>
                 <th>Humid</th>
-                <th>Press</th>
                 <th>Sig</th>
             </tr>
         </table>
