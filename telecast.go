@@ -287,6 +287,19 @@ func isTeletypeServiceReachable() bool {
     return unreachableMinutes < 60
 }
 
+// Determine whether or not the service has been unreachable for a VERY long time,
+// in which case we should assume that the device is in a really bad state.  If this
+// is the case, we reboot.
+func isOfflineForExtendedPeriod() bool {
+    // Exit immediately if the service is known to be reachable
+    if serviceReachable {
+        return false
+    }
+    // Suppress the notion of "unreachable" until we have been offline for quite some time
+    unreachableMinutes := int64(time.Now().Sub(serviceFirstUnreachableAt) / time.Minute)
+    return unreachableMinutes > (60 * 6)
+}
+
 // Send stats to the service
 func cmdSendStatsToTeletypeService() {
 

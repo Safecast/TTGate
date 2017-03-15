@@ -133,6 +133,12 @@ func timer15m() {
         fmt.Printf("mem.HeapSys: %d -> %d\n", memBase.HeapSys, mem.HeapSys)
 		fmt.Printf("\n")
 
+		// Reboot the server if things get really borked
+		if isOfflineForExtendedPeriod() {
+	        fmt.Printf("Cannot reach service for many, many hours: rebooting device.\n");
+		    os.Exit(0)
+		}
+
     }
 }
 
