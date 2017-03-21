@@ -17,18 +17,18 @@ import (
 // Data structure maintained for devices from which we received data
 type SeenDevice struct {
     DeviceId           string    `json:"device_id"`
-    DeviceNo		   uint64    `json:"-"`
+    DeviceNo           uint64    `json:"-"`
     capturedAt         string    `json:"-"`
     captured           time.Time `json:"-"`
     CapturedAtLocal    string    `json:"captured_local"`
     MinutesAgoStr      string    `json:"minutes_ago"`
     minutesAgo         int64     `json:"-"`
     minutesApproxAgo   int64     `json:"-"`
-    Lnd_7318U          string	 `json:"lnd7318u"`
-    Lnd_7318C          string	 `json:"lnd7318c"`
-    Lnd_7128Ec         string	 `json:"lnd7128ec"`
-    BatVoltage		   string    `json:"bat_voltage"`
-    BatSoc			   string    `json:"bat_soc"`
+    Lnd_7318U          string    `json:"lnd7318u"`
+    Lnd_7318C          string    `json:"lnd7318c"`
+    Lnd_7128Ec         string    `json:"lnd7128ec"`
+    BatVoltage         string    `json:"bat_voltage"`
+    BatSoc             string    `json:"bat_soc"`
     BatCurrent         string    `json:"bat_current"`
     EnvTemp            string    `json:"env_temp"`
     EnvHumid           string    `json:"env_humid"`
@@ -98,7 +98,7 @@ func cmdLocallyDisplaySafecastMessage(msg ttproto.Telecast, snr float32) {
 
     // Extract essential info to be recorded
     if msg.DeviceId != nil {
-		dev.DeviceNo = uint64(msg.GetDeviceId())
+        dev.DeviceNo = uint64(msg.GetDeviceId())
         dev.DeviceId = strconv.FormatUint(dev.DeviceNo, 10)
     }
 
@@ -112,21 +112,21 @@ func cmdLocallyDisplaySafecastMessage(msg ttproto.Telecast, snr float32) {
 
     if msg.Lnd_7318U != nil {
         dev.Lnd_7318U = fmt.Sprintf("%dcpm", msg.GetLnd_7318U())
-	} else {
-		dev.Lnd_7318U = ""
-	}
+    } else {
+        dev.Lnd_7318U = ""
+    }
 
     if msg.Lnd_7318C != nil {
         dev.Lnd_7318C = fmt.Sprintf("%dcpm", msg.GetLnd_7318C())
-	} else {
-		dev.Lnd_7318C = ""
-	}
+    } else {
+        dev.Lnd_7318C = ""
+    }
 
     if msg.Lnd_7128Ec != nil {
         dev.Lnd_7128Ec = fmt.Sprintf("%dcpm", msg.GetLnd_7128Ec())
-	} else {
-		dev.Lnd_7128Ec = ""
-	}
+    } else {
+        dev.Lnd_7128Ec = ""
+    }
 
     if msg.BatSoc != nil {
         dev.BatSoc = fmt.Sprintf("%.2f%%", msg.GetBatSoc())
@@ -225,7 +225,12 @@ func cmdLocallyDisplaySafecastMessage(msg ttproto.Telecast, snr float32) {
         dev.OpcPm10_0 = ""
     }
 
-    dev.DeviceType = msg.GetDeviceType().String()
+    if msg.DeviceType == nil {
+        dev.DeviceType = "SOLARCAST"
+    } else {
+        dev.DeviceType = msg.GetDeviceType().String()
+    }
+
     if msg.Latitude != nil {
         dev.Latitude = fmt.Sprintf("%.2f", msg.GetLatitude())
     } else {
@@ -281,9 +286,9 @@ func cmdLocallyDisplaySafecastMessage(msg ttproto.Telecast, snr float32) {
                 dev.SNR = seenDevices[i].SNR
             }
 
-			// Update the entry
+            // Update the entry
             seenDevices[i] = dev
-			found = true;
+            found = true;
             break
         }
 
@@ -294,18 +299,18 @@ func cmdLocallyDisplaySafecastMessage(msg ttproto.Telecast, snr float32) {
     }
 
     // Display the received message on the Resin device console
-	str1 := "-"
-	str2 := "-"
-	str3 := "-"
-	if dev.Lnd_7318U != "" {
-		str1 = dev.Lnd_7318U
-	}
-	if dev.Lnd_7318C != "" {
-		str2 = dev.Lnd_7318C
-	}
-	if dev.Lnd_7128Ec != "" {
-		str3 = dev.Lnd_7128Ec
-	}
+    str1 := "-"
+    str2 := "-"
+    str3 := "-"
+    if dev.Lnd_7318U != "" {
+        str1 = dev.Lnd_7318U
+    }
+    if dev.Lnd_7318C != "" {
+        str2 = dev.Lnd_7318C
+    }
+    if dev.Lnd_7128Ec != "" {
+        str3 = dev.Lnd_7128Ec
+    }
     fmt.Printf("\n%s %s: %s %s %s\n\n", dev.CapturedAtLocal, dev.DeviceId, str1, str2, str3)
 
 }
@@ -317,15 +322,15 @@ func GetSafecastDevicesString() string {
     sortedDevices := seenDevices
 
     // Zip through the list, updating how many minutes it was captured ago
-	s := ""
+    s := ""
     for i := 0; i < len(sortedDevices); i++ {
-		if s != "" {
-			s += ","
-		}
-		s += fmt.Sprintf("%d", sortedDevices[i].DeviceNo)
-	}
+        if s != "" {
+            s += ","
+        }
+        s += fmt.Sprintf("%d", sortedDevices[i].DeviceNo)
+    }
 
-	return s
+    return s
 }
 
 // Get the device data sorted and classified in a way useful in local web browser
