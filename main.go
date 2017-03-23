@@ -25,7 +25,7 @@ var DebugStatusUpdate = false
 func main() {
 
 	// Welcome
-    fmt.Printf("\nLora Gateway\n")
+    fmt.Printf("\nLora Gateway!\n")
 
 	// Debug flags
 	s := os.Getenv("DEBUG_FAILOVER")
