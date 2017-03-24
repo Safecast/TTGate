@@ -286,13 +286,22 @@ func SentPendingOutbound() bool {
     if len(outboundQueue) != 0 {
 
         for ocmd := range outboundQueue {
+
+			// Convert it to the new-format protocol buffer
+			header := []byte{BUFF_FORMAT_PB_ARRAY, 1}
+			header = append(header, byte(len(ocmd.Command)))
+			command := append(header, ocmd.Command...)
+
+			// Convert it to a hex commnd
             outbuf := []byte("radio tx ")
-            for _, databyte := range ocmd.Command {
+            for _, databyte := range command {
                 loChar := hexchar[(databyte & 0x0f)]
                 hiChar := hexchar[((databyte >> 4) & 0x0f)]
                 outbuf = append(outbuf, hiChar)
                 outbuf = append(outbuf, loChar)
             }
+
+			// Send it
             ioSendCommand(outbuf)
             cmdBusyReset()
             cmdSetState(CMD_STATE_LPWAN_TXRPL1)
