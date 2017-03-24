@@ -73,6 +73,7 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
 
             // Is this a simplecast message?
         case ttproto.Telecast_UNKNOWN_DEVICE_TYPE:
+			fallthrough
         case ttproto.Telecast_SOLARCAST:
             cmdForwardMessageToTeletypeService(pb, snr)
             go cmdLocallyDisplaySafecastMessage(msg, snr)
