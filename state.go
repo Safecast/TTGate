@@ -16,6 +16,12 @@ import (
     "github.com/safecast/ttproto/golang"
 )
 
+// Buffered I/O header formats coordinated with TTNODE.  Note that although we are now starting
+// with version number 0, we special-case version number 8 because of the old style "single protocl buffer"
+// message format that always begins with 0x08. (see ttnode/send.c)
+const BUFF_FORMAT_PB_ARRAY byte  =  0
+const BUFF_FORMAT_SINGLE_PB byte =  8
+
 // Command processing states
 const (
     CMD_STATE_IDLE = iota
@@ -304,7 +310,7 @@ func SentPendingOutbound() bool {
 func cmdProcessReceived(hex []byte, snr float32) {
 
     // Convert received message from hex to binary
-    bin := make([]byte, len(hex)/2)
+    buf := make([]byte, len(hex)/2)
     for i := 0; i < len(hex)/2; i++ {
 
         var hinibble, lonibble byte
@@ -331,17 +337,55 @@ func cmdProcessReceived(hex []byte, snr float32) {
             lonibble = 0
         }
 
-        bin[i] = (hinibble << 4) | lonibble
+        buf[i] = (hinibble << 4) | lonibble
 
     }
 
-    // Unpack the received message which is a protocol buffer
-    msg := &ttproto.Telecast{}
-    err := proto.Unmarshal(bin, msg)
-    if err != nil {
-		fmt.Printf("*** message not recognized - likely a LoRaWAN transmission ***\n");
-        return
-    }
+	// Make sure that we understand the format of the message.
+	msg := &ttproto.Telecast{}
+    buf_format := buf[0]
+    switch (buf_format) {
+
+    case BUFF_FORMAT_SINGLE_PB: {
+		
+	    // Unpack the received message which is a protocol buffer
+	    err := proto.Unmarshal(buf, msg)
+	    if err != nil {
+			fmt.Printf("*** message not recognized - likely a LoRaWAN transmission ***\n");
+	        return
+	    }
+
+		// Output a debug message, because this should no longer be being received
+		fmt.Printf("*** WARNING: OLD FORMAT PROTOCOL BUFFER: %d\n", msg.GetDeviceId())
+	}
+		
+    case BUFF_FORMAT_PB_ARRAY: {
+        count := int(buf[1])
+        lengthArrayOffset := 2
+        payloadOffset := lengthArrayOffset + count
+
+		// For now, we only support single-PB messages.  If we need to support more,
+		// this will be trivial because we can just transmit the msg as-is while just
+		// iterating over it to extract data to be displayed on local HDMI monitor.
+		if (count != 1) {
+			fmt.Printf("*** ERROR: FOR NOW WE ONLY SUPPORT 1-MESSAGE PAYLOADS\n");
+			return
+		}
+		i := 0
+		
+        // Extract the length
+        length := int(buf[lengthArrayOffset+i])
+
+        // Unmarshal payload
+        payload := buf[payloadOffset:payloadOffset+length]
+        err := proto.Unmarshal(payload, msg)
+        if err != nil {
+			fmt.Printf("*** message not recognized - likely a LoRaWAN transmission ***\n");
+	        return
+        }
+
+	}
+	}
 
     // Remember the Device ID number of the last received message, for failover purposes
     if (msg.DeviceId != nil) {
@@ -349,7 +393,7 @@ func cmdProcessReceived(hex []byte, snr float32) {
     }
 
     // Process it as a Telecast message
-    cmdProcessReceivedTelecastMessage(*msg, bin, snr)
+    cmdProcessReceivedTelecastMessage(*msg, buf, snr)
 
 }
 
