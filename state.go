@@ -356,7 +356,7 @@ func cmdProcessReceived(hex []byte, snr float32) {
 	    }
 
 		// Output a debug message, because this should no longer be being received
-		fmt.Printf("*** WARNING: OLD FORMAT PROTOCOL BUFFER: %d\n", msg.GetDeviceId())
+		fmt.Printf("*** WARNING: OLD WIRE FORMAT: %d\n", msg.GetDeviceId())
 	}
 		
     case BUFF_FORMAT_PB_ARRAY: {
