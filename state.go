@@ -359,7 +359,7 @@ func cmdProcessReceived(hex []byte, snr float32) {
     msg := &ttproto.Telecast{}
     buf_format := buf[0]
     switch (buf_format) {
-
+		
     case BUFF_FORMAT_PB_ARRAY: {
         count := int(buf[1])
         lengthArrayOffset := 2
@@ -386,6 +386,11 @@ func cmdProcessReceived(hex []byte, snr float32) {
         }
 
     }
+
+	default: {
+        fmt.Printf("*** Unrecognized message type (could be a LoRaWAN transmission)\n")
+		return
+	}
     }
 
     // Remember the Device ID number of the last received message, for failover purposes
