@@ -369,7 +369,7 @@ func cmdProcessReceived(hex []byte, snr float32) {
         // this will be trivial because we can just transmit the msg as-is while just
         // iterating over it to extract data to be displayed on local HDMI monitor.
         if (count != 1) {
-            fmt.Printf("*** ERROR: FOR NOW WE ONLY SUPPORT 1-MESSAGE PAYLOADS\n");
+            fmt.Printf("*** Unrecognized message type (could be a LoRaWAN transmission)\n")
             return
         }
         i := 0
@@ -381,7 +381,7 @@ func cmdProcessReceived(hex []byte, snr float32) {
         payload := buf[payloadOffset:payloadOffset+length]
         err := proto.Unmarshal(payload, msg)
         if err != nil {
-            fmt.Printf("*** message not recognized - likely a LoRaWAN transmission ***\n");
+            fmt.Printf("*** Unrecognized message type (could be a LoRaWAN transmission)\n")
             return
         }
 
