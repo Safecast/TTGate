@@ -100,7 +100,7 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
                 }
                 // Importantly, sleep for a couple seconds to give the (slow) receiver a chance to get into receive mode
                 time.Sleep(2 * time.Second)
-                cmdEnqueueOutbound(data)
+                cmdEnqueueOutboundPb(data)
                 fmt.Printf("Sent pingback to device %d\n", msg.GetDeviceId())
                 return
             }
@@ -226,7 +226,7 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
             if payloadstr != "" {
                 payload, err := hex.DecodeString(payloadstr)
                 if err == nil {
-                    cmdEnqueueOutbound(payload)
+                    cmdEnqueueOutboundPayload(payload)
                     fmt.Printf("Sent reply: %s\n", payloadstr)
                 } else {
                     fmt.Printf("Error %v: %s\n", err, payloadstr)

@@ -6,12 +6,12 @@
 package main
 
 import (
-	"os"
+    "os"
     "bytes"
     "fmt"
     "strconv"
     "time"
-	"strings"
+    "strings"
     "github.com/golang/protobuf/proto"
     "github.com/safecast/ttproto/golang"
 )
@@ -34,8 +34,8 @@ const (
     CMD_STATE_LPWAN_TXRPL1
     CMD_STATE_LPWAN_TXRPL2
     CMD_STATE_LPWAN_SNRRPL
-	CMD_STATE_LPWAN_SENDFQRPL
-	CMD_STATE_LPWAN_GETEUIRPL
+    CMD_STATE_LPWAN_SENDFQRPL
+    CMD_STATE_LPWAN_GETEUIRPL
 )
 
 // Constants
@@ -53,7 +53,7 @@ var lorafpRegionCommandNumber int
 
 // Get the unique gateway device ID
 func cmdGetGatewayID() string {
-	return hweui
+    return hweui
 }
 
 // Set the current state of the state machine
@@ -100,8 +100,8 @@ func cmdProcess(cmd []byte) {
         cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
 
     case CMD_STATE_LPWAN_GETVERRPL:
-		Region = os.Getenv("REGION")
-		lorafpRegionCommandNumber = 0
+        Region = os.Getenv("REGION")
+        lorafpRegionCommandNumber = 0
         time.Sleep(4 * time.Second)
         if (!bytes.HasPrefix(cmd, []byte("RN2483"))) && (!bytes.HasPrefix(cmd, []byte("RN2903"))) {
             ioSendCommandString("sys get ver")
@@ -130,28 +130,28 @@ func cmdProcess(cmd []byte) {
             if err != nil || i64 < 100000 {
                 fmt.Printf("Bad response from mac pause: %s\n", cmdstr)
             } else {
-		        ioSendCommandString("sys get hweui")
-		        cmdSetState(CMD_STATE_LPWAN_GETEUIRPL)
+                ioSendCommandString("sys get hweui")
+                cmdSetState(CMD_STATE_LPWAN_GETEUIRPL)
             }
         }
 
 
     case CMD_STATE_LPWAN_GETEUIRPL:
-		hweui = cmdstr
+        hweui = cmdstr
         ioSendCommandString("radio set wdt 60000")
         cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
 
     case CMD_STATE_LPWAN_SETWDTRPL:
         time.Sleep(100 * time.Millisecond)
-		isCommand, theCommand := lorafp_get_command(lorafpRegionCommandNumber)
-		if (isCommand) {
-			lorafpRegionCommandNumber++;
-			ioSendCommandString(theCommand)
+        isCommand, theCommand := lorafp_get_command(lorafpRegionCommandNumber)
+        if (isCommand) {
+            lorafpRegionCommandNumber++;
+            ioSendCommandString(theCommand)
             cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
-			break;
-		}
-		fallthrough
-	case CMD_STATE_LPWAN_SENDFQRPL:
+            break;
+        }
+        fallthrough
+    case CMD_STATE_LPWAN_SENDFQRPL:
         // Allow the LPWAN to settle after init
         time.Sleep(4 * time.Second)
         // The init sequence is over, so begin a receive
@@ -250,8 +250,21 @@ func cmdProcess(cmd []byte) {
 
 }
 
-// Enqueue an outbound message (from any goroutine)
-func cmdEnqueueOutbound(cmd []byte) {
+// Enqueue an outbound ttproto message
+func cmdEnqueueOutboundPb(cmd []byte) {
+
+    // Convert it to the new-format protocol buffer
+    header := []byte{BUFF_FORMAT_PB_ARRAY, 1}
+    header = append(header, byte(len(cmd)))
+    command := append(header, cmd...)
+
+	// Enqueue it
+	cmdEnqueueOutboundPayload(command)
+	
+}
+
+// Enqueue an outbound message that already has a PB_ARRAY header
+func cmdEnqueueOutboundPayload(cmd []byte) {
     var ocmd OutboundCommand
     ocmd.Command = cmd
     outboundQueue <- ocmd
@@ -275,7 +288,7 @@ func SentPendingOutbound() bool {
         data, err := proto.Marshal(msg)
         if err == nil {
             // This will be dequeued below
-            cmdEnqueueOutbound(data)
+            cmdEnqueueOutboundPb(data)
         }
         // Nullify so that we don't send the message more than once
         deviceToNotifyIfServiceDown = 0
@@ -287,21 +300,16 @@ func SentPendingOutbound() bool {
 
         for ocmd := range outboundQueue {
 
-			// Convert it to the new-format protocol buffer
-			header := []byte{BUFF_FORMAT_PB_ARRAY, 1}
-			header = append(header, byte(len(ocmd.Command)))
-			command := append(header, ocmd.Command...)
-
-			// Convert it to a hex commnd
+            // Convert it to a hex commnd
             outbuf := []byte("radio tx ")
-            for _, databyte := range command {
+            for _, databyte := range ocmd.Command {
                 loChar := hexchar[(databyte & 0x0f)]
                 hiChar := hexchar[((databyte >> 4) & 0x0f)]
                 outbuf = append(outbuf, hiChar)
                 outbuf = append(outbuf, loChar)
             }
 
-			// Send it
+            // Send it
             ioSendCommand(outbuf)
             cmdBusyReset()
             cmdSetState(CMD_STATE_LPWAN_TXRPL1)
@@ -350,38 +358,38 @@ func cmdProcessReceived(hex []byte, snr float32) {
 
     }
 
-	// Make sure that we understand the format of the message.
-	msg := &ttproto.Telecast{}
+    // Make sure that we understand the format of the message.
+    msg := &ttproto.Telecast{}
     buf_format := buf[0]
     switch (buf_format) {
 
     case BUFF_FORMAT_SINGLE_PB: {
-		
-	    // Unpack the received message which is a protocol buffer
-	    err := proto.Unmarshal(buf, msg)
-	    if err != nil {
-			fmt.Printf("*** message not recognized - likely a LoRaWAN transmission ***\n");
-	        return
-	    }
 
-		// Output a debug message, because this should no longer be being received
-		fmt.Printf("*** WARNING: OLD WIRE FORMAT: %d\n", msg.GetDeviceId())
-	}
-		
+        // Unpack the received message which is a protocol buffer
+        err := proto.Unmarshal(buf, msg)
+        if err != nil {
+            fmt.Printf("*** message not recognized - likely a LoRaWAN transmission ***\n");
+            return
+        }
+
+        // Output a debug message, because this should no longer be being received
+        fmt.Printf("*** WARNING: OLD WIRE FORMAT: %d\n", msg.GetDeviceId())
+    }
+
     case BUFF_FORMAT_PB_ARRAY: {
         count := int(buf[1])
         lengthArrayOffset := 2
         payloadOffset := lengthArrayOffset + count
 
-		// For now, we only support single-PB messages.  If we need to support more,
-		// this will be trivial because we can just transmit the msg as-is while just
-		// iterating over it to extract data to be displayed on local HDMI monitor.
-		if (count != 1) {
-			fmt.Printf("*** ERROR: FOR NOW WE ONLY SUPPORT 1-MESSAGE PAYLOADS\n");
-			return
-		}
-		i := 0
-		
+        // For now, we only support single-PB messages.  If we need to support more,
+        // this will be trivial because we can just transmit the msg as-is while just
+        // iterating over it to extract data to be displayed on local HDMI monitor.
+        if (count != 1) {
+            fmt.Printf("*** ERROR: FOR NOW WE ONLY SUPPORT 1-MESSAGE PAYLOADS\n");
+            return
+        }
+        i := 0
+
         // Extract the length
         length := int(buf[lengthArrayOffset+i])
 
@@ -389,12 +397,12 @@ func cmdProcessReceived(hex []byte, snr float32) {
         payload := buf[payloadOffset:payloadOffset+length]
         err := proto.Unmarshal(payload, msg)
         if err != nil {
-			fmt.Printf("*** message not recognized - likely a LoRaWAN transmission ***\n");
-	        return
+            fmt.Printf("*** message not recognized - likely a LoRaWAN transmission ***\n");
+            return
         }
 
-	}
-	}
+    }
+    }
 
     // Remember the Device ID number of the last received message, for failover purposes
     if (msg.DeviceId != nil) {
