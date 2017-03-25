@@ -16,11 +16,8 @@ import (
     "github.com/safecast/ttproto/golang"
 )
 
-// Buffered I/O header formats coordinated with TTNODE.  Note that although we are now starting
-// with version number 0, we special-case version number 8 because of the old style "single protocl buffer"
-// message format that always begins with 0x08. (see ttnode/send.c)
+// Payload buffer format
 const BUFF_FORMAT_PB_ARRAY byte  =  0
-const BUFF_FORMAT_SINGLE_PB byte =  8
 
 // Command processing states
 const (
@@ -362,19 +359,6 @@ func cmdProcessReceived(hex []byte, snr float32) {
     msg := &ttproto.Telecast{}
     buf_format := buf[0]
     switch (buf_format) {
-
-    case BUFF_FORMAT_SINGLE_PB: {
-
-        // Unpack the received message which is a protocol buffer
-        err := proto.Unmarshal(buf, msg)
-        if err != nil {
-            fmt.Printf("*** message not recognized - likely a LoRaWAN transmission ***\n");
-            return
-        }
-
-        // Output a debug message, because this should no longer be being received
-        fmt.Printf("*** WARNING: OLD WIRE FORMAT: %d\n", msg.GetDeviceId())
-    }
 
     case BUFF_FORMAT_PB_ARRAY: {
         count := int(buf[1])
