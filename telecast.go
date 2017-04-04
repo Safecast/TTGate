@@ -64,7 +64,7 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
     if msg.DeviceType == nil {
 
 		// Solarcast
-        cmdForwardMessageToTeletypeService(pb, snr)
+        go cmdForwardMessageToTeletypeService(pb, snr)
         go cmdLocallyDisplaySafecastMessage(msg, snr)
 
     } else {
@@ -75,12 +75,12 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
         case ttproto.Telecast_UNKNOWN_DEVICE_TYPE:
 			fallthrough
         case ttproto.Telecast_SOLARCAST:
-            cmdForwardMessageToTeletypeService(pb, snr)
+            go cmdForwardMessageToTeletypeService(pb, snr)
             go cmdLocallyDisplaySafecastMessage(msg, snr)
 
             // Are we simply forwarding a message originating from a nano?
         case ttproto.Telecast_BGEIGIE_NANO:
-            cmdForwardMessageToTeletypeService(pb, snr)
+            go cmdForwardMessageToTeletypeService(pb, snr)
             go cmdLocallyDisplaySafecastMessage(msg, snr)
 
             // If this is a ping request (indicated by null Message), then send that device back the same thing we received,
@@ -106,7 +106,7 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
             }
 
             // Forward the message to the service
-            cmdForwardMessageToTeletypeService(pb, snr)
+            go cmdForwardMessageToTeletypeService(pb, snr)
 
             // If it's a non-Safecast device, just display what we received
         default:
