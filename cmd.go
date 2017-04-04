@@ -70,9 +70,9 @@ func cmd1mWatchdog() {
 	switch watchdog1mCount {
 	case 1:
 	case 2:
-		fmt.Printf("*** cmdStateChangeWatchdog: Warning!\n")
+		go fmt.Printf("*** cmdStateChangeWatchdog: Warning!\n")
 	case 3:
-		fmt.Printf("*** cmdStateChangeWatchdog: Reinitializing!\n")
+		go fmt.Printf("*** cmdStateChangeWatchdog: Reinitializing!\n")
 		cmdReinit()
 	}
 

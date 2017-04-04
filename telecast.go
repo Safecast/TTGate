@@ -44,12 +44,12 @@ func UpdateTargetIP() {
     // and determine if WE are the server for those protocols
     addrs, err := net.LookupHost(TTUploadAddress)
     if err != nil {
-        fmt.Printf("Can't resolve %s: %v\n", TTUploadAddress, err);
+        go fmt.Printf("Can't resolve %s: %v\n", TTUploadAddress, err);
         TTUploadIP = TTUploadAddress
         return
     }
     if len(addrs) < 1 {
-        fmt.Printf("Can't resolve %s: %v\n", TTUploadAddress, err);
+        go fmt.Printf("Can't resolve %s: %v\n", TTUploadAddress, err);
         TTUploadIP = TTUploadAddress
         return
     }
@@ -96,12 +96,12 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
                 msg.Message = proto.String("ping")
                 data, err := proto.Marshal(&msg)
                 if err != nil {
-                    fmt.Printf("marshaling error: ", err)
+                    go fmt.Printf("marshaling error: ", err)
                 }
                 // Importantly, sleep for a couple seconds to give the (slow) receiver a chance to get into receive mode
                 time.Sleep(2 * time.Second)
                 cmdEnqueueOutboundPb(data)
-                fmt.Printf("Sent pingback to device %d\n", msg.GetDeviceId())
+                go fmt.Printf("Sent pingback to device %d\n", msg.GetDeviceId())
                 return
             }
 
@@ -111,7 +111,7 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
             // If it's a non-Safecast device, just display what we received
         default:
             if msg.DeviceId != nil {
-                fmt.Printf("Received Msg from Device %d: '%s'\n", msg.GetDeviceId(), msg.GetMessage())
+                go fmt.Printf("Received Msg from Device %d: '%s'\n", msg.GetDeviceId(), msg.GetMessage())
             }
 
         }
@@ -145,7 +145,7 @@ func GetIPInfo() (bool, string, IPInfoData) {
             }
         }
 
-        fmt.Printf("IPInfo failure: %s\n", err)
+        go fmt.Printf("IPInfo failure: %s\n", err)
 
     }
 
@@ -215,10 +215,10 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
     resp, err := httpclient.Do(req)
     if err != nil {
         setTeletypeServiceReachability(false)
-        fmt.Printf("*** Error uploading to %s %s\n\n", UploadURL, err)
+        go fmt.Printf("*** Error uploading to %s %s\n\n", UploadURL, err)
     } else {
         transaction_seconds := int64(time.Now().Sub(transaction_start) / time.Second)
-        fmt.Printf("Upload to %s took %ds\n", UploadURL, transaction_seconds)
+        go fmt.Printf("Upload to %s took %ds\n", UploadURL, transaction_seconds)
         setTeletypeServiceReachability(true)
         contents, err := ioutil.ReadAll(resp.Body)
         if err == nil {
@@ -227,9 +227,9 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
                 payload, err := hex.DecodeString(payloadstr)
                 if err == nil {
                     cmdEnqueueOutboundPayload(payload)
-                    fmt.Printf("Sent reply: %s\n", payloadstr)
+                    go fmt.Printf("Sent reply: %s\n", payloadstr)
                 } else {
-                    fmt.Printf("Error %v: %s\n", err, payloadstr)
+                    go fmt.Printf("Error %v: %s\n", err, payloadstr)
                 }
             }
         }
@@ -242,17 +242,17 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 
         ServerAddr, err := net.ResolveUDPAddr("udp", "tt.safecast.org:8081")
         if err != nil {
-            fmt.Printf("*** Error resolving UDP address: %v\n", err)
+            go fmt.Printf("*** Error resolving UDP address: %v\n", err)
         } else {
 
             Conn, err := net.DialUDP("udp", nil, ServerAddr)
             if err != nil {
-                fmt.Printf("*** Error dialing UDP: %v\n", err)
+                go fmt.Printf("*** Error dialing UDP: %v\n", err)
             } else {
 
                 _, err := Conn.Write(pb)
                 if err != nil {
-                    fmt.Printf("*** Error writing UDP: %v\n", err)
+                    go fmt.Printf("*** Error writing UDP: %v\n", err)
                 }
 
                 Conn.Close()
@@ -267,14 +267,14 @@ func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
 // Set the teletype service as known-reachable or known-unreachable
 func setTeletypeServiceReachability(isReachable bool) {
     if (!serviceReachable && isReachable) {
-        fmt.Printf("*** TTSERVE is now reachable\n");
+        go fmt.Printf("*** TTSERVE is now reachable\n");
     } else if (serviceReachable && !isReachable) {
-        fmt.Printf("*** TTSERVE is now unreachable\n");
+        go fmt.Printf("*** TTSERVE is now unreachable\n");
         serviceFirstUnreachableAt = time.Now()
     } else if (!serviceReachable && !isReachable) {
         t := time.Now()
         unreachableForMinutes := int64(t.Sub(serviceFirstUnreachableAt) / time.Minute)
-        fmt.Printf("*** TTSERVE has been unreachable for %d minutes\n", unreachableForMinutes);
+        go fmt.Printf("*** TTSERVE has been unreachable for %d minutes\n", unreachableForMinutes);
     }
     serviceReachable = isReachable
 }

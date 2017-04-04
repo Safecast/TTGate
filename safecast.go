@@ -311,7 +311,7 @@ func cmdLocallyDisplaySafecastMessage(msg ttproto.Telecast, snr float32) {
     if dev.Lnd_7128Ec != "" {
         str3 = dev.Lnd_7128Ec
     }
-    fmt.Printf("\n%s %s: %s %s %s\n\n", dev.CapturedAtLocal, dev.DeviceId, str1, str2, str3)
+    go fmt.Printf("\n%s %s: %s %s %s\n\n", dev.CapturedAtLocal, dev.DeviceId, str1, str2, str3)
 
 }
 

@@ -46,7 +46,7 @@ func ioInit() {
     // Open the serial port
     s, err := serial.OpenPort(&serial.Config{Name: port, Baud: speed})
     if err != nil {
-        fmt.Printf("Cannot open %s\n", port)
+        go fmt.Printf("Cannot open %s\n", port)
         return
     }
     serialPort = s
@@ -74,7 +74,7 @@ func ioInitMicrochip() {
     if !rpioIsOpen {
         err := rpio.Open()
         if err != nil {
-            fmt.Printf("ioInitMicrochip: err %v\n", err)
+            go fmt.Printf("ioInitMicrochip: err %v\n", err)
             return
         }
         rpioIsOpen = true
@@ -91,7 +91,7 @@ func ioInitMicrochip() {
     pin.High()
     time.Sleep(5 * time.Second)
 
-    fmt.Printf("\nLPWAN Hardware Reset\n\n")
+    go fmt.Printf("\nLPWAN Hardware Reset\n\n")
 
 }
 
@@ -120,7 +120,7 @@ func InboundMain() {
         n, err := serialPort.Read(thisbuf)
         if err != nil {
             if err != io.EOF {
-                fmt.Printf("serial: read error %v\n", err)
+                go fmt.Printf("serial: read error %v\n", err)
             }
 
         } else {
@@ -131,7 +131,7 @@ func InboundMain() {
             if n != 0 && n != bufsize {
 
                 if verboseDebug {
-                    fmt.Printf("read(%d): '%s'\n% 02x\n", n, thisbuf[:n], thisbuf[:n])
+                    go fmt.Printf("read(%d): '%s'\n% 02x\n", n, thisbuf[:n], thisbuf[:n])
                 }
 
                 // If we've been asked to flush the data because this is the first
@@ -199,7 +199,7 @@ func ProcessInbound(buf []byte) []byte {
 
     // Return the unprocessed portion of the buffer for next time
     if verboseDebug && replyWatchdogEnabled {
-        fmt.Printf("Unprocessed: '%s' -> '%s'\n", buf, buf[begin:])
+        go fmt.Printf("Unprocessed: '%s' -> '%s'\n", buf, buf[begin:])
     }
 
     return (buf[begin:])
@@ -218,7 +218,7 @@ func io5sWatchdog() {
     if replyWatchdogEnabled {
         replyWatchdogTickCount = replyWatchdogTickCount + 1
         if (replyWatchdogTickCount >= 5) {
-            fmt.Printf("*** ioReplyWatchdog: no cmd reply!\n")
+            go fmt.Printf("*** ioReplyWatchdog: no cmd reply!\n")
             // Exit, which will cause our
             // shell script to restart the container.  This is a failsafe
             // to ensure that any Linux-level process usage (such as bugs in
@@ -239,13 +239,13 @@ func ioSendCommandString(cmd string) {
 // Send bytes to the serial port as a full newline-delimited command
 func ioSendCommand(cmd []byte) {
 
-    fmt.Printf("send(%s)\n", cmd)
+    go fmt.Printf("send(%s)\n", cmd)
 
     // Write this, appending newline
     if (serialInitCompleted) {
         _, err := serialPort.Write(bytes.Join([][]byte{cmd, []byte("")}, []byte("\r\n")))
         if err != nil {
-            fmt.Printf("write err: %d", err)
+            go fmt.Printf("write err: %d", err)
         }
     }
 

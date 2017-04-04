@@ -25,7 +25,7 @@ var DebugStatusUpdate = false
 func main() {
 
 	// Welcome
-    fmt.Printf("\nLora Gateway\n")
+    go fmt.Printf("\nLora Gateway\n")
 
 	// Debug flags
 	s := os.Getenv("DEBUG_FAILOVER")
@@ -115,27 +115,27 @@ func timer15m() {
 			runtime.ReadMemStats(&memBase)
 		}
 		
-		fmt.Printf("\n")
+		go fmt.Printf("\n")
 
         // Print stats
         t := time.Now()
         hoursAgo :=  int64(t.Sub(bootedAt) / time.Hour)
         minutesAgo := int64(t.Sub(bootedAt) / time.Minute) - (hoursAgo * 60)
-        fmt.Printf("STATS: %d received in the last %dh %dm\n", cmdGetStats(), hoursAgo, minutesAgo)
-		fmt.Printf("\n")
+        go fmt.Printf("STATS: %d received in the last %dh %dm\n", cmdGetStats(), hoursAgo, minutesAgo)
+		go fmt.Printf("\n")
 
         // Print resource usage, just as an FYI
         var mem runtime.MemStats
         runtime.ReadMemStats(&mem)
-        fmt.Printf("mem.Alloc: %d -> %d\n", memBase.Alloc, mem.Alloc)
-        fmt.Printf("mem.HeapAlloc: %d -> %d\n", memBase.HeapAlloc, mem.HeapAlloc)
-        fmt.Printf("mem.HeapObjects: %d -> %d\n", memBase.HeapObjects, mem.HeapObjects)
-        fmt.Printf("mem.HeapSys: %d -> %d\n", memBase.HeapSys, mem.HeapSys)
-		fmt.Printf("\n")
+        go fmt.Printf("mem.Alloc: %d -> %d\n", memBase.Alloc, mem.Alloc)
+        go fmt.Printf("mem.HeapAlloc: %d -> %d\n", memBase.HeapAlloc, mem.HeapAlloc)
+        go fmt.Printf("mem.HeapObjects: %d -> %d\n", memBase.HeapObjects, mem.HeapObjects)
+        go fmt.Printf("mem.HeapSys: %d -> %d\n", memBase.HeapSys, mem.HeapSys)
+		go fmt.Printf("\n")
 
 		// Reboot the server if things get really borked
 		if isOfflineForExtendedPeriod() {
-	        fmt.Printf("Cannot reach service for many, many hours: rebooting device.\n");
+	        go fmt.Printf("Cannot reach service for many, many hours: rebooting device.\n");
 		    os.Exit(0)
 		}
 

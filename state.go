@@ -84,7 +84,7 @@ func cmdProcess(cmd []byte) {
     }
 
     // State dispatcher
-    fmt.Printf("recv(%s)\n", cmdstr)
+    go fmt.Printf("recv(%s)\n", cmdstr)
     switch currentState {
 
         ////
@@ -125,7 +125,7 @@ func cmdProcess(cmd []byte) {
         } else {
             i64, err := strconv.ParseInt(cmdstr, 10, 64)
             if err != nil || i64 < 100000 {
-                fmt.Printf("Bad response from mac pause: %s\n", cmdstr)
+                go fmt.Printf("Bad response from mac pause: %s\n", cmdstr)
             } else {
                 ioSendCommandString("sys get hweui")
                 cmdSetState(CMD_STATE_LPWAN_GETEUIRPL)
@@ -193,7 +193,7 @@ func cmdProcess(cmd []byte) {
             // Totally unknown error, but since we cannot just
             // leave things in a state without a pending receive,
             // we need to just restart the world.
-            fmt.Printf("LPWAN rcv error\n")
+            go fmt.Printf("LPWAN rcv error\n")
             cmdReinit()
         }
 
@@ -228,7 +228,7 @@ func cmdProcess(cmd []byte) {
             // reset the world if too many consecutive busy errors
             cmdBusy()
         } else {
-            fmt.Printf("LPWAN xmt1 error\n")
+            go fmt.Printf("LPWAN xmt1 error\n")
             RestartReceive()
         }
 
@@ -239,7 +239,7 @@ func cmdProcess(cmd []byte) {
                 RestartReceive()
             }
         } else {
-            fmt.Printf("LPWAN xmt2 error\n")
+            go fmt.Printf("LPWAN xmt2 error\n")
             RestartReceive()
         }
 
@@ -369,7 +369,7 @@ func cmdProcessReceived(hex []byte, snr float32) {
         // this will be trivial because we can just transmit the msg as-is while just
         // iterating over it to extract data to be displayed on local HDMI monitor.
         if (count != 1) {
-            fmt.Printf("*** Unrecognized message type (could be a LoRaWAN transmission)\n")
+            go fmt.Printf("*** Unrecognized message type (could be a LoRaWAN transmission)\n")
             return
         }
         i := 0
@@ -381,14 +381,14 @@ func cmdProcessReceived(hex []byte, snr float32) {
         payload := buf[payloadOffset:payloadOffset+length]
         err := proto.Unmarshal(payload, msg)
         if err != nil {
-            fmt.Printf("*** Unrecognized message type (could be a LoRaWAN transmission)\n")
+            go fmt.Printf("*** Unrecognized message type (could be a LoRaWAN transmission)\n")
             return
         }
 
     }
 
 	default: {
-        fmt.Printf("*** Unrecognized message type (could be a LoRaWAN transmission)\n")
+        go fmt.Printf("*** Unrecognized message type (could be a LoRaWAN transmission)\n")
 		return
 	}
     }
