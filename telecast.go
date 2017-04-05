@@ -123,7 +123,6 @@ func GetIPInfo() (bool, string, IPInfoData) {
 
     // If already avail, return it
     if ipInfoString != "" {
-		fmt.Printf("Return cached %s %s\n", ipInfoString, ipInfoData)
         return true, ipInfoString, ipInfoData
     }
 
@@ -133,19 +132,15 @@ func GetIPInfo() (bool, string, IPInfoData) {
         FetchedIPInfo = true
 
         response, err := http.Get("http://ip-api.com/json/")
-		fmt.Printf("IPInfo Get yields %s %s\n", response, err)
         if err == nil {
             defer response.Body.Close()
             contents, err := ioutil.ReadAll(response.Body)
-			fmt.Printf("ReadAll yields %s %s\n", contents, err)
             if err == nil {
                 ipInfoString = string(contents)
                 err = json.Unmarshal(contents, &ipInfoData)
-				fmt.Printf("Unmarshal  yields %s %s\n", ipInfoData, err)
                 if err != nil {
                     ipInfoData = IPInfoData{}
                 }
-				fmt.Printf("Return %s %s\n", ipInfoString, ipInfoData)
                 return true, ipInfoString, ipInfoData
             }
         }
@@ -334,8 +329,6 @@ func cmdSendStatsToTeletypeService() {
 
     // IPInfo
     _, _, msg.IPInfo = GetIPInfo()
-	// ozzie
-	fmt.Printf("IPInfo: %s\n", msg.IPInfo)
 	
     // Stats
     msg.MessagesReceived = cmdGetStats()
@@ -343,8 +336,6 @@ func cmdSendStatsToTeletypeService() {
 
     // Send it
     msgJSON, _ := json.Marshal(msg)
-	// ozzie
-	fmt.Printf("POSTING:\n%s\n%s\n", msg, msgJSON)
     req, err := http.NewRequest("POST", TTStatsURL, bytes.NewBuffer(msgJSON))
     req.Header.Set("User-Agent", "TTGATE")
     req.Header.Set("Content-Type", "application/json")
