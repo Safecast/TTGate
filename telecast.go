@@ -334,6 +334,9 @@ func cmdSendStatsToTeletypeService() {
     msg.MessagesReceived = cmdGetStats()
     msg.DevicesSeen = GetSafecastDevicesString()
 
+	// Debug
+	go fmt.Printf("Sending stats update to service\n")
+
     // Send it
     msgJSON, _ := json.Marshal(msg)
     req, err := http.NewRequest("POST", TTStatsURL, bytes.NewBuffer(msgJSON))
