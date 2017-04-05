@@ -362,6 +362,7 @@ func cmdSendStatsToTeletypeService() {
     }
     resp, err := httpclient.Do(req)
     if err != nil {
+		fmt.Printf("*** Cannot reach service: %s\n", err)
         setTeletypeServiceReachability(false)
     } else {
         setTeletypeServiceReachability(true)
