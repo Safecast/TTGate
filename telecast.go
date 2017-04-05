@@ -123,6 +123,7 @@ func GetIPInfo() (bool, string, IPInfoData) {
 
     // If already avail, return it
     if ipInfoString != "" {
+		fmt.Printf("Return cached %s %s\n", ipInfoString, ipInfoData)
         return true, ipInfoString, ipInfoData
     }
 
@@ -132,15 +133,19 @@ func GetIPInfo() (bool, string, IPInfoData) {
         FetchedIPInfo = true
 
         response, err := http.Get("http://ip-api.com/json/")
+		fmt.Printf("IPInfo Get yields %s %s\n", response, err)
         if err == nil {
             defer response.Body.Close()
             contents, err := ioutil.ReadAll(response.Body)
+			fmt.Printf("ReadAll yields %s %s\n", contents, err)
             if err == nil {
                 ipInfoString = string(contents)
                 err = json.Unmarshal(contents, &ipInfoData)
+				fmt.Printf("Unmarshal  yields %s %s\n", ipInfoData, err)
                 if err != nil {
                     ipInfoData = IPInfoData{}
                 }
+				fmt.Printf("Return %s %s\n", ipInfoString, ipInfoData)
                 return true, ipInfoString, ipInfoData
             }
         }
