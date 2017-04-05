@@ -334,13 +334,17 @@ func cmdSendStatsToTeletypeService() {
 
     // IPInfo
     _, _, msg.IPInfo = GetIPInfo()
-
+	// ozzie
+	fmt.Printf("IPInfo: %s\n", msg.IPInfo)
+	
     // Stats
     msg.MessagesReceived = cmdGetStats()
     msg.DevicesSeen = GetSafecastDevicesString()
 
     // Send it
     msgJSON, _ := json.Marshal(msg)
+	// ozzie
+	fmt.Printf("POSTING:\n%s\n%s\n", msg, msgJSON)
     req, err := http.NewRequest("POST", TTStatsURL, bytes.NewBuffer(msgJSON))
     req.Header.Set("User-Agent", "TTGATE")
     req.Header.Set("Content-Type", "application/json")
