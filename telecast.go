@@ -58,13 +58,13 @@ func UpdateTargetIP() {
 }
 
 // Process a received Telecast message, forwarding if appropriate
-func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr float32) {
+func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr float32,  replyAllowed bool) {
 
     // Do various things baed upon the message type
     if msg.DeviceType == nil {
 
 		// Solarcast
-        go cmdForwardMessageToTeletypeService(pb, snr)
+        cmdForwardMessageToTeletypeService(pb, snr, replyAllowed)
         go cmdLocallyDisplaySafecastMessage(msg, snr)
 
     } else {
@@ -75,12 +75,12 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
         case ttproto.Telecast_UNKNOWN_DEVICE_TYPE:
 			fallthrough
         case ttproto.Telecast_SOLARCAST:
-            go cmdForwardMessageToTeletypeService(pb, snr)
+            cmdForwardMessageToTeletypeService(pb, snr, replyAllowed)
             go cmdLocallyDisplaySafecastMessage(msg, snr)
 
             // Are we simply forwarding a message originating from a nano?
         case ttproto.Telecast_BGEIGIE_NANO:
-            go cmdForwardMessageToTeletypeService(pb, snr)
+            cmdForwardMessageToTeletypeService(pb, snr, replyAllowed)
             go cmdLocallyDisplaySafecastMessage(msg, snr)
 
             // If this is a ping request (indicated by null Message), then send that device back the same thing we received,
@@ -106,7 +106,7 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
             }
 
             // Forward the message to the service
-            go cmdForwardMessageToTeletypeService(pb, snr)
+            cmdForwardMessageToTeletypeService(pb, snr, replyAllowed)
 
             // If it's a non-Safecast device, just display what we received
         default:
@@ -155,7 +155,22 @@ func GetIPInfo() (bool, string, IPInfoData) {
 }
 
 // Forward this message to the teletype service via HTTP
-func cmdForwardMessageToTeletypeService(pb []byte, snr float32) {
+func cmdForwardMessageToTeletypeService(pb []byte, snr float32, replyAllowed bool) {
+
+	// Note that if a reply is allowed, we MUST do this synchronously, because failing
+	// to do so will cause the state.go state machine to immediately go into a recv()
+	// which will prevent our send() from occurring within the waiting device's allowed
+	// time window.
+	if replyAllowed {
+		forwardMessageToTeletypeService(pb, snr)
+	} else {
+		go forwardMessageToTeletypeService(pb, snr)
+	}
+
+}
+	
+// Forward this message to the teletype service via HTTP
+func forwardMessageToTeletypeService(pb []byte, snr float32) {
 
     _, ipinfo, _ := GetIPInfo()
 

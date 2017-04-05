@@ -255,9 +255,9 @@ func cmdEnqueueOutboundPb(cmd []byte) {
     header = append(header, byte(len(cmd)))
     command := append(header, cmd...)
 
-	// Enqueue it
-	cmdEnqueueOutboundPayload(command)
-	
+    // Enqueue it
+    cmdEnqueueOutboundPayload(command)
+
 }
 
 // Enqueue an outbound message that already has a PB_ARRAY header
@@ -359,7 +359,7 @@ func cmdProcessReceived(hex []byte, snr float32) {
     msg := &ttproto.Telecast{}
     buf_format := buf[0]
     switch (buf_format) {
-		
+
     case BUFF_FORMAT_PB_ARRAY: {
         count := int(buf[1])
         lengthArrayOffset := 2
@@ -387,10 +387,10 @@ func cmdProcessReceived(hex []byte, snr float32) {
 
     }
 
-	default: {
+    default: {
         go fmt.Printf("*** Unrecognized message type (could be a LoRaWAN transmission)\n")
-		return
-	}
+        return
+    }
     }
 
     // Remember the Device ID number of the last received message, for failover purposes
@@ -398,8 +398,20 @@ func cmdProcessReceived(hex []byte, snr float32) {
         deviceToNotifyIfServiceDown = msg.GetDeviceId()
     }
 
+    // Extract the "reply allowed" flag, which controls whether or not we do synchronous I/O
+    // to the service.  If we ever support an array of PB's, this should just iterate through
+    // the array and be true if ANY of the messages allow a reply
+    replyAllowed := false
+    if msg.ReplyType != nil {
+        switch msg.GetReplyType() {
+            // A reply is expected
+        case ttproto.Telecast_ALLOWED:
+            replyAllowed = true
+        }
+    }
+
     // Process it as a Telecast message
-    cmdProcessReceivedTelecastMessage(*msg, buf, snr)
+    cmdProcessReceivedTelecastMessage(*msg, buf, snr, replyAllowed)
 
 }
 
