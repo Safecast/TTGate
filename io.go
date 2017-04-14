@@ -10,6 +10,8 @@ import (
     "fmt"
     "io"
     "os"
+    "math/rand"
+    "hash/crc32"
     "time"
     "github.com/tarm/serial"
     "github.com/stianeikeland/go-rpio"
@@ -27,6 +29,9 @@ var flushBufferedData = false
 // Initialize the i/o subsystem
 func ioInit() {
 
+	// Initialize random number generator
+	randinit();
+	
     // Has been useful for hardware reset & serial port I/O debugging
     verboseDebug = false
     verbose := os.Getenv("VERBOSE")
@@ -253,4 +258,17 @@ func ioSendCommand(cmd []byte) {
     // and we are now awaiting a reply from the chip.
     ioReplyWatchdogReset(true)
 
+}
+
+// Initialize package
+func randinit() {
+
+    // Initialize the random number generator
+    rand.Seed(time.Now().Unix() + int64(crc32.ChecksumIEEE([]byte(os.Getenv("RESIN_DEVICE_NAME_AT_INIT")))))
+
+}
+
+// Get a random number in a range
+func random(min, max int) int {
+    return rand.Intn(max - min) + min
 }

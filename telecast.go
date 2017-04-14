@@ -98,8 +98,10 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
                 if err != nil {
                     go fmt.Printf("marshaling error: ", err)
                 }
-                // Importantly, sleep for a couple seconds to give the (slow) receiver a chance to get into receive mode
-                time.Sleep(2 * time.Second)
+                // Importantly, sleep for a couple seconds to give the (slow) receiver a chance to get into receive mode.
+				// We randomize it in case there are several ttgate's alive within listening range, so we minimize the chance
+				// that we will step on each others' transmissions.
+                time.Sleep(time.Duration(random(1,5)) * time.Second)
                 cmdEnqueueOutboundPb(data)
                 go fmt.Printf("Sent pingback to device %d\n", msg.GetDeviceId())
                 return
