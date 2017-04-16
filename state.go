@@ -97,13 +97,22 @@ func cmdProcess(cmd []byte) {
         cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
 
     case CMD_STATE_LPWAN_GETVERRPL:
-        Region = os.Getenv("REGION")
+		if Region == "" {
+	        Region = os.Getenv("REGION")
+		}
         lorafpRegionCommandNumber = 0
         time.Sleep(4 * time.Second)
         if (!bytes.HasPrefix(cmd, []byte("RN2483"))) && (!bytes.HasPrefix(cmd, []byte("RN2903"))) {
             ioSendCommandString("sys get ver")
             cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
         } else {
+	        if Region == "" {
+		        if bytes.HasPrefix(cmd, []byte("RN2483")) {
+					Region = "eu"
+				} else if bytes.HasPrefix(cmd, []byte("RN2903")) {
+					Region = "us"
+				}
+			}
             ioSendCommandString("sys reset")
             cmdSetState(CMD_STATE_LPWAN_RESETRPL)
         }
