@@ -1,6 +1,6 @@
 // Copyright 2017 Inca Roads LLC.  All rights reserved.
 // Use of this source code is governed by licenses granted by the
-// copyright holder including that found in the LICENSE file. 
+// copyright holder including that found in the LICENSE file.
 
 // Gateway between TTNode-based LoRa devices and the TTServe service
 package main
@@ -11,11 +11,11 @@ import (
     "net/http"
     "os"
     "time"
-	"runtime"
-	"strconv"
+    "runtime"
+    "strconv"
 )
 
-// Statics 
+// Statics
 var OurTimezone *time.Location
 var OurCountryCode string = ""
 var DebugFailover = false
@@ -24,23 +24,23 @@ var DebugStatusUpdate = false
 // Main entry point when launched by run.sh
 func main() {
 
-	// Welcome
+    // Welcome
     go fmt.Printf("\nLora Gateway\n")
 
-	// Debug flags
-	s := os.Getenv("DEBUG_FAILOVER")
-	i, err := strconv.ParseInt(s, 10, 64)
-	DebugFailover = (err == nil && i != 0)
+    // Debug flags
+    s := os.Getenv("DEBUG_FAILOVER")
+    i, err := strconv.ParseInt(s, 10, 64)
+    DebugFailover = (err == nil && i != 0)
 
-	s = os.Getenv("DEBUG_STATUS")
-	i, err = strconv.ParseInt(s, 10, 64)
-	DebugStatusUpdate = (err == nil && i != 0)
+    s = os.Getenv("DEBUG_STATUS")
+    i, err = strconv.ParseInt(s, 10, 64)
+    DebugStatusUpdate = (err == nil && i != 0)
 
     // Load localization information
     loadLocalTimezone()
 
-	// Translate the DNS address to an IP address, because this can be slow
-	UpdateTargetIP()
+    // Translate the DNS address to an IP address, because this can be slow
+    UpdateTargetIP()
 
     // Spawn our localhost web server, used to update the HDMI status display
     go webServer()
@@ -57,14 +57,14 @@ func main() {
     // Initialize the state machine and command processing
     cmdInit()
 
-	// Wait for quite a while, and then exit, which will cause our
-	// shell script to restart the container.  This is a failsafe 
-	// to ensure that any Linux-level process usage (such as bugs in
-	// the golang runtime or Midori) will be reset, and we will
-	// occasionally start completely fresh and clean.
+    // Wait for quite a while, and then exit, which will cause our
+    // shell script to restart the container.  This is a failsafe
+    // to ensure that any Linux-level process usage (such as bugs in
+    // the golang runtime or Midori) will be reset, and we will
+    // occasionally start completely fresh and clean.
     time.Sleep(7 * 24 * time.Hour)
     os.Exit(0)
-	
+
 }
 
 // Timer functions
@@ -77,18 +77,18 @@ func timer5s() {
 
 func timer1m() {
     for {
-		// Time out commands
+        // Time out commands
         cmd1mWatchdog()
 
-		// Update what's on the browser connected to HDMI
+        // Update what's on the browser connected to HDMI
         webUpdateData()
 
-		// Send fast updates when requested to do so
-		if DebugStatusUpdate {
-			cmdSendStatsToTeletypeService()
-		}
+        // Send fast updates when requested to do so
+        if DebugStatusUpdate {
+            cmdSendStatsToTeletypeService()
+        }
 
-		// Sleep
+        // Sleep
         time.Sleep(1 * 60 * time.Second)
     }
 }
@@ -96,48 +96,50 @@ func timer1m() {
 func timer5m() {
     for {
         time.Sleep(5 * 60 * time.Second)
-		cmdSendStatsToTeletypeService()
-		UpdateTargetIP()
-	}
+        cmdSendStatsToTeletypeService()
+        UpdateTargetIP()
+    }
 }
 
 func timer15m() {
-	var memBaseSet bool = false
-	var memBase runtime.MemStats
+    var memBaseSet bool = false
+    var memBase runtime.MemStats
     bootedAt := time.Now()
 
     for {
         time.Sleep(15 * 60 * time.Second)
 
-		// Get original memory statistics, before we've done anything at all
-		if (!memBaseSet) {
-			memBaseSet = true;
-			runtime.ReadMemStats(&memBase)
-		}
-		
-		go fmt.Printf("\n")
+        // Get original memory statistics, before we've done anything at all
+        if (!memBaseSet) {
+            memBaseSet = true;
+            runtime.ReadMemStats(&memBase)
+        }
+
+        go fmt.Printf("\n")
 
         // Print stats
         t := time.Now()
         hoursAgo :=  int64(t.Sub(bootedAt) / time.Hour)
         minutesAgo := int64(t.Sub(bootedAt) / time.Minute) - (hoursAgo * 60)
         go fmt.Printf("STATS: %d received in the last %dh %dm\n", cmdGetStats(), hoursAgo, minutesAgo)
-		go fmt.Printf("\n")
+        go fmt.Printf("\n")
 
         // Print resource usage, just as an FYI
         var mem runtime.MemStats
         runtime.ReadMemStats(&mem)
-        go fmt.Printf("mem.Alloc: %d -> %d\n", memBase.Alloc, mem.Alloc)
-        go fmt.Printf("mem.HeapAlloc: %d -> %d\n", memBase.HeapAlloc, mem.HeapAlloc)
-        go fmt.Printf("mem.HeapObjects: %d -> %d\n", memBase.HeapObjects, mem.HeapObjects)
-        go fmt.Printf("mem.HeapSys: %d -> %d\n", memBase.HeapSys, mem.HeapSys)
-		go fmt.Printf("\n")
+        if (false) {
+            go fmt.Printf("mem.Alloc: %d -> %d\n", memBase.Alloc, mem.Alloc)
+            go fmt.Printf("mem.HeapAlloc: %d -> %d\n", memBase.HeapAlloc, mem.HeapAlloc)
+            go fmt.Printf("mem.HeapObjects: %d -> %d\n", memBase.HeapObjects, mem.HeapObjects)
+            go fmt.Printf("mem.HeapSys: %d -> %d\n", memBase.HeapSys, mem.HeapSys)
+            go fmt.Printf("\n")
+        }
 
-		// Reboot the server if things get really borked
-		if isOfflineForExtendedPeriod() {
-	        go fmt.Printf("Cannot reach service for many, many hours: rebooting device.\n");
-		    os.Exit(0)
-		}
+        // Reboot the server if things get really borked
+        if isOfflineForExtendedPeriod() {
+            go fmt.Printf("Cannot reach service for many, many hours: rebooting device.\n");
+            os.Exit(0)
+        }
 
     }
 }
@@ -146,16 +148,16 @@ func timer15m() {
 func loadLocalTimezone() {
 
     // Use the ip-api service, which handily provides the needed info
-	isAvail, _, info := GetIPInfo()
-	if !isAvail {
-	    // Default to UTC, with NO country standards, if we can't find our own info
-	    OurTimezone, _ = time.LoadLocation("UTC")
-	    OurCountryCode = ""
-	} else {
-	    OurTimezone, _ = time.LoadLocation(info.Timezone)
-	    OurCountryCode = info.CountryCode
-	}
-	
+    isAvail, _, info := GetIPInfo()
+    if !isAvail {
+        // Default to UTC, with NO country standards, if we can't find our own info
+        OurTimezone, _ = time.LoadLocation("UTC")
+        OurCountryCode = ""
+    } else {
+        OurTimezone, _ = time.LoadLocation(info.Timezone)
+        OurCountryCode = info.CountryCode
+    }
+
 }
 
 // The localhost server used exclusively to update the local HDMI display
