@@ -432,7 +432,7 @@ func lorafp_get_command(cmdno int) (bool, string) {
     case "us":
         us_commands := []string{
             "radio set mod lora",
-            "radio set freq 923300000",
+            "radio set freq 915000000",
         }
         if cmdno < len(us_commands) {
             return true, us_commands[cmdno]
