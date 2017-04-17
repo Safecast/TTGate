@@ -433,6 +433,7 @@ func lorafp_get_command(cmdno int) (bool, string) {
         eu_commands := []string{
             "radio set mod lora",
             "radio set freq 868100000",
+            "radio set pwr 15",
         }
         if cmdno < len(eu_commands) {
             return true, eu_commands[cmdno]
@@ -442,6 +443,7 @@ func lorafp_get_command(cmdno int) (bool, string) {
         us_commands := []string{
             "radio set mod lora",
             "radio set freq 915000000",
+            "radio set pwr 20",
         }
         if cmdno < len(us_commands) {
             return true, us_commands[cmdno]
