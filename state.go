@@ -49,8 +49,8 @@ var Region string = ""
 var lorafpRegionCommandNumber int
 
 // Get the unique gateway device ID
-func cmdGetGatewayID() string {
-    return hweui
+func cmdGetGatewayInfo() (id string, region string) {
+    return hweui, Region
 }
 
 // Set the current state of the state machine

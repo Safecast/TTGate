@@ -182,7 +182,7 @@ func forwardMessageToTeletypeService(pb []byte, snr float32) {
     msg.Payload = pb
 
     // Pass along the gateway EUI
-    msg.GatewayId = cmdGetGatewayID()
+    msg.GatewayId, _ = cmdGetGatewayInfo()
 
     // Some devices don't have LAT/LON, and in this case the gateway will supply it (if configured)
     if !FetchedLatLon {
@@ -330,19 +330,19 @@ func isOfflineForExtendedPeriod() bool {
 // Send stats to the service
 func cmdSendStatsToTeletypeService() {
 
-    // If we're executing prior to the fetching of the
-    // gateway ID from the Lora chip, exit
-    if cmdGetGatewayID() == "" {
-        return
-    }
-
     // Construct an outbound message
     msg := &TTGateReq{}
     msg.ReceivedAt = nowInUTC()
 
     // Gateway name
-    msg.GatewayId = cmdGetGatewayID()
+    msg.GatewayId, msg.GatewayRegion = cmdGetGatewayInfo()
     msg.GatewayName = os.Getenv("RESIN_DEVICE_NAME_AT_INIT")
+
+    // If we're executing prior to the fetching of the
+    // gateway ID from the Lora chip, exit
+    if msg.GatewayId == "" {
+        return
+    }
 
     // IPInfo
     _, _, msg.IPInfo = GetIPInfo()
