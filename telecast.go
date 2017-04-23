@@ -101,9 +101,10 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
                 // Importantly, sleep for several seconds to give the (slow) receiver a chance to get into receive mode.
 				// We randomize it in case there are several ttgate's alive within listening range, so we minimize the chance
 				// that we will step on each others' transmissions.
-                time.Sleep(time.Duration(random(1,20)) * time.Second)
+				delay_secs := random(1, 20)
+                time.Sleep(time.Duration(delay_secs) * time.Second)
                 cmdEnqueueOutboundPb(data)
-                go fmt.Printf("Sent pingback to device %d\n", msg.GetDeviceId())
+                go fmt.Printf("Sent pingback to device %d after %d seconds\n", msg.GetDeviceId(), delay_secs)
                 return
             }
 
