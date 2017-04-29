@@ -85,7 +85,10 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
 
             // If this is a ping request (indicated by null Message), then send that device back the same thing we received,
             // but WITH a message (so that we don't cause a ping storm among multiple ttgates with visibility to each other)
-        case ttproto.Telecast_TTGATE:
+		case ttproto.Telecast_TTGATE:
+			// From another gateway or a pre-2017-05 device that didn't properly use TTGATEPING
+			fallthrough
+        case ttproto.Telecast_TTGATEPING:
             // If we're offline, short circuit this because we don't want to mislead.
             // We'd rather that they use cellular.
             if !isTeletypeServiceReachable() {
@@ -93,7 +96,13 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
             }
             // Process it
             if msg.Message == nil {
+
+				// Format the message
                 msg.Message = proto.String("ping")
+				t := ttproto.Telecast_TTGATE
+				msg.DeviceType = &t
+
+				// Marshal it
                 data, err := proto.Marshal(&msg)
                 if err != nil {
                     go fmt.Printf("marshaling error: ", err)
