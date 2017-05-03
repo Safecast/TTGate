@@ -76,7 +76,14 @@ func timer5s() {
 }
 
 func timer1m() {
+	minutesAlive := 0
     for {
+		// For the first 5 minutes, send pings to service.  After
+		// that, it's up to the 5m timer handler.
+		if minutesAlive < 5 {
+	        cmdSendStatsToTeletypeService()
+		}
+		
         // Time out commands
         cmd1mWatchdog()
 
@@ -90,6 +97,7 @@ func timer1m() {
 
         // Sleep
         time.Sleep(1 * 60 * time.Second)
+		minutesAlive++
     }
 }
 
