@@ -394,7 +394,7 @@ func cmdSendStatsToTeletypeService() {
     } else {
         setTeletypeServiceReachability(true)
         resp.Body.Close()
-	    go fmt.Printf("Sent stats to service.\n", err)
+	    go fmt.Printf("Sent stats to service.\n")
     }
 
 }
