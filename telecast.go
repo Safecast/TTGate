@@ -29,7 +29,8 @@ var TTStatsURL string = "http://tt.safecast.org/gateway"
 // Statics
 var ipInfoString string = ""
 var ipInfoData IPInfoData
-var serviceReachable = true
+var serviceReachable = false
+var serviceEverBecameUnreachable = false
 var serviceFirstUnreachableAt time.Time
 var FetchedIPInfo bool = false
 var FetchedLatLon bool = false
@@ -63,7 +64,7 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
     // Do various things baed upon the message type
     if msg.DeviceType == nil {
 
-		// Solarcast
+        // Solarcast
         cmdForwardMessageToTeletypeService(pb, snr, replyAllowed)
         go cmdLocallyDisplaySafecastMessage(msg, snr)
 
@@ -73,7 +74,7 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
 
             // Is this a simplecast message?
         case ttproto.Telecast_UNKNOWN_DEVICE_TYPE:
-			fallthrough
+            fallthrough
         case ttproto.Telecast_SOLARCAST:
             cmdForwardMessageToTeletypeService(pb, snr, replyAllowed)
             go cmdLocallyDisplaySafecastMessage(msg, snr)
@@ -85,32 +86,32 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
 
             // If this is a ping request (indicated by null Message), then send that device back the same thing we received,
             // but WITH a message (so that we don't cause a ping storm among multiple ttgates with visibility to each other)
-		case ttproto.Telecast_TTGATE:
-			// From another gateway or a pre-2017-05 device that didn't properly use TTGATEPING
-			fallthrough
+        case ttproto.Telecast_TTGATE:
+            // From another gateway or a pre-2017-05 device that didn't properly use TTGATEPING
+            fallthrough
         case ttproto.Telecast_TTGATEPING:
             // If we're offline, short circuit this because we don't want to mislead.
             // We'd rather that they use cellular.
-            if !isTeletypeServiceReachable() {
+            if !serviceReachable {
                 return
             }
             // Process it
             if msg.Message == nil {
 
-				// Format the message
+                // Format the message
                 msg.Message = proto.String("ping")
-				t := ttproto.Telecast_TTGATE
-				msg.DeviceType = &t
+                t := ttproto.Telecast_TTGATE
+                msg.DeviceType = &t
 
-				// Marshal it
+                // Marshal it
                 data, err := proto.Marshal(&msg)
                 if err != nil {
                     go fmt.Printf("marshaling error: ", err)
                 }
                 // Importantly, sleep for several seconds to give the (slow) receiver a chance to get into receive mode.
-				// We randomize it in case there are several ttgate's alive within listening range, so we minimize the chance
-				// that we will step on each others' transmissions.
-				delay_secs := random(1, 20)
+                // We randomize it in case there are several ttgate's alive within listening range, so we minimize the chance
+                // that we will step on each others' transmissions.
+                delay_secs := random(1, 20)
                 time.Sleep(time.Duration(delay_secs) * time.Second)
                 cmdEnqueueOutboundPb(data)
                 go fmt.Printf("Sent pingback to device %d after %d seconds\n", msg.GetDeviceId(), delay_secs)
@@ -169,18 +170,18 @@ func GetIPInfo() (bool, string, IPInfoData) {
 // Forward this message to the teletype service via HTTP
 func cmdForwardMessageToTeletypeService(pb []byte, snr float32, replyAllowed bool) {
 
-	// Note that if a reply is allowed, we MUST do this synchronously, because failing
-	// to do so will cause the state.go state machine to immediately go into a recv()
-	// which will prevent our send() from occurring within the waiting device's allowed
-	// time window.
-	if replyAllowed {
-		forwardMessageToTeletypeService(pb, snr)
-	} else {
-		go forwardMessageToTeletypeService(pb, snr)
-	}
+    // Note that if a reply is allowed, we MUST do this synchronously, because failing
+    // to do so will cause the state.go state machine to immediately go into a recv()
+    // which will prevent our send() from occurring within the waiting device's allowed
+    // time window.
+    if replyAllowed {
+        forwardMessageToTeletypeService(pb, snr)
+    } else {
+        go forwardMessageToTeletypeService(pb, snr)
+    }
 
 }
-	
+
 // Forward this message to the teletype service via HTTP
 func forwardMessageToTeletypeService(pb []byte, snr float32) {
 
@@ -298,10 +299,17 @@ func setTeletypeServiceReachability(isReachable bool) {
     } else if (serviceReachable && !isReachable) {
         go fmt.Printf("*** TTSERVE is now unreachable\n");
         serviceFirstUnreachableAt = time.Now()
+        serviceEverBecameUnreachable = true
     } else if (!serviceReachable && !isReachable) {
-        t := time.Now()
-        unreachableForMinutes := int64(t.Sub(serviceFirstUnreachableAt) / time.Minute)
-        go fmt.Printf("*** TTSERVE has been unreachable for %d minutes\n", unreachableForMinutes);
+        // If the service has never transitioned from reachable to unreachable, return it immediately
+        if !serviceEverBecameUnreachable {
+            serviceFirstUnreachableAt = time.Now()
+            serviceEverBecameUnreachable = true
+        } else {
+            t := time.Now()
+            unreachableForMinutes := int64(t.Sub(serviceFirstUnreachableAt) / time.Minute)
+            go fmt.Printf("*** TTSERVE has been unreachable for %d minutes\n", unreachableForMinutes);
+        }
     }
     serviceReachable = isReachable
 }
@@ -319,7 +327,12 @@ func isTeletypeServiceReachable() bool {
     if serviceReachable {
         return true
     }
-    // Suppress the notion of "unreachable" until we have been offline for quite some time
+    // If the service has never transitioned from reachable to unreachable, return it immediately
+    if !serviceEverBecameUnreachable {
+        serviceFirstUnreachableAt = time.Now()
+        serviceEverBecameUnreachable = true
+    }
+    // Debounce the notion of "unreachable" until we have been offline for quite some time
     unreachableMinutes := int64(time.Now().Sub(serviceFirstUnreachableAt) / time.Minute)
     return unreachableMinutes < 60
 }
@@ -332,9 +345,14 @@ func isOfflineForExtendedPeriod() bool {
     if serviceReachable {
         return false
     }
+    // If the service has never transitioned from reachable to unreachable, return it immediately
+    if !serviceEverBecameUnreachable {
+        serviceFirstUnreachableAt = time.Now()
+        serviceEverBecameUnreachable = true
+    }
     // Suppress the notion of "unreachable" until we have been offline for quite some time
     unreachableMinutes := int64(time.Now().Sub(serviceFirstUnreachableAt) / time.Minute)
-    return unreachableMinutes > (60 * 6)
+    return unreachableMinutes > (60 * 3)
 }
 
 // Send stats to the service
@@ -356,13 +374,13 @@ func cmdSendStatsToTeletypeService() {
 
     // IPInfo
     _, _, msg.IPInfo = GetIPInfo()
-	
+
     // Stats
     msg.MessagesReceived = cmdGetStats()
     msg.DevicesSeen = GetSafecastDevicesString()
 
-	// Debug
-	go fmt.Printf("Sending stats update to service\n")
+    // Debug
+    go fmt.Printf("Sending stats update to service\n")
 
     // Send it
     msgJSON, _ := json.Marshal(msg)
@@ -374,7 +392,7 @@ func cmdSendStatsToTeletypeService() {
     }
     resp, err := httpclient.Do(req)
     if err != nil {
-		fmt.Printf("*** Cannot reach service: %s\n", err)
+        fmt.Printf("*** Cannot reach service: %s\n", err)
         setTeletypeServiceReachability(false)
     } else {
         setTeletypeServiceReachability(true)
