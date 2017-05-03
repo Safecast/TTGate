@@ -95,9 +95,9 @@ func timer1m() {
 
 func timer5m() {
     for {
-        time.Sleep(5 * 60 * time.Second)
         cmdSendStatsToTeletypeService()
         UpdateTargetIP()
+        time.Sleep(5 * 60 * time.Second)
     }
 }
 

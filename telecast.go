@@ -379,9 +379,6 @@ func cmdSendStatsToTeletypeService() {
     msg.MessagesReceived = cmdGetStats()
     msg.DevicesSeen = GetSafecastDevicesString()
 
-    // Debug
-    go fmt.Printf("Sending stats update to service\n")
-
     // Send it
     msgJSON, _ := json.Marshal(msg)
     req, err := http.NewRequest("POST", TTStatsURL, bytes.NewBuffer(msgJSON))
@@ -392,11 +389,12 @@ func cmdSendStatsToTeletypeService() {
     }
     resp, err := httpclient.Do(req)
     if err != nil {
-        fmt.Printf("*** Cannot reach service: %s\n", err)
         setTeletypeServiceReachability(false)
+	    go fmt.Printf("Error sending stats to service: %s\n", err)
     } else {
         setTeletypeServiceReachability(true)
         resp.Body.Close()
+	    go fmt.Printf("Sent stats to service.\n", err)
     }
 
 }
