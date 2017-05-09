@@ -144,7 +144,10 @@ func cmdProcess(cmd []byte) {
 
     case CMD_STATE_LPWAN_GETEUIRPL:
         hweui = cmdstr
-        ioSendCommandString("radio set wdt 60000")
+		// On 2017-05-09, change this from exactly 60000 to an odd number,
+		// so that we don't accidentally get into a rhythm with transmitters
+		// who also tend to synchronize on even boundaries.
+        ioSendCommandString("radio set wdt 54321")
         cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
 
     case CMD_STATE_LPWAN_SETWDTRPL:
