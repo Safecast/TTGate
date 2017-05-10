@@ -21,40 +21,40 @@ import (
 )
 
 // Service
-var TTUploadAddress string = "tt.safecast.org"
-var TTUploadURLPattern string = "http://%s/send"
-var TTUploadIP string
-var TTStatsURL string = "http://tt.safecast.org/gateway"
+var ttUploadAddress = "tt.safecast.org"
+var ttUploadURLPattern = "http://%s/send"
+var ttUploadIP = ""
+var ttStatsURL = "http://tt.safecast.org/gateway"
 
 // Statics
-var ipInfoString string = ""
+var ipInfoString = ""
 var ipInfoData IPInfoData
 var serviceReachable = false
 var serviceEverBecameUnreachable = false
 var serviceFirstUnreachableAt time.Time
-var FetchedIPInfo bool = false
-var FetchedLatLon bool = false
-var Latitude = ""
-var Longitude = ""
-var Altitude = ""
+var fetchedIPInfo = false
+var fetchedLatLon = false
+var locLat = ""
+var locLon = ""
+var locAlt = ""
 
-// Load localization information
+// UpdateTargetIP loads network location, DNS, and IP information
 func UpdateTargetIP() {
 
     // Look up the two IP addresses that we KNOW have only a single A record,
     // and determine if WE are the server for those protocols
-    addrs, err := net.LookupHost(TTUploadAddress)
+    addrs, err := net.LookupHost(ttUploadAddress)
     if err != nil {
-        go fmt.Printf("Can't resolve %s: %v\n", TTUploadAddress, err);
-        TTUploadIP = TTUploadAddress
+        go fmt.Printf("Can't resolve %s: %v\n", ttUploadAddress, err);
+        ttUploadIP = ttUploadAddress
         return
     }
     if len(addrs) < 1 {
-        go fmt.Printf("Can't resolve %s: %v\n", TTUploadAddress, err);
-        TTUploadIP = TTUploadAddress
+        go fmt.Printf("Can't resolve %s: %v\n", ttUploadAddress, err);
+        ttUploadIP = ttUploadAddress
         return
     }
-    TTUploadIP = addrs[0]
+    ttUploadIP = addrs[0]
 
 }
 
@@ -111,10 +111,10 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
                 // Importantly, sleep for several seconds to give the (slow) receiver a chance to get into receive mode.
                 // We randomize it in case there are several ttgate's alive within listening range, so we minimize the chance
                 // that we will step on each others' transmissions.
-                delay_secs := random(1, 20)
-                time.Sleep(time.Duration(delay_secs) * time.Second)
+                delaySecs := random(1, 20)
+                time.Sleep(time.Duration(delaySecs) * time.Second)
                 cmdEnqueueOutboundPb(data)
-                go fmt.Printf("Sent pingback to device %d after %d seconds\n", msg.GetDeviceId(), delay_secs)
+                go fmt.Printf("Sent pingback to device %d after %d seconds\n", msg.GetDeviceId(), delaySecs)
                 return
             }
 
@@ -131,7 +131,7 @@ func cmdProcessReceivedTelecastMessage(msg ttproto.Telecast, pb []byte, snr floa
     }
 }
 
-// Refresh ipinfo as a string
+// GetIPInfo refreshes the IP info for a given IP
 func GetIPInfo() (bool, string, IPInfoData) {
 
     // If already avail, return it
@@ -141,8 +141,8 @@ func GetIPInfo() (bool, string, IPInfoData) {
 
     // The first time through here, let's fetch info about our IP.
     // We embrace the ip-api.com data definitions as our native format.
-    if !FetchedIPInfo {
-        FetchedIPInfo = true
+    if !fetchedIPInfo {
+        fetchedIPInfo = true
 
         response, err := http.Get("http://ip-api.com/json/")
         if err == nil {
@@ -193,30 +193,30 @@ func forwardMessageToTeletypeService(pb []byte, snr float32) {
     msg.Payload = pb
 
     // Pass along the gateway EUI
-    msg.GatewayId, _ = cmdGetGatewayInfo()
+    msg.GatewayID, _ = cmdGetGatewayInfo()
 
     // Some devices don't have LAT/LON, and in this case the gateway will supply it (if configured)
-    if !FetchedLatLon {
-        FetchedLatLon = true
-        Latitude = os.Getenv("LAT")
-        Longitude = os.Getenv("LON")
-        Altitude = os.Getenv("ALT")
+    if !fetchedLatLon {
+        fetchedLatLon = true
+        locLat = os.Getenv("LAT")
+        locLon = os.Getenv("LON")
+        locAlt = os.Getenv("ALT")
     }
 
-    if Latitude != "" {
-        f64, err := strconv.ParseFloat(Latitude, 64)
+    if locLat != "" {
+        f64, err := strconv.ParseFloat(locLat, 64)
         if err == nil {
             msg.Latitude = float32(f64)
         }
     }
-    if Longitude != "" {
-        f64, err := strconv.ParseFloat(Longitude, 64)
+    if locLon != "" {
+        f64, err := strconv.ParseFloat(locLon, 64)
         if err == nil {
             msg.Longitude = float32(f64)
         }
     }
-    if Altitude != "" {
-        i64, err := strconv.ParseInt(Altitude, 10, 64)
+    if locAlt != "" {
+        i64, err := strconv.ParseInt(locAlt, 10, 64)
         if err == nil {
             msg.Altitude = int32(i64)
         }
@@ -232,21 +232,21 @@ func forwardMessageToTeletypeService(pb []byte, snr float32) {
 
     // Send it to the teletype service via HTTP
     msgJSON, _ := json.Marshal(msg)
-    UploadURL := fmt.Sprintf(TTUploadURLPattern, TTUploadIP)
+    UploadURL := fmt.Sprintf(ttUploadURLPattern, ttUploadIP)
     req, err := http.NewRequest("POST", UploadURL, bytes.NewBuffer(msgJSON))
     req.Header.Set("User-Agent", "TTGATE")
     req.Header.Set("Content-Type", "application/json")
     httpclient := &http.Client{
         Timeout: time.Second * 15,
     }
-    transaction_start := time.Now()
+    transactionStart := time.Now()
     resp, err := httpclient.Do(req)
     if err != nil {
         setTeletypeServiceReachability(false)
         go fmt.Printf("*** Error uploading to %s %s\n\n", UploadURL, err)
     } else {
-        transaction_seconds := int64(time.Now().Sub(transaction_start) / time.Second)
-        go fmt.Printf("Upload to %s took %ds\n", UploadURL, transaction_seconds)
+        transactionSeconds := int64(time.Now().Sub(transactionStart) / time.Second)
+        go fmt.Printf("Upload to %s took %ds\n", UploadURL, transactionSeconds)
         setTeletypeServiceReachability(true)
         contents, err := ioutil.ReadAll(resp.Body)
         if err == nil {
@@ -363,12 +363,12 @@ func cmdSendStatsToTeletypeService() {
     msg.ReceivedAt = nowInUTC()
 
     // Gateway name
-    msg.GatewayId, msg.GatewayRegion = cmdGetGatewayInfo()
+    msg.GatewayID, msg.GatewayRegion = cmdGetGatewayInfo()
     msg.GatewayName = os.Getenv("RESIN_DEVICE_NAME_AT_INIT")
 
     // If we're executing prior to the fetching of the
     // gateway ID from the Lora chip, exit
-    if msg.GatewayId == "" {
+    if msg.GatewayID == "" {
         return
     }
 
@@ -381,7 +381,7 @@ func cmdSendStatsToTeletypeService() {
 
     // Send it
     msgJSON, _ := json.Marshal(msg)
-    req, err := http.NewRequest("POST", TTStatsURL, bytes.NewBuffer(msgJSON))
+    req, err := http.NewRequest("POST", ttStatsURL, bytes.NewBuffer(msgJSON))
     req.Header.Set("User-Agent", "TTGATE")
     req.Header.Set("Content-Type", "application/json")
     httpclient := &http.Client{

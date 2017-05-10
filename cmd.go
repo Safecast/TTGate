@@ -10,23 +10,23 @@ import (
 )
 
 // Outbound command queue structure
-type OutboundCommand struct {
+type outboundCommand struct {
 	Command []byte
 }
 
 // Statics
-var outboundQueue chan OutboundCommand
-var cmdInitialized bool = false
-var inReinit bool = false
-var totalMessagesReceived uint32 = 0
-var busyCount = 0
-var watchdog1mCount = 0
+var outboundQueue chan outboundCommand
+var cmdInitialized bool
+var inReinit bool
+var totalMessagesReceived uint32
+var busyCount int
+var watchdog1mCount int
 
 // First time initialization of the command processing subsystem
 func cmdInit() {
 
 	// Initialize the outbound queue
-	outboundQueue = make(chan OutboundCommand, 100) // Don't exhibit backpressure for a long time
+	outboundQueue = make(chan outboundCommand, 100) // Don't exhibit backpressure for a long time
 
 	// Init state machine, etc.
 	cmdReinit()
@@ -34,6 +34,13 @@ func cmdInit() {
 	// We're now fully initialized
 	cmdInitialized = true
 
+}
+
+// Enqueue an outbound message that already has a PB_ARRAY header
+func cmdEnqueueOutboundPayload(cmd []byte) {
+    var ocmd outboundCommand
+    ocmd.Command = cmd
+    outboundQueue <- ocmd
 }
 
 // Reinitialize the world upon failure conditions
@@ -49,7 +56,7 @@ func cmdReinit() {
 	ioInitMicrochip()
 
 	// Initialize the state machine and kick off a device reset
-	cmdSetState(CMD_STATE_LPWAN_RESETREQ)
+	cmdSetResetState()
 	cmdProcess(nil)
 
 	// Done

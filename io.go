@@ -64,7 +64,7 @@ func ioInit() {
     ioReplyWatchdogReset(false)
 
     // Process receives in a different goroutine because I/O is synchronous
-    go InboundMain()
+    go inboundMain()
 
 }
 
@@ -101,13 +101,13 @@ func ioInitMicrochip() {
 }
 
 // The inbound I/O goroutine used for handling of inbound synchronous serial I/O
-func InboundMain() {
+func inboundMain() {
 
     // Two I/O buffers - one for the current read, and
     // the other containing the previous read's unprocessed data
     const bufsize = 1024
     var thisbuf = make([]byte, bufsize)
-    var prevbuf []byte = []byte("")
+    var prevbuf = []byte("")
 
     // Wait until init completed
     for !serialInitCompleted {
@@ -143,9 +143,9 @@ func InboundMain() {
                 // read after a hardware reset, do so.  Else, process it.
                 if flushBufferedData {
                     flushBufferedData = false
-                    ProcessInbound(thisbuf[:n])
+                    processInbound(thisbuf[:n])
                 } else {
-                    prevbuf = ProcessInbound(append(prevbuf[:], thisbuf[:n]...))
+                    prevbuf = processInbound(append(prevbuf[:], thisbuf[:n]...))
                 }
 
             }
@@ -155,7 +155,7 @@ func InboundMain() {
 }
 
 // Process data that has come inbound on the serial port
-func ProcessInbound(buf []byte) []byte {
+func processInbound(buf []byte) []byte {
 
     length := len(buf)
     begin := 0

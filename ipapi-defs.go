@@ -7,6 +7,7 @@ import (
     "net"
 )
 
+// IPInfoData contains info about a given IPV4 address
 type IPInfoData struct {
     IP           net.IP  `json:"query,omitempty"`
 	Message		 string  `json:"message,omitempty"`

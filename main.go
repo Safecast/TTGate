@@ -15,11 +15,12 @@ import (
     "strconv"
 )
 
-// Statics
+// OurTimezone is the time zone of the gateway
 var OurTimezone *time.Location
-var OurCountryCode string = ""
+// OurCountryCode is the country code of the gateway
+var OurCountryCode string
+// DebugFailover is true if the gateway is suggesting FailOver mode to clients
 var DebugFailover = false
-var DebugStatusUpdate = false
 
 // Main entry point when launched by run.sh
 func main() {
@@ -31,10 +32,6 @@ func main() {
     s := os.Getenv("DEBUG_FAILOVER")
     i, err := strconv.ParseInt(s, 10, 64)
     DebugFailover = (err == nil && i != 0)
-
-    s = os.Getenv("DEBUG_STATUS")
-    i, err = strconv.ParseInt(s, 10, 64)
-    DebugStatusUpdate = (err == nil && i != 0)
 
     // Load localization information
     loadLocalTimezone()
@@ -90,11 +87,6 @@ func timer1m() {
         // Update what's on the browser connected to HDMI
         webUpdateData()
 
-        // Send fast updates when requested to do so
-        if DebugStatusUpdate {
-            cmdSendStatsToTeletypeService()
-        }
-
         // Sleep
         time.Sleep(1 * 60 * time.Second)
 		minutesAlive++
@@ -110,7 +102,7 @@ func timer5m() {
 }
 
 func timer15m() {
-    var memBaseSet bool = false
+    var memBaseSet = false
     var memBase runtime.MemStats
     bootedAt := time.Now()
 

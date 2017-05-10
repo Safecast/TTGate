@@ -17,22 +17,22 @@ import (
 )
 
 // Payload buffer format
-const BUFF_FORMAT_PB_ARRAY byte  =  0
+const buffFormatPBArray byte  =  0
 
 // Command processing states
 const (
-    CMD_STATE_IDLE = iota
-    CMD_STATE_LPWAN_RESETREQ
-    CMD_STATE_LPWAN_RESETRPL
-    CMD_STATE_LPWAN_GETVERRPL
-    CMD_STATE_LPWAN_MACPAUSERPL
-    CMD_STATE_LPWAN_SETWDTRPL
-    CMD_STATE_LPWAN_RCVRPL
-    CMD_STATE_LPWAN_TXRPL1
-    CMD_STATE_LPWAN_TXRPL2
-    CMD_STATE_LPWAN_SNRRPL
-    CMD_STATE_LPWAN_SENDFQRPL
-    CMD_STATE_LPWAN_GETEUIRPL
+    cmdStateIDLE = iota
+    cmdStateLPWanRESETREQ
+    cmdStateLPWanRESETRPL
+    cmdStateLPWanGETVERRPL
+    cmdStateLPWanMACPAUSERPL
+    cmdStateLPWanSETWDTRPL
+    cmdStateLPWanRCVRPL
+    cmdStateLPWanTXRPL1
+    cmdStateLPWanTXRPL2
+    cmdStateLPWanSNRRPL
+    cmdStateLPWanSENDFQRPL
+    cmdStateLPWanGETEUIRPL
 )
 
 // Constants
@@ -41,16 +41,16 @@ const invalidSNR float32 = 123.456
 // Statics
 var receivedMessage []byte
 var currentState uint16
-var deviceToNotifyIfServiceDown uint32 = 0
-var hweui string = ""
+var deviceToNotifyIfServiceDown = uint32(0)
+var hweui = ""
 
 // Localization
-var Region string = ""
+var loraRegion = ""
 var lorafpRegionCommandNumber int
 
 // Get the unique gateway device ID
 func cmdGetGatewayInfo() (id string, region string) {
-    return hweui, Region
+    return hweui, loraRegion
 }
 
 // Set the current state of the state machine
@@ -60,10 +60,15 @@ func cmdSetState(newState uint16) {
 }
 
 // Set into a Receive state, and await reply
-func RestartReceive() {
+func restartReceive() {
     ioSendCommandString("radio rx 0")
     cmdBusyReset()
-    cmdSetState(CMD_STATE_LPWAN_RCVRPL)
+    cmdSetState(cmdStateLPWanRCVRPL)
+}
+
+// Set the state to perform a reset
+func cmdSetResetState() {
+	cmdSetState(cmdStateLPWanRESETREQ)
 }
 
 // Process an inbound message received from the LPWAN
@@ -91,38 +96,38 @@ func cmdProcess(cmd []byte) {
         // Initialization states
         ////
 
-    case CMD_STATE_LPWAN_RESETREQ:
+    case cmdStateLPWanRESETREQ:
         time.Sleep(4 * time.Second)
         ioSendCommandString("sys get ver")
-        cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
+        cmdSetState(cmdStateLPWanGETVERRPL)
 
-    case CMD_STATE_LPWAN_GETVERRPL:
-		if Region == "" {
-	        Region = os.Getenv("REGION")
+    case cmdStateLPWanGETVERRPL:
+		if loraRegion == "" {
+	        loraRegion = os.Getenv("REGION")
 		}
         lorafpRegionCommandNumber = 0
         time.Sleep(4 * time.Second)
         if (!bytes.HasPrefix(cmd, []byte("RN2483"))) && (!bytes.HasPrefix(cmd, []byte("RN2903"))) {
             ioSendCommandString("sys get ver")
-            cmdSetState(CMD_STATE_LPWAN_GETVERRPL)
+            cmdSetState(cmdStateLPWanGETVERRPL)
         } else {
-	        if Region == "" {
+	        if loraRegion == "" {
 		        if bytes.HasPrefix(cmd, []byte("RN2483")) {
-					Region = "eu"
+					loraRegion = "eu"
 				} else if bytes.HasPrefix(cmd, []byte("RN2903")) {
-					Region = "us"
+					loraRegion = "us"
 				}
 			}
             ioSendCommandString("sys reset")
-            cmdSetState(CMD_STATE_LPWAN_RESETRPL)
+            cmdSetState(cmdStateLPWanRESETRPL)
         }
 
-    case CMD_STATE_LPWAN_RESETRPL:
+    case cmdStateLPWanRESETRPL:
         time.Sleep(4 * time.Second)
         ioSendCommandString("mac pause")
-        cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
+        cmdSetState(cmdStateLPWanMACPAUSERPL)
 
-    case CMD_STATE_LPWAN_MACPAUSERPL:
+    case cmdStateLPWanMACPAUSERPL:
         time.Sleep(4 * time.Second)
         // If we're still getting these responses, it's because we're still
         // flushing the buffer of incoming sys get ver's or sys resets from
@@ -130,47 +135,47 @@ func cmdProcess(cmd []byte) {
         // because we'll just aggravate the situation.  Just flush,
         // and keep waiting for the expected command.
         if (bytes.HasPrefix(cmd, []byte("RN2483"))) || (bytes.HasPrefix(cmd, []byte("RN2903"))) {
-            cmdSetState(CMD_STATE_LPWAN_MACPAUSERPL)
+            cmdSetState(cmdStateLPWanMACPAUSERPL)
         } else {
             i64, err := strconv.ParseInt(cmdstr, 10, 64)
             if err != nil || i64 < 100000 {
                 go fmt.Printf("Bad response from mac pause: %s\n", cmdstr)
             } else {
                 ioSendCommandString("sys get hweui")
-                cmdSetState(CMD_STATE_LPWAN_GETEUIRPL)
+                cmdSetState(cmdStateLPWanGETEUIRPL)
             }
         }
 
 
-    case CMD_STATE_LPWAN_GETEUIRPL:
+    case cmdStateLPWanGETEUIRPL:
         hweui = cmdstr
 		// On 2017-05-09, change this from exactly 60000 to an odd number,
 		// so that we don't accidentally get into a rhythm with transmitters
 		// who also tend to synchronize on even boundaries.
         ioSendCommandString("radio set wdt 54321")
-        cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
+        cmdSetState(cmdStateLPWanSETWDTRPL)
 
-    case CMD_STATE_LPWAN_SETWDTRPL:
+    case cmdStateLPWanSETWDTRPL:
         time.Sleep(100 * time.Millisecond)
-        isCommand, theCommand := lorafp_get_command(lorafpRegionCommandNumber)
+        isCommand, theCommand := lorafpGetCommand(lorafpRegionCommandNumber)
         if (isCommand) {
             lorafpRegionCommandNumber++;
             ioSendCommandString(theCommand)
-            cmdSetState(CMD_STATE_LPWAN_SETWDTRPL)
+            cmdSetState(cmdStateLPWanSETWDTRPL)
             break;
         }
         fallthrough
-    case CMD_STATE_LPWAN_SENDFQRPL:
+    case cmdStateLPWanSENDFQRPL:
         // Allow the LPWAN to settle after init
         time.Sleep(4 * time.Second)
         // The init sequence is over, so begin a receive
-        RestartReceive()
+        restartReceive()
 
         ////
         // Steady-state receive handling states
         ////
 
-    case CMD_STATE_LPWAN_RCVRPL:
+    case cmdStateLPWanRCVRPL:
         if bytes.HasPrefix(cmd, []byte("ok")) {
             // this is expected response from initiating the rcv,
             // so just ignore it and keep waiting for a message to come in
@@ -178,14 +183,14 @@ func cmdProcess(cmd []byte) {
             // Expected from receive timeout of WDT seconds.
             // if there's a pending outbound, transmit it (which will change state)
             // else restart the receive
-            if !SentPendingOutbound() {
-                RestartReceive()
+            if !sentPendingOutbound() {
+                restartReceive()
             }
         } else if bytes.HasPrefix(cmd, []byte("busy")) {
             // This is not at all expected, but it means that we're
             // moving too quickly and we should try again.
             time.Sleep(5 * time.Second)
-            RestartReceive()
+            restartReceive()
             // reset the world if too many consecutive busy errors
             cmdBusy()
         } else if bytes.HasPrefix(cmd, []byte("radio_rx")) {
@@ -200,7 +205,7 @@ func cmdProcess(cmd []byte) {
             receivedMessage = cmd[hexstarts:]
             // Get the SNR of the last message received
             ioSendCommandString("radio get snr")
-            cmdSetState(CMD_STATE_LPWAN_SNRRPL)
+            cmdSetState(cmdStateLPWanSNRRPL)
         } else {
             // Totally unknown error, but since we cannot just
             // leave things in a state without a pending receive,
@@ -209,7 +214,7 @@ func cmdProcess(cmd []byte) {
             cmdReinit()
         }
 
-    case CMD_STATE_LPWAN_SNRRPL:
+    case cmdStateLPWanSNRRPL:
         {
             // Get the number in the commanbd buffer
             snr64, err := strconv.ParseFloat(cmdstr, 64)
@@ -220,8 +225,8 @@ func cmdProcess(cmd []byte) {
             cmdProcessReceived(receivedMessage, float32(snr64))
             // If there's a pending outbound, transmit it (which will change state)
             // else restart the receive
-            if !SentPendingOutbound() {
-                RestartReceive()
+            if !sentPendingOutbound() {
+                restartReceive()
             }
         }
 
@@ -229,30 +234,30 @@ func cmdProcess(cmd []byte) {
         // Post-cmdEnqueueOutbound transmit-handling states
         ////
 
-    case CMD_STATE_LPWAN_TXRPL1:
+    case cmdStateLPWanTXRPL1:
         if bytes.HasPrefix(cmd, []byte("ok")) {
-            cmdSetState(CMD_STATE_LPWAN_TXRPL2)
+            cmdSetState(cmdStateLPWanTXRPL2)
         } else if bytes.HasPrefix(cmd, []byte("busy")) {
             // This is not at all expected, but it means that we're
             // moving too quickly and we should try again.
             time.Sleep(5 * time.Second)
-            RestartReceive()
+            restartReceive()
             // reset the world if too many consecutive busy errors
             cmdBusy()
         } else {
             go fmt.Printf("LPWAN xmt1 error\n")
-            RestartReceive()
+            restartReceive()
         }
 
-    case CMD_STATE_LPWAN_TXRPL2:
+    case cmdStateLPWanTXRPL2:
         if bytes.HasPrefix(cmd, []byte("radio_tx_ok")) {
             // if there's another pending outbound, transmit it, else restart the receive
-            if !SentPendingOutbound() {
-                RestartReceive()
+            if !sentPendingOutbound() {
+                restartReceive()
             }
         } else {
             go fmt.Printf("LPWAN xmt2 error\n")
-            RestartReceive()
+            restartReceive()
         }
 
     }
@@ -263,7 +268,7 @@ func cmdProcess(cmd []byte) {
 func cmdEnqueueOutboundPb(cmd []byte) {
 
     // Convert it to the new-format protocol buffer
-    header := []byte{BUFF_FORMAT_PB_ARRAY, 1}
+    header := []byte{buffFormatPBArray, 1}
     header = append(header, byte(len(cmd)))
     command := append(header, cmd...)
 
@@ -272,15 +277,8 @@ func cmdEnqueueOutboundPb(cmd []byte) {
 
 }
 
-// Enqueue an outbound message that already has a PB_ARRAY header
-func cmdEnqueueOutboundPayload(cmd []byte) {
-    var ocmd OutboundCommand
-    ocmd.Command = cmd
-    outboundQueue <- ocmd
-}
-
 // Send the pending outbound (from command processing goroutine)
-func SentPendingOutbound() bool {
+func sentPendingOutbound() bool {
     hexchar := []byte("0123456789ABCDEF")
 
     // Check to see if the service is currently offline and
@@ -321,7 +319,7 @@ func SentPendingOutbound() bool {
             // Send it
             ioSendCommand(outbuf)
             cmdBusyReset()
-            cmdSetState(CMD_STATE_LPWAN_TXRPL1)
+            cmdSetState(cmdStateLPWanTXRPL1)
             // Returning true indicates that we set state
             return true
         }
@@ -369,10 +367,10 @@ func cmdProcessReceived(hex []byte, snr float32) {
 
     // Make sure that we understand the format of the message.
     msg := &ttproto.Telecast{}
-    buf_format := buf[0]
-    switch (buf_format) {
+    bufFormat := buf[0]
+    switch (bufFormat) {
 
-    case BUFF_FORMAT_PB_ARRAY: {
+    case buffFormatPBArray: {
         count := int(buf[1])
         lengthArrayOffset := 2
         payloadOffset := lengthArrayOffset + count
@@ -428,28 +426,28 @@ func cmdProcessReceived(hex []byte, snr float32) {
 }
 
 // Commands for setting frequency
-func lorafp_get_command(cmdno int) (bool, string) {
+func lorafpGetCommand(cmdno int) (bool, string) {
 
-    switch strings.ToLower(Region) {
+    switch strings.ToLower(loraRegion) {
 
     case "eu":
-        eu_commands := []string{
+        euCommands := []string{
             "radio set mod lora",
             "radio set freq 868100000",
             "radio set pwr 15",
         }
-        if cmdno < len(eu_commands) {
-            return true, eu_commands[cmdno]
+        if cmdno < len(euCommands) {
+            return true, euCommands[cmdno]
         }
 
     case "us":
-        us_commands := []string{
+        usCommands := []string{
             "radio set mod lora",
             "radio set freq 915000000",
             "radio set pwr 20",
         }
-        if cmdno < len(us_commands) {
-            return true, us_commands[cmdno]
+        if cmdno < len(usCommands) {
+            return true, usCommands[cmdno]
         }
 
     }

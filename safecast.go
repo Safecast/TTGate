@@ -15,8 +15,8 @@ import (
 )
 
 // Data structure maintained for devices from which we received data
-type SeenDevice struct {
-    DeviceId           string    `json:"device_id"`
+type seenDevice struct {
+    DeviceID           string    `json:"device_id"`
     DeviceNo           uint64    `json:"-"`
     capturedAt         string    `json:"-"`
     captured           time.Time `json:"-"`
@@ -24,9 +24,9 @@ type SeenDevice struct {
     MinutesAgoStr      string    `json:"minutes_ago"`
     minutesAgo         int64     `json:"-"`
     minutesApproxAgo   int64     `json:"-"`
-    Lnd_7318U          string    `json:"lnd7318u"`
-    Lnd_7318C          string    `json:"lnd7318c"`
-    Lnd_7128Ec         string    `json:"lnd7128ec"`
+    Lnd7318U          string    `json:"lnd7318u"`
+    Lnd7318C          string    `json:"lnd7318c"`
+    Lnd7128Ec         string    `json:"lnd7128ec"`
     BatVoltage         string    `json:"bat_voltage"`
     BatSoc             string    `json:"bat_soc"`
     BatCurrent         string    `json:"bat_current"`
@@ -46,14 +46,14 @@ type SeenDevice struct {
     OpcPm02_5          string    `json:"opc_pm02_5"`
     OpcPm10_0          string    `json:"opc_pm10_0"`
 }
-var seenDevices []SeenDevice
+var seenDevices []seenDevice
 
 // Class used to sort this data in a way that makes visual sense,
 // trying to stabilize the first entry as what might be the "closest" one
-type ByKey []SeenDevice
-func (a ByKey) Len() int      { return len(a) }
-func (a ByKey) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a ByKey) Less(i, j int) bool {
+type byKey []seenDevice
+func (a byKey) Len() int      { return len(a) }
+func (a byKey) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a byKey) Less(i, j int) bool {
 
     // Primary:
     // Treat things captured reasonably coincident  as all being equivalent
@@ -86,7 +86,7 @@ func (a ByKey) Less(i, j int) bool {
 
 // Record this safecast message for display on local HDMI via embedded browser
 func cmdLocallyDisplaySafecastMessage(msg ttproto.Telecast, snr float32) {
-    var dev SeenDevice
+    var dev seenDevice
 
     // Bump stats
     totalMessagesReceived = totalMessagesReceived + 1
@@ -99,7 +99,7 @@ func cmdLocallyDisplaySafecastMessage(msg ttproto.Telecast, snr float32) {
     // Extract essential info to be recorded
     if msg.DeviceId != nil {
         dev.DeviceNo = uint64(msg.GetDeviceId())
-        dev.DeviceId = strconv.FormatUint(dev.DeviceNo, 10)
+        dev.DeviceID = strconv.FormatUint(dev.DeviceNo, 10)
     }
 
     if msg.CapturedAt != nil {
@@ -111,21 +111,21 @@ func cmdLocallyDisplaySafecastMessage(msg ttproto.Telecast, snr float32) {
     dev.CapturedAtLocal = dev.captured.In(OurTimezone).Format("Mon 3:04pm")
 
     if msg.Lnd_7318U != nil {
-        dev.Lnd_7318U = fmt.Sprintf("%dcpm", msg.GetLnd_7318U())
+        dev.Lnd7318U = fmt.Sprintf("%dcpm", msg.GetLnd_7318U())
     } else {
-        dev.Lnd_7318U = ""
+        dev.Lnd7318U = ""
     }
 
     if msg.Lnd_7318C != nil {
-        dev.Lnd_7318C = fmt.Sprintf("%dcpm", msg.GetLnd_7318C())
+        dev.Lnd7318C = fmt.Sprintf("%dcpm", msg.GetLnd_7318C())
     } else {
-        dev.Lnd_7318C = ""
+        dev.Lnd7318C = ""
     }
 
     if msg.Lnd_7128Ec != nil {
-        dev.Lnd_7128Ec = fmt.Sprintf("%dcpm", msg.GetLnd_7128Ec())
+        dev.Lnd7128Ec = fmt.Sprintf("%dcpm", msg.GetLnd_7128Ec())
     } else {
-        dev.Lnd_7128Ec = ""
+        dev.Lnd7128Ec = ""
     }
 
     if msg.BatSoc != nil {
@@ -248,20 +248,20 @@ func cmdLocallyDisplaySafecastMessage(msg ttproto.Telecast, snr float32) {
     }
 
     // Scan and update the list of seen devices
-    var found bool = false
+    var found = false
     for i := 0; i < len(seenDevices); i++ {
 
         // Make sure we retain values that aren't present
-        if dev.DeviceId == seenDevices[i].DeviceId {
+        if dev.DeviceID == seenDevices[i].DeviceID {
 
-            if dev.Lnd_7318U == "" {
-                dev.Lnd_7318U = seenDevices[i].Lnd_7318U
+            if dev.Lnd7318U == "" {
+                dev.Lnd7318U = seenDevices[i].Lnd7318U
             }
-            if dev.Lnd_7318C == "" {
-                dev.Lnd_7318C = seenDevices[i].Lnd_7318C
+            if dev.Lnd7318C == "" {
+                dev.Lnd7318C = seenDevices[i].Lnd7318C
             }
-            if dev.Lnd_7128Ec == "" {
-                dev.Lnd_7128Ec = seenDevices[i].Lnd_7128Ec
+            if dev.Lnd7128Ec == "" {
+                dev.Lnd7128Ec = seenDevices[i].Lnd7128Ec
             }
             if dev.BatVoltage == "" {
                 dev.BatVoltage = seenDevices[i].BatVoltage
@@ -302,20 +302,20 @@ func cmdLocallyDisplaySafecastMessage(msg ttproto.Telecast, snr float32) {
     str1 := "-"
     str2 := "-"
     str3 := "-"
-    if dev.Lnd_7318U != "" {
-        str1 = dev.Lnd_7318U
+    if dev.Lnd7318U != "" {
+        str1 = dev.Lnd7318U
     }
-    if dev.Lnd_7318C != "" {
-        str2 = dev.Lnd_7318C
+    if dev.Lnd7318C != "" {
+        str2 = dev.Lnd7318C
     }
-    if dev.Lnd_7128Ec != "" {
-        str3 = dev.Lnd_7128Ec
+    if dev.Lnd7128Ec != "" {
+        str3 = dev.Lnd7128Ec
     }
-    go fmt.Printf("\n%s %s: %s %s %s\n\n", dev.CapturedAtLocal, dev.DeviceId, str1, str2, str3)
+    go fmt.Printf("\n%s %s: %s %s %s\n\n", dev.CapturedAtLocal, dev.DeviceID, str1, str2, str3)
 
 }
 
-// Get the device data sorted and classified in a way useful in local web browser
+// GetSafecastDevicesString retrieves the device data sorted and classified in a way useful in local web browser
 func GetSafecastDevicesString() string {
 
     // Duplicate the device list
@@ -333,7 +333,7 @@ func GetSafecastDevicesString() string {
     return s
 }
 
-// Get the device data sorted and classified in a way useful in local web browser
+// GetSafecastDataAsJSON retrieves the device data sorted and classified in a way useful in local web browser
 func GetSafecastDataAsJSON() []byte {
 
     // Duplicate the device list
@@ -348,7 +348,7 @@ func GetSafecastDataAsJSON() []byte {
     }
 
     // Sort it
-    sort.Sort(ByKey(sortedDevices))
+    sort.Sort(byKey(sortedDevices))
 
     // Reformat it into a JSON text buffer
     buffer, _ := json.MarshalIndent(sortedDevices, "", "    ")
