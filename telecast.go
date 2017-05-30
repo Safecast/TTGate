@@ -41,20 +41,34 @@ var locAlt = ""
 // UpdateTargetIP loads network location, DNS, and IP information
 func UpdateTargetIP() {
 
-    // Look up the two IP addresses that we KNOW have only a single A record,
-    // and determine if WE are the server for those protocols
-    addrs, err := net.LookupHost(ttUploadAddress)
-    if err != nil {
-        go fmt.Printf("Can't resolve %s: %v\n", ttUploadAddress, err);
+    // Only enable this if it is really proven that it is slow.  The downside
+    // of having this code enabled is that it completely defeats the purpose
+    // of load balancing on the web.  That this point, the downside is far
+    // greater than the upside.
+
+    if false {
+
+        // Look up the two IP addresses that we KNOW have only a single A record,
+        // and determine if WE are the server for those protocols
+        addrs, err := net.LookupHost(ttUploadAddress)
+        if err != nil {
+            go fmt.Printf("Can't resolve %s: %v\n", ttUploadAddress, err);
+            ttUploadIP = ttUploadAddress
+            return
+        }
+        if len(addrs) < 1 {
+            go fmt.Printf("Can't resolve %s: %v\n", ttUploadAddress, err);
+            ttUploadIP = ttUploadAddress
+            return
+        }
+        ttUploadIP = addrs[0]
+
+    } else {
+
         ttUploadIP = ttUploadAddress
-        return
+
     }
-    if len(addrs) < 1 {
-        go fmt.Printf("Can't resolve %s: %v\n", ttUploadAddress, err);
-        ttUploadIP = ttUploadAddress
-        return
-    }
-    ttUploadIP = addrs[0]
+
 
 }
 
@@ -390,11 +404,11 @@ func cmdSendStatsToTeletypeService() {
     resp, err := httpclient.Do(req)
     if err != nil {
         setTeletypeServiceReachability(false)
-	    go fmt.Printf("Error sending stats to service: %s\n", err)
+        go fmt.Printf("Error sending stats to service: %s\n", err)
     } else {
         setTeletypeServiceReachability(true)
         resp.Body.Close()
-	    go fmt.Printf("Sent stats to service.\n")
+        go fmt.Printf("Sent stats to service.\n")
     }
 
 }
