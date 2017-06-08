@@ -6,7 +6,6 @@
 package main
 
 import (
-    "bytes"
     "fmt"
     "io"
     "os"
@@ -248,7 +247,7 @@ func ioSendCommand(cmd []byte) {
 
     // Write this, appending newline
     if (serialInitCompleted) {
-        _, err := serialPort.Write(bytes.Join([][]byte{cmd, []byte("")}, []byte("\r\n")))
+	    _, err := serialPort.Write(append(cmd, []byte("\r\n")...))
         if err != nil {
             go fmt.Printf("write err: %d", err)
         }
