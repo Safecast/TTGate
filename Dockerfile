@@ -2,7 +2,7 @@
 # Use of this source code is governed by licenses granted by the
 # copyright holder including that found in the LICENSE file.
 
-FROM resin/raspberrypi-golang
+FROM resin/raspberrypi3-golang
 
 # Packaging parameters
 ENV PKG ttgate
