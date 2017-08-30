@@ -1,4 +1,4 @@
-// Copyright 2017 Inca Roads LLC.  All rights reserved. 
+// Copyright 2017 Inca Roads LLC.  All rights reserved.
 // Use of this source code is governed by licenses granted by the
 // copyright holder including that found in the LICENSE file.
 
@@ -28,9 +28,9 @@ var flushBufferedData = false
 // Initialize the i/o subsystem
 func ioInit() {
 
-	// Initialize random number generator
-	randinit();
-	
+    // Initialize random number generator
+    randinit();
+
     // Has been useful for hardware reset & serial port I/O debugging
     verboseDebug = false
     verbose := os.Getenv("VERBOSE")
@@ -228,9 +228,14 @@ func io5sWatchdog() {
             // to ensure that any Linux-level process usage (such as bugs in
             // the golang runtime or Midori) will be reset, and we will
             // occasionally start completely fresh and clean.
-			if (replyWatchdogTickCount >= 100) {
-	            os.Exit(0)
-			}
+            if (replyWatchdogTickCount >= 100) {
+                fmt.Printf("*** \n");
+                fmt.Printf("*** \n");
+                fmt.Printf("*** Exiting because we've lost module communications ***\n")
+                fmt.Printf("*** \n");
+                fmt.Printf("*** \n");
+                os.Exit(0)
+            }
         }
     }
 }
@@ -247,7 +252,7 @@ func ioSendCommand(cmd []byte) {
 
     // Write this, appending newline
     if (serialInitCompleted) {
-	    _, err := serialPort.Write(append(cmd, []byte("\r\n")...))
+        _, err := serialPort.Write(append(cmd, []byte("\r\n")...))
         if err != nil {
             go fmt.Printf("write err: %d", err)
         }

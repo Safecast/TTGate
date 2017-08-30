@@ -60,6 +60,13 @@ func main() {
     // the golang runtime or Midori) will be reset, and we will
     // occasionally start completely fresh and clean.
     time.Sleep(7 * 24 * time.Hour)
+
+    fmt.Printf("*** \n");
+    fmt.Printf("*** \n");
+    fmt.Printf("*** Exiting for weekly restart ***\n")
+    fmt.Printf("*** \n");
+    fmt.Printf("*** \n");
+
     os.Exit(0)
 
 }
@@ -73,14 +80,14 @@ func timer5s() {
 }
 
 func timer1m() {
-	minutesAlive := 0
+    minutesAlive := 0
     for {
-		// For the first 5 minutes, send pings to service.  After
-		// that, it's up to the 5m timer handler.
-		if minutesAlive < 5 {
-	        cmdSendStatsToTeletypeService()
-		}
-		
+        // For the first 5 minutes, send pings to service.  After
+        // that, it's up to the 5m timer handler.
+        if minutesAlive < 5 {
+            cmdSendStatsToTeletypeService()
+        }
+
         // Time out commands
         cmd1mWatchdog()
 
@@ -89,7 +96,7 @@ func timer1m() {
 
         // Sleep
         time.Sleep(1 * 60 * time.Second)
-		minutesAlive++
+        minutesAlive++
     }
 }
 
@@ -125,9 +132,9 @@ func timer15m() {
         go fmt.Printf("\n")
 
         // Print resource usage, just as an FYI
-        var mem runtime.MemStats
-        runtime.ReadMemStats(&mem)
         if (false) {
+            var mem runtime.MemStats
+            runtime.ReadMemStats(&mem)
             go fmt.Printf("mem.Alloc: %d -> %d\n", memBase.Alloc, mem.Alloc)
             go fmt.Printf("mem.HeapAlloc: %d -> %d\n", memBase.HeapAlloc, mem.HeapAlloc)
             go fmt.Printf("mem.HeapObjects: %d -> %d\n", memBase.HeapObjects, mem.HeapObjects)
@@ -137,7 +144,11 @@ func timer15m() {
 
         // Reboot the server if things get really borked
         if isOfflineForExtendedPeriod() {
-            go fmt.Printf("Cannot reach service for many, many hours: rebooting device.\n");
+            fmt.Printf("*** \n");
+            fmt.Printf("*** \n");
+            fmt.Printf("Cannot reach service for many, many hours: rebooting device.\n");
+            fmt.Printf("*** \n");
+            fmt.Printf("*** \n");
             os.Exit(0)
         }
 

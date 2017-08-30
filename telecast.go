@@ -322,7 +322,7 @@ func setTeletypeServiceReachability(isReachable bool) {
         } else {
             t := time.Now()
             unreachableForMinutes := int64(t.Sub(serviceFirstUnreachableAt) / time.Minute)
-            go fmt.Printf("*** TTSERVE has been unreachable for %d minutes\n", unreachableForMinutes);
+            fmt.Printf("*** TTSERVE has been unreachable for %d minutes\n", unreachableForMinutes);
         }
     }
     serviceReachable = isReachable
