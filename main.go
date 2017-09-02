@@ -59,7 +59,7 @@ func main() {
     // to ensure that any Linux-level process usage (such as bugs in
     // the golang runtime or Midori) will be reset, and we will
     // occasionally start completely fresh and clean.
-    time.Sleep(7 * 24 * time.Hour)
+    time.Sleep(time.Duration(restartEveryDays * 24) * time.Hour)
 
     fmt.Printf("*** \n");
     fmt.Printf("*** \n");

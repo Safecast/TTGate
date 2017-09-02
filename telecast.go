@@ -20,12 +20,6 @@ import (
     "github.com/safecast/ttproto/golang"
 )
 
-// Service
-var ttUploadAddress = "tt.safecast.org"
-var ttUploadURLPattern = "http://%s/send"
-var ttUploadIP = ""
-var ttStatsURL = "http://tt.safecast.org/gateway"
-
 // Statics
 var ipInfoString = ""
 var ipInfoData IPInfoData
@@ -365,8 +359,8 @@ func isOfflineForExtendedPeriod() bool {
         serviceEverBecameUnreachable = true
     }
     // Suppress the notion of "unreachable" until we have been offline for quite some time
-    unreachableMinutes := int64(time.Now().Sub(serviceFirstUnreachableAt) / time.Minute)
-    return unreachableMinutes > (60 * 3)
+    unreachableMinutes := int(time.Now().Sub(serviceFirstUnreachableAt) / time.Minute)
+    return unreachableMinutes > restartWhenUnreachableMinutes
 }
 
 // Send stats to the service
