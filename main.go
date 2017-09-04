@@ -63,7 +63,7 @@ func main() {
 
     fmt.Printf("*** \n");
     fmt.Printf("*** \n");
-    fmt.Printf("*** Exiting for weekly restart ***\n")
+    fmt.Printf("*** Exiting (weekly restart) ***\n")
     fmt.Printf("*** \n");
     fmt.Printf("*** \n");
 
